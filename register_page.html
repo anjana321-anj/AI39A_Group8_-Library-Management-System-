@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookVerse – Create Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sky: #38bdf8;
+    --sky-dark: #0284c7;
+    --sky-light: #e0f2fe;
+    --ink: #0f172a;
+    --slate: #475569;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--white);
+    overflow: hidden;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left {
+    background: linear-gradient(145deg, #0ea5e9 0%, #0284c7 60%, #0369a1 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    padding: 4rem;
+    position: relative; overflow: hidden;
+  }
+  .left::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .left::after {
+    content: '';
+    position: absolute;
+    width: 350px; height: 350px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    bottom: -80px; right: -80px;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: .6rem;
+    margin-bottom: 3.5rem; position: relative; z-index: 1;
+    animation: fadeUp .6s ease both;
+  }
+  .logo-icon {
+    width: 40px; height: 40px; background: rgba(255,255,255,.2);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,.3);
+  }
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem; font-weight: 700; color: white;
+  }
+
+  .left-content { position: relative; z-index: 1; animation: fadeUp .6s .1s ease both; }
+  .left-content h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem; font-weight: 700; color: white;
+    line-height: 1.2; margin-bottom: 1rem;
+  }
+  .left-content h2 em { font-style: italic; color: #bae6fd; }
+  .left-content p { color: rgba(255,255,255,.75); font-size: .95rem; line-height: 1.7; max-width: 320px; margin-bottom: 2rem; }
+
+  .perks { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+  .perks li {
+    display: flex; align-items: center; gap: .75rem;
+    color: rgba(255,255,255,.9); font-size: .88rem; font-weight: 500;
+    animation: fadeUp .6s ease both;
+  }
+  .perks li:nth-child(1) { animation-delay: .2s; }
+  .perks li:nth-child(2) { animation-delay: .3s; }
+  .perks li:nth-child(3) { animation-delay: .4s; }
+  .perk-icon {
+    width: 32px; height: 32px; background: rgba(255,255,255,.15);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; flex-shrink: 0;
+  }
+
+  /* ── RIGHT PANEL ── */
+  .right {
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem 4rem;
+    background: #f8fafc;
+    overflow-y: auto;
+  }
+
+  .form-card {
+    width: 100%; max-width: 400px;
+    animation: fadeUp .5s .15s ease both;
+  }
+
+  .form-header { margin-bottom: 2rem; }
+  .form-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem; font-weight: 700; color: var(--ink); margin-bottom: .3rem;
+  }
+  .form-header p { color: var(--muted); font-size: .9rem; }
+
+  .form-group { margin-bottom: 1.1rem; }
+  label {
+    display: block; font-size: .82rem; font-weight: 600;
+    color: var(--slate); margin-bottom: .45rem; letter-spacing: .01em;
+  }
+  .input-wrap { position: relative; }
+  .input-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    font-size: .95rem; color: var(--muted); pointer-events: none;
+  }
+  input[type=text], input[type=email], input[type=password] {
+    width: 100%;
+    padding: .7rem 1rem .7rem 2.6rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    color: var(--ink);
+    background: var(--white);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input:focus {
+    border-color: var(--sky);
+    box-shadow: 0 0 0 3px rgba(56,189,248,.18);
+  }
+  input.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+
+  .error-msg { font-size: .78rem; color: #ef4444; margin-top: .3rem; display: none; }
+  .error-msg.show { display: block; }
+
+  .password-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: .85rem; padding: 0; transition: color .2s;
+  }
+  .password-toggle:hover { color: var(--slate); }
+
+  .terms {
+    display: flex; align-items: flex-start; gap: .6rem;
+    margin-bottom: 1.3rem; font-size: .82rem; color: var(--muted); line-height: 1.5;
+  }
+  .terms input[type=checkbox] {
+    width: 16px; height: 16px; padding: 0; margin-top: 2px;
+    accent-color: var(--sky); cursor: pointer; flex-shrink: 0;
+  }
+  .terms a { color: var(--sky-dark); text-decoration: none; font-weight: 600; }
+  .terms a:hover { text-decoration: underline; }
+
+  .btn-create {
+    width: 100%; padding: .8rem;
+    background: var(--sky);
+    color: white; font-family: 'DM Sans', sans-serif;
+    font-size: .95rem; font-weight: 700;
+    border: none; border-radius: 10px; cursor: pointer;
+    transition: background .2s, transform .15s, box-shadow .2s;
+    letter-spacing: .01em;
+  }
+  .btn-create:hover { background: var(--sky-dark); box-shadow: 0 6px 20px rgba(2,132,199,.3); transform: translateY(-1px); }
+  .btn-create:active { transform: translateY(0); }
+  .btn-create:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  .divider {
+    display: flex; align-items: center; gap: .75rem;
+    margin: 1.2rem 0; color: var(--muted); font-size: .8rem;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .btn-google {
+    width: 100%; padding: .72rem;
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: 'DM Sans', sans-serif;
+    font-size: .88rem; font-weight: 600; color: var(--ink);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .6rem;
+    transition: background .2s, border-color .2s;
+  }
+  .btn-google:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+  .signin-link {
+    text-align: center; margin-top: 1.3rem;
+    font-size: .86rem; color: var(--muted);
+  }
+  .signin-link a { color: var(--sky-dark); font-weight: 600; text-decoration: none; cursor: pointer; }
+  .signin-link a:hover { text-decoration: underline; }
+
+  /* Success state */
+  .success-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,23,42,.5); z-index: 50;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .success-overlay.show { display: flex; animation: fadeIn .3s ease; }
+  .success-box {
+    background: white; border-radius: 18px; padding: 2.5rem;
+    max-width: 360px; width: 90%; text-align: center;
+    animation: scaleIn .3s ease;
+  }
+  .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .success-box h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: .5rem; color: var(--ink); }
+  .success-box p { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
+  .btn-dashboard {
+    background: var(--sky); color: white; border: none;
+    padding: .7rem 1.8rem; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+    font-weight: 700; font-size: .92rem; cursor: pointer;
+  }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+
+  @media (max-width: 768px) {
+    body { grid-template-columns: 1fr; overflow: auto; }
+    .left { display: none; }
+    .right { padding: 2rem 1.5rem; min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left">
+  <div class="logo">
+    <div class="logo-icon">📖</div>
+    <span class="logo-text">BookVerse</span>
+  </div>
+  <div class="left-content">
+    <h2>Borrow. Read.<br><em>Explore.</em></h2>
+    <p>Join thousands of readers who discover their next great book with BookVerse.</p>
+    <ul class="perks">
+      <li><div class="perk-icon">📚</div> Access 12,400+ books instantly</li>
+      <li><div class="perk-icon">🔄</div> Borrow up to 5 books at a time</li>
+      <li><div class="perk-icon">⭐</div> Personalized reading recommendations</li>
+    </ul>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right">
+  <div class="form-card">
+    <div class="form-header">
+      <h1>Create your account</h1>
+      <p>Join BookVerse and start borrowing today.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="fullname">Full name</label>
+      <div class="input-wrap">
+        <span class="input-icon">👤</span>
+        <input type="text" id="fullname" placeholder="Alex Johnson" oninput="clearError('fullname')">
+      </div>
+      <div class="error-msg" id="err-fullname">Please enter your full name.</div>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <div class="input-wrap">
+        <span class="input-icon">✉️</span>
+        <input type="email" id="email" placeholder="alex@email.com" oninput="clearError('email')">
+      </div>
+      <div class="error-msg" id="err-email">Please enter a valid email address.</div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" placeholder="Min. 8 characters" oninput="clearError('password')">
+        <button class="password-toggle" onclick="togglePass()" type="button" id="toggle-btn">Show</button>
+      </div>
+      <div class="error-msg" id="err-password">Password must be at least 8 characters.</div>
+    </div>
+
+    <div class="terms">
+      <input type="checkbox" id="agree">
+      <label for="agree" style="margin:0;font-weight:400;color:var(--muted)">
+        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+      </label>
+    </div>
+
+    <button class="btn-create" onclick="handleRegister()">Create account</button>
+
+    <div class="divider">or</div>
+
+    <button class="btn-google" onclick="showSuccess('Google')">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 6.294C4.672 4.169 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="signin-link">Already a member? <a href="#">Sign in</a></div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-box">
+    <div class="success-icon">🎉</div>
+    <h3>You're all set!</h3>
+    <p id="success-msg">Welcome to BookVerse. Your account has been created successfully.</p>
+    <button class="btn-dashboard" onclick="closeSuccess()">Go to Dashboard →</button>
+  </div>
+</div>
+
+<script>
+  function togglePass() {
+    const input = document.getElementById('password');
+    const btn = document.getElementById('toggle-btn');
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+    else { input.type = 'password'; btn.textContent = 'Show'; }
+  }
+
+  function clearError(field) {
+    document.getElementById(field).classList.remove('error');
+    document.getElementById('err-' + field).classList.remove('show');
+  }
+
+  function showError(field, msg) {
+    document.getElementById(field).classList.add('error');
+    const el = document.getElementById('err-' + field);
+    if (msg) el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function handleRegister() {
+    const name = document.getElementById('fullname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value;
+    const agreed = document.getElementById('agree').checked;
+    let valid = true;
+
+    if (!name) { showError('fullname'); valid = false; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email'); valid = false; }
+    if (pass.length < 8) { showError('password'); valid = false; }
+    if (!agreed) { alert('Please agree to the Terms of Service to continue.'); valid = false; }
+
+    if (valid) showSuccess(name.split(' ')[0]);
+  }
+
+  function showSuccess(name) {
+    document.getElementById('success-msg').textContent =
+      `Welcome to BookVerse, ${name}! Your account has been created successfully.`;
+    document.getElementById('success-overlay').classList.add('show');
+  }
+
+  function closeSuccess() {
+    document.getElementById('success-overlay').classList.remove('show');
+  }
+</script>
+</body>
+</html>
