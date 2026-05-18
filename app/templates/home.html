@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home - BookVerse</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: white;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      background: #f0f4f8;
+      border-radius: 50px;
+      padding: 5px;
+      gap: 2px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #555;
+      transition: all 0.2s;
+    }
+
+    .nav-links a.active {
+      background: white;
+      color: #1a1a2e;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
+    .nav-links a:hover:not(.active) { color: #1a1a2e; }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-right a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .btn-started {
+      background: linear-gradient(135deg, #4ec6e0, #1fa8cc);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 2px 12px rgba(78,198,224,0.35);
+    }
+
+    .btn-started:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: calc(100vh - 73px);
+      background: linear-gradient(160deg, #b8e8f5 0%, #8dd8ef 30%, #6dcae8 60%, #a8dff0 100%);
+      display: flex;
+      align-items: center;
+      padding: 60px 48px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* subtle radial glow in the background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -10%;
+      right: 10%;
+      width: 55%;
+      height: 120%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      gap: 40px;
+    }
+
+    /* ── LEFT ── */
+    .hero-left {
+      flex: 1;
+      max-width: 540px;
+    }
+
+    .welcome-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 50px;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #2a6f8f;
+      margin-bottom: 28px;
+    }
+
+    .welcome-badge svg {
+      width: 14px;
+      height: 14px;
+      fill: #2a9dc4;
+    }
+
+    .hero-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.4rem, 4vw, 3.1rem);
+      line-height: 1.15;
+      color: #0d2233;
+      margin-bottom: 22px;
+    }
+
+    .hero-title .highlight {
+      color: #2ab8e0;
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: #2d4a5c;
+      line-height: 1.7;
+      max-width: 420px;
+      margin-bottom: 36px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 52px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #3db8d8, #1a99bc);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(26,153,188,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(26,153,188,0.5);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      background: rgba(255,255,255,0.75);
+      color: #1a2d3d;
+      border: 1.5px solid rgba(255,255,255,0.9);
+      backdrop-filter: blur(6px);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.95);
+      transform: translateY(-2px);
+    }
+
+    /* ── STATS ── */
+    .stats {
+      display: flex;
+      gap: 36px;
+    }
+
+    .stat-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.6rem;
+      color: #0d2233;
+      font-weight: 400;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: #3a6a82;
+      font-weight: 600;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── RIGHT IMAGE GRID ── */
+    .hero-right {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 230px 230px;
+      gap: 12px;
+      max-width: 580px;
+    }
+
+    .book-card {
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .book-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .book-card:hover img { transform: scale(1.04); }
+
+    /* placeholder colors when images fail to load */
+    .book-card:nth-child(1) { background: #2a2a2a; }
+    .book-card:nth-child(2) { background: #1c1c2e; }
+    .book-card:nth-child(3) { background: #3b2a1a; }
+    .book-card:nth-child(4) { background: #1a1a30; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero { flex-direction: column; padding: 40px 24px; }
+      .hero-inner { flex-direction: column; }
+      .hero-right {
+        width: 100%;
+        max-width: 100%;
+        grid-template-rows: 180px 180px;
+      }
+      nav { padding: 14px 24px; }
+    }
+
+    @media (max-width: 540px) {
+      .hero-right { grid-template-rows: 140px 140px; gap: 8px; }
+      .stats { gap: 20px; }
+      .hero-buttons { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-icon">
+        <img src="/image/Logo.png" alt="Logo">
+      </div>
+      BookVerse
+    </a>
+
+    <div class="nav-links">
+      <a href="#" class="active">Home</a>
+      <a href="#">Browse</a>
+    </div>
+
+    <div class="nav-right">
+      <a href="#">Sign in</a>
+      <a href="#" class="btn-started">Get started</a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-inner">
+
+      <!-- LEFT -->
+      <div class="hero-left">
+        <div class="welcome-badge">
+          <!-- sparkle icon -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74z"/>
+          </svg>
+          Welcome to BookVerse
+        </div>
+
+        <h1 class="hero-title">
+          A library that feels<br>
+          like a <span class="highlight">clear blue sky.</span>
+        </h1>
+
+        <p class="hero-sub">
+          Discover thousands of titles, borrow with one click, and keep
+          your reading life organized — all in one beautifully calm space.
+        </p>
+
+        <div class="hero-buttons">
+          <a href="#" class="btn-primary">Browse the library &rarr;</a>
+          <a href="#" class="btn-secondary">Create free account</a>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-number">12+</div>
+            <div class="stat-label">Titles</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">1,201+</div>
+            <div class="stat-label">Members</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">8,420+</div>
+            <div class="stat-label">Books Borrowed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — image grid (uses royalty-free Unsplash photos matching the screenshot) -->
+      <div class="hero-right">
+        <!-- top-left: dark book cover -->
+        <div class="book-card">
+          <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80"
+               alt="Milk and Honey book" />
+        </div>
+        <!-- top-right: open book dark bg -->
+        <div class="book-card">
+          <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&auto=format&fit=crop&q=80"
+               alt="Open book" />
+        </div>
+        <!-- bottom-left: dark library hallway -->
+        <div class="book-card">
+          <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=600&auto=format&fit=crop&q=80"
+               alt="Library hallway" />
+        </div>
+        <!-- bottom-right: colourful spines -->
+        <div class="book-card">
+          <img src="https://plus.unsplash.com/premium_photo-1669652639337-c513cc42ead6?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+               alt="Colourful books" />
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>
