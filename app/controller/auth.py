@@ -24,3 +24,13 @@ class AuthController:
 
     def services(self):
         return render_template('services.html')
+    
+    def dashboard(self):
+        return render_template('dashboard.html')
+    
+    def borrowed(self):
+        return render_template('borrowedpage.html')
+    
+    def login_enhanced(self):
+        return render_template('index_enhanced.html')
+    
