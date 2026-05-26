@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Login - BookVerse{% endblock %}
+
+{% block header_actions %}
+<a class="ghost-link" href="{{ url_for('auth.login_enhanced') }}">Try enhanced login</a>
+<a class="btn btn-primary" href="{{ url_for('auth.register') }}">Create account</a>
+{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="auth-layout">
+        <div class="auth-copy">
+            <span class="eyebrow">Welcome back</span>
+            <h1 class="headline">Pick up right where your last page ended.</h1>
+            <p class="subheadline">
+                This login screen now works as a real Flask template instead of a blank file. It keeps the same
+                cool-blue BookVerse mood while guiding readers into the dashboard.
+            </p>
+            <div class="metric-grid">
+                <article class="metric-card">
+                    <h3>24</h3>
+                    <p>Books completed by active readers this month.</p>
+                </article>
+                <article class="metric-card">
+                    <h3>75%</h3>
+                    <p>Average monthly goal progress tracked from the dashboard.</p>
+                </article>
+                <article class="metric-card">
+                    <h3>95%</h3>
+                    <p>Readers say the interface feels calmer than their old spreadsheets.</p>
+                </article>
+            </div>
+        </div>
+
+        <aside class="auth-panel">
+            <h2>Sign in to BookVerse</h2>
+            <p>Use the demo form below to move into the dashboard flow.</p>
+            <form class="auth-form" method="get" action="{{ url_for('auth.dashboard') }}">
+                <div class="input-group">
+                    <label for="login-email">Email address</label>
+                    <input id="login-email" name="email" type="email" placeholder="reader@bookverse.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <input id="login-password" name="password" type="password" placeholder="Enter your password" required>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">Open my dashboard</button>
+                    <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Need an account?</a>
+                </div>
+                <p class="helper-text">
+                    This project currently demonstrates the template flow and navigation. Database-backed auth can be
+                    plugged in next using the new configuration file.
+                </p>
+            </form>
+        </aside>
+    </div>
+</section>
+{% endblock %}

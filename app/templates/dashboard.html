@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - BookVerse{% endblock %}
+
+{% block header_actions %}
+<a class="ghost-link" href="{{ url_for('auth.profile') }}">Reader profile</a>
+<a class="btn btn-primary" href="{{ url_for('auth.books') }}">Add books later</a>
+{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="section-header">
+        <div>
+            <span class="eyebrow">Admin dashboard</span>
+            <h1 class="headline">A cleaner command view for the BookVerse library.</h1>
+            <p class="subheadline">Circulation, member flow, and shelf growth now sit inside a shared template system.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('auth.borrowed') }}">Review borrowed items</a>
+    </div>
+
+    <div class="metric-grid">
+        <article class="metric-card">
+            <h3>8,420</h3>
+            <p>Total books in the catalog right now.</p>
+        </article>
+        <article class="metric-card">
+            <h3>1,201</h3>
+            <p>Registered members across active shelves.</p>
+        </article>
+        <article class="metric-card">
+            <h3>325</h3>
+            <p>Books currently borrowed or in circulation.</p>
+        </article>
+    </div>
+</section>
+
+<section class="surface">
+    <div class="dashboard-grid">
+        <article class="dashboard-panel">
+            <h2>Recent activity</h2>
+            <p>Quick checks for circulation and front-desk follow-up.</p>
+            <div class="list">
+                <div class="activity-row">
+                    <div>
+                        <p class="row-title">Atomic Habits renewed by Priya Patel</p>
+                        <p class="muted">Renewed for 14 more days after no pending reservation was found.</p>
+                    </div>
+                    <span class="status-pill success">Renewed</span>
+                </div>
+                <div class="activity-row">
+                    <div>
+                        <p class="row-title">Three new books added to Self-help</p>
+                        <p class="muted">Shelf growth helps the homepage and books page stay current.</p>
+                    </div>
+                    <span class="status-pill info">Catalog</span>
+                </div>
+                <div class="activity-row">
+                    <div>
+                        <p class="row-title">One overdue reminder prepared</p>
+                        <p class="muted">A follow-up is ready for a title that crossed its return date.</p>
+                    </div>
+                    <span class="status-pill warning">Reminder</span>
+                </div>
+            </div>
+        </article>
+
+        <aside class="dashboard-panel">
+            <h2>Quick actions</h2>
+            <p>Common routes for staff and student operators.</p>
+            <div class="card-grid">
+                <article class="quick-card">
+                    <h3>Browse catalog</h3>
+                    <p>Open the books page for shelf review and discovery.</p>
+                </article>
+                <article class="quick-card">
+                    <h3>Member profile</h3>
+                    <p>Jump into the reader-facing profile experience.</p>
+                </article>
+                <article class="quick-card">
+                    <h3>Borrowed overview</h3>
+                    <p>Check due dates and active loan statuses quickly.</p>
+                </article>
+                <article class="quick-card">
+                    <h3>Support contact</h3>
+                    <p>Use the contact template for requests and library questions.</p>
+                </article>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}
