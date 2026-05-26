@@ -1,0 +1,68 @@
+{% set current_endpoint = request.endpoint or '' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BookVerse{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <div class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="{{ url_for('auth.home') }}">
+                <span class="brand-icon">
+                    <img src="{{ url_for('serve_image', filename='Logo.png') }}" alt="BookVerse logo">
+                </span>
+                <span class="brand-text">
+                    <span class="brand-title">BookVerse</span>
+                    <span class="brand-tagline">Read clearly. Borrow calmly.</span>
+                </span>
+            </a>
+
+            <nav class="nav-pills" aria-label="Primary">
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.home' else '' }}" href="{{ url_for('auth.home') }}">Home</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.services' else '' }}" href="{{ url_for('auth.services') }}">Services</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.dashboard' else '' }}" href="{{ url_for('auth.dashboard') }}">Dashboard</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.borrowed' else '' }}" href="{{ url_for('auth.borrowed') }}">Borrowed</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.contact' else '' }}" href="{{ url_for('auth.contact') }}">Contact</a>
+            </nav>
+
+            <div class="action-group">
+                {% block header_actions %}
+                <a class="ghost-link" href="{{ url_for('auth.login') }}">Sign in</a>
+                <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Create account</a>
+                {% endblock %}
+            </div>
+        </header>
+
+        <main class="page-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="site-footer">
+            <div class="footer-grid">
+                <div>
+                    <strong>BookVerse</strong>
+                    <div class="muted">A clean library interface for readers, shelves, and circulation.</div>
+                </div>
+                <div class="footer-links">
+                    <a href="{{ url_for('auth.home') }}">Home</a>
+                    <a href="{{ url_for('auth.books') }}">Books</a>
+                    <a href="{{ url_for('auth.about') }}">About</a>
+                    <a href="{{ url_for('auth.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('auth.profile') }}">Profile</a>
+                    <a href="{{ url_for('auth.contact') }}">Contact</a>
+                    <a href="{{ url_for('auth.login_enhanced') }}">Enhanced login</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
