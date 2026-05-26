@@ -34,4 +34,14 @@ class AuthRoutes:
         self.bp.route("/services")(
             self.controller.services
         )
+        self.bp.route("/dashboard")(
+            self.controller.dashboard
+        )
+        self.bp.route("/borrowed")(
+            self.controller.borrowed
+        )
+        self.bp.route("/login-enhanced")(
+            self.controller.login_enhanced
+        )
         return self.bp
+    
