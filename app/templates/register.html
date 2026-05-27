@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Register - BookVerse{% endblock %}
+
+{% block header_actions %}
+<a class="ghost-link" href="{{ url_for('auth.login') }}">Already a member?</a>
+<a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
+{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="auth-layout">
+        <div class="auth-copy">
+            <span class="eyebrow">Create your reader profile</span>
+            <h1 class="headline">Join a library space that feels light, organized, and easy to return to.</h1>
+            <p class="subheadline">
+                Registration now has a complete interface with the same glassy blue visual system used across the
+                rest of the site.
+            </p>
+            <div class="service-grid">
+                <article class="feature-card">
+                    <h3>Saved favorites</h3>
+                    <p>Keep a running list of books you plan to borrow next.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Borrowing history</h3>
+                    <p>Track what you borrowed, renewed, and returned over time.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Reading preferences</h3>
+                    <p>Use your favorite genres to shape recommendations and shelf highlights.</p>
+                </article>
+            </div>
+        </div>
+
+        <aside class="auth-panel">
+            <h2>Start your account</h2>
+            <p>Fill out the demo form to move into your reader profile.</p>
+            <form class="auth-form" method="get" action="{{ url_for('auth.profile') }}">
+                <div class="field-grid">
+                    <div class="input-group">
+                        <label for="register-name">Full name</label>
+                        <input id="register-name" name="name" type="text" placeholder="Aarav Sharma" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="register-genre">Favorite genre</label>
+                        <select id="register-genre" name="genre">
+                            <option>Fiction</option>
+                            <option>Self-help</option>
+                            <option>Biography</option>
+                            <option>Research</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="register-email">Email address</label>
+                    <input id="register-email" name="email" type="email" placeholder="reader@bookverse.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="register-password">Password</label>
+                    <input id="register-password" name="password" type="password" placeholder="Create a password" required>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">Build my profile</button>
+                    <a class="btn btn-secondary" href="{{ url_for('auth.home') }}">Explore first</a>
+                </div>
+            </form>
+        </aside>
+    </div>
+</section>
+{% endblock %}
