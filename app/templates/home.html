@@ -1,110 +1,99 @@
 {% extends "base.html" %}
 
-{% block title %}Home - BookVerse{% endblock %}
+{% block title %}BookVerse - Modern Digital Library{% endblock %}
 
 {% block content %}
-<section class="surface">
-    <div class="hero-grid">
-        <div class="stack">
-            <span class="eyebrow">Reader-first library space</span>
-            <h1 class="headline">A bright, modern shelf for every chapter of your reading life.</h1>
-            <p class="subheadline">
-                BookVerse helps students and readers discover books, manage borrowing, and keep their reading flow
-                organized in one calm interface inspired by clean skies and open pages.
-            </p>
-            <div class="hero-actions">
-                <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse the catalog</a>
-                <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Start a reader profile</a>
+<section class="hero-section">
+    <div class="hero-copy reveal">
+        <span class="eyebrow">Premium student library</span>
+        <h1 class="hero-title">BookVerse</h1>
+        <p class="hero-copy-text">
+            A clean digital library platform for discovering books, borrowing titles, and managing reading progress
+            through a secure modern dashboard.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Catalog</a>
+            <a class="btn btn-secondary" href="{{ url_for('auth.register') }}" data-ripple>Start Reading</a>
+            <a class="btn btn-glass" href="{{ url_for('auth.dashboard') }}" data-ripple>Explore Dashboard</a>
+        </div>
+        <div class="hero-metrics">
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.books if stats else 0 }}">0</strong>
+                <span>Books</span>
             </div>
-            <div class="metric-grid">
-                <article class="metric-card">
-                    <h3>8,420+</h3>
-                    <p>Books already organized into easy-to-scan shelves.</p>
-                </article>
-                <article class="metric-card">
-                    <h3>1,201</h3>
-                    <p>Members borrowing titles, saving lists, and tracking returns.</p>
-                </article>
-                <article class="metric-card">
-                    <h3>12</h3>
-                    <p>Featured collections curated for study, leisure, and growth.</p>
-                </article>
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.members if stats else 0 }}">0</strong>
+                <span>Readers</span>
+            </div>
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.borrowed if stats else 0 }}">0</strong>
+                <span>Borrowed</span>
             </div>
         </div>
+    </div>
 
-        <aside class="hero-visual">
-            <div class="visual-stack">
-                <div class="visual-banner">
-                    <h3>Today's shelf focus</h3>
-                    <p>Self-growth, literary fiction, and student favorites are trending right now.</p>
-                </div>
-                <div class="visual-card">
-                    <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=900&auto=format&fit=crop" alt="Open book">
-                    <div class="stack">
-                        <strong>Calm borrowing flow</strong>
-                        <small>Move from discovery to checkout with a clear path and easy due-date visibility.</small>
-                        <div class="badge-row">
-                            <span class="chip active">Smart discovery</span>
-                            <span class="chip">Due-date tracking</span>
-                        </div>
+    <div class="hero-stage reveal">
+        <div class="hero-orbit-card card-one">
+            <span>Trending</span>
+            <strong>{{ books[0].title if books else "Atomic Habits" }}</strong>
+        </div>
+        <div class="book-stack">
+            {% for book in books %}
+                <article class="floating-book" style="--delay: {{ loop.index0 * 120 }}ms;">
+                    <img src="{{ book.image }}" alt="{{ book.title }}">
+                    <div>
+                        <strong>{{ book.title }}</strong>
+                        <span>{{ book.author }}</span>
                     </div>
-                </div>
-                <div class="quote-card">
-                    <blockquote>"A library interface should feel as inviting as the books it protects."</blockquote>
-                    <footer>BookVerse design note</footer>
-                </div>
-            </div>
-        </aside>
-    </div>
-</section>
-
-<section class="surface">
-    <div class="section-header">
-        <div>
-            <h2>Curated shelves</h2>
-            <p>These sections mirror the same blue, airy visual language across the whole site.</p>
+                </article>
+            {% endfor %}
         </div>
-        <a class="btn btn-secondary" href="{{ url_for('auth.dashboard') }}">Open dashboard</a>
-    </div>
-
-    <div class="book-grid">
-        <article class="book-card">
-            <div class="cover-art">
-                <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=900&auto=format&fit=crop" alt="Poetry collection">
-            </div>
-            <h3>Poetry and reflection</h3>
-            <p>Short, meaningful reads for quiet evenings and quick inspiration.</p>
-        </article>
-        <article class="book-card">
-            <div class="cover-art">
-                <img src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=900&auto=format&fit=crop" alt="Fiction shelf">
-            </div>
-            <h3>Modern fiction</h3>
-            <p>Layered stories and memorable voices for readers who like emotional range.</p>
-        </article>
-        <article class="book-card">
-            <div class="cover-art">
-                <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=900&auto=format&fit=crop" alt="Library aisle">
-            </div>
-            <h3>Study-ready aisles</h3>
-            <p>Focused collections for coursework, projects, and independent research.</p>
-        </article>
+        <div class="hero-orbit-card card-two">
+            <span>Available now</span>
+            <strong>{{ stats.available if stats else 0 }} titles</strong>
+        </div>
     </div>
 </section>
 
-<section class="surface">
-    <div class="feature-grid">
-        <article class="feature-card">
-            <h3>Quick catalog search</h3>
-            <p>Readers can jump from interest to title without digging through cluttered lists.</p>
+<section class="section-band reveal">
+    <div class="section-heading">
+        <span class="eyebrow">Curated shelves</span>
+        <h2>Designed for fast discovery and calm browsing.</h2>
+        <p>Premium cards, availability states, and responsive grids keep the catalog readable on every screen.</p>
+    </div>
+    <div class="shelf-grid">
+        {% for book in books %}
+            <article class="book-card tilt-card">
+                <div class="book-cover">
+                    <img src="{{ book.image }}" alt="{{ book.title }}">
+                    <span class="availability-badge">Available</span>
+                </div>
+                <div class="book-body">
+                    <span class="book-category">{{ book.category }}</span>
+                    <h3>{{ book.title }}</h3>
+                    <p>{{ book.description }}</p>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section-band reveal">
+    <div class="feature-strip">
+        <article>
+            <span class="feature-icon">01</span>
+            <h3>Secure sessions</h3>
+            <p>Dashboard, borrowed books, and profile routes now require login.</p>
         </article>
-        <article class="feature-card">
-            <h3>Borrowing visibility</h3>
-            <p>Due dates, statuses, and active loans stay visible from the dashboard and profile pages.</p>
+        <article>
+            <span class="feature-icon">02</span>
+            <h3>MySQL ready</h3>
+            <p>`class_db` is initialized with users, books, borrowed books, and skills.</p>
         </article>
-        <article class="feature-card">
-            <h3>Consistent templates</h3>
-            <p>Every route now renders within one shared theme instead of mixing mockups and blank files.</p>
+        <article>
+            <span class="feature-icon">03</span>
+            <h3>Smooth interactions</h3>
+            <p>Reveal animations, counters, ripple buttons, and polished hover states add life without heavy libraries.</p>
         </article>
     </div>
 </section>
