@@ -3,74 +3,58 @@
 {% block title %}Profile - BookVerse{% endblock %}
 
 {% block content %}
-<section class="surface">
-    <div class="profile-grid">
-        <div class="stack">
-            <span class="eyebrow">Reader profile</span>
-            <h1 class="headline">Your reading snapshot, borrowing flow, and progress all in one place.</h1>
-            <p class="subheadline">
-                This profile page keeps the same visual language as the rest of the app while giving the route a real,
-                useful layout.
-            </p>
-            <div class="stats-grid">
-                <article class="stat-card">
-                    <div class="stat-value">18</div>
-                    <div class="stat-label">Books finished this year</div>
-                </article>
-                <article class="stat-card">
-                    <div class="stat-value">4</div>
-                    <div class="stat-label">Active loans</div>
-                </article>
-                <article class="stat-card">
-                    <div class="stat-value">3</div>
-                    <div class="stat-label">Renewals available</div>
-                </article>
-                <article class="stat-card">
-                    <div class="stat-value">92%</div>
-                    <div class="stat-label">Reading goal completion</div>
-                </article>
-            </div>
+<section class="profile-layout">
+    <aside class="profile-card reveal">
+        <div class="avatar">{{ user.username[:1]|upper if user else 'B' }}</div>
+        <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
+        <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
+        <div class="profile-meta">
+            <span>Member since</span>
+            <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
         </div>
+        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
+    </aside>
 
-        <aside class="hero-visual">
-            <div class="visual-stack">
-                <div class="visual-card">
-                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=900&auto=format&fit=crop" alt="Reader profile visual">
-                    <div class="stack">
-                        <strong>Reader focus</strong>
-                        <small>Favorite genres: modern fiction, personal growth, and reflective nonfiction.</small>
-                    </div>
-                </div>
-                <div class="list-card">
-                    <h3>Current goal</h3>
-                    <p>Finish two more books before the semester wrap-up and renew one research title if needed.</p>
-                </div>
+    <div class="profile-main">
+        <section class="stats-grid reveal">
+            <article class="stat-widget">
+                <span>Total Loans</span>
+                <strong data-counter="{{ borrowed_books|length }}">0</strong>
+                <small>All borrowed records</small>
+            </article>
+            <article class="stat-widget">
+                <span>Active</span>
+                <strong data-counter="{{ borrowed_books|selectattr('status', 'equalto', 'borrowed')|list|length }}">0</strong>
+                <small>Currently on your shelf</small>
+            </article>
+            <article class="stat-widget">
+                <span>Skills</span>
+                <strong data-counter="{{ skills|length }}">0</strong>
+                <small>Profile learning tags</small>
+            </article>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Reading activity</h2>
+                <a href="{{ url_for('auth.borrowed') }}">Manage returns</a>
             </div>
-        </aside>
-    </div>
-</section>
-
-<section class="surface">
-    <div class="section-header">
-        <div>
-            <h2>Borrowed right now</h2>
-            <p>These cards match the borrowed page so the experience stays familiar.</p>
-        </div>
-        <a class="btn btn-secondary" href="{{ url_for('auth.borrowed') }}">View all borrowed books</a>
-    </div>
-    <div class="book-grid">
-        <article class="book-card">
-            <h3>Atomic Habits</h3>
-            <p>Due May 28, 2026. Keep for your personal productivity review.</p>
-        </article>
-        <article class="book-card">
-            <h3>The Alchemist</h3>
-            <p>Due June 02, 2026. Renew once if another reader has not reserved it.</p>
-        </article>
-        <article class="book-card">
-            <h3>Educated</h3>
-            <p>Due June 10, 2026. Biography shelf, memoir focus, high demand.</p>
-        </article>
+            <div class="activity-list">
+                {% if borrowed_books %}
+                    {% for loan in borrowed_books[:5] %}
+                        <div class="activity-item">
+                            <span class="activity-dot"></span>
+                            <div>
+                                <strong>{{ loan.title }}</strong>
+                                <small>{{ loan.status|title }} &middot; {{ loan.author }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No reading activity yet. Your first borrowed book will appear here.</p>
+                {% endif %}
+            </div>
+        </section>
     </div>
 </section>
 {% endblock %}
