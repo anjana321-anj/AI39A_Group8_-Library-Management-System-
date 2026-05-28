@@ -1,85 +1,70 @@
 {% extends "base.html" %}
 
-{% block title %}Books - BookVerse{% endblock %}
+{% block title %}Catalog - BookVerse{% endblock %}
 
 {% block content %}
-<section class="surface">
+<section class="page-hero reveal">
     <span class="eyebrow">Catalog</span>
-    <h1 class="headline">Browse shelves designed to feel organized before you even start searching.</h1>
-    <p class="subheadline">
-        The books page is now a complete template with real structure, consistent styling, and working route-level
-        navigation.
-    </p>
-    <div class="chip-row" style="margin-top: 24px;">
-        <span class="chip active">All books</span>
-        <span class="chip">Most borrowed</span>
-        <span class="chip">Staff picks</span>
-        <span class="chip">Study essentials</span>
-        <span class="chip">New arrivals</span>
+    <h1>Find the next book worth borrowing.</h1>
+    <p>Browse seeded MySQL titles with live availability, category badges, and functional borrow buttons.</p>
+    <div class="filter-row">
+        <button class="filter-chip active" type="button" data-filter="all">All</button>
+        {% for category in categories %}
+            <button class="filter-chip" type="button" data-filter="{{ category|lower|replace(' ', '-') }}">{{ category }}</button>
+        {% endfor %}
     </div>
 </section>
 
-<section class="surface">
-    <div class="books-layout">
-        <div class="book-grid">
-            <article class="book-card">
-                <div class="cover-art">
-                    <img src="https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=900&auto=format&fit=crop" alt="Book cover">
+<section class="catalog-layout">
+    <div class="catalog-grid reveal">
+        {% for book in books %}
+            <article class="book-card tilt-card" data-category="{{ book.category|lower|replace(' ', '-') }}">
+                <div class="book-cover">
+                    <img src="{{ book.image }}" alt="{{ book.title }}">
+                    <span class="availability-badge {{ 'muted-badge' if not book.available else '' }}">
+                        {{ 'Available' if book.available else 'Borrowed' }}
+                    </span>
                 </div>
-                <h3>The Alchemist</h3>
-                <p>Paulo Coelho. A timeless pick for readers who want purpose, motion, and reflection.</p>
+                <div class="book-body">
+                    <span class="book-category">{{ book.category }}</span>
+                    <h3>{{ book.title }}</h3>
+                    <p>{{ book.description }}</p>
+                    <div class="book-meta">
+                        <span>{{ book.author }}</span>
+                        {% if book.available %}
+                            {% if session.get('user_id') %}
+                                <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
+                                    <button class="btn btn-small btn-primary" type="submit" data-ripple>Borrow</button>
+                                </form>
+                            {% else %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.login', next=url_for('auth.books')) }}" data-ripple>Sign in</a>
+                            {% endif %}
+                        {% else %}
+                            <button class="btn btn-small btn-disabled" type="button" disabled>Unavailable</button>
+                        {% endif %}
+                    </div>
+                </div>
             </article>
-            <article class="book-card">
-                <div class="cover-art">
-                    <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=900&auto=format&fit=crop" alt="Book cover">
-                </div>
-                <h3>Atomic Habits</h3>
-                <p>James Clear. Popular with readers building routines and practical study habits.</p>
-            </article>
-            <article class="book-card">
-                <div class="cover-art">
-                    <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=900&auto=format&fit=crop" alt="Book cover">
-                </div>
-                <h3>Educated</h3>
-                <p>Tara Westover. A strong memoir shelf entry for biography and self-directed growth.</p>
-            </article>
-            <article class="book-card">
-                <div class="cover-art">
-                    <img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=900&auto=format&fit=crop" alt="Book cover">
-                </div>
-                <h3>Deep Work</h3>
-                <p>Cal Newport. Useful for concentration, projects, and distraction-free study sessions.</p>
-            </article>
-            <article class="book-card">
-                <div class="cover-art">
-                    <img src="https://images.unsplash.com/photo-1524578271613-d550eacf6090?q=80&w=900&auto=format&fit=crop" alt="Book cover">
-                </div>
-                <h3>Think Like a Monk</h3>
-                <p>Jay Shetty. A calm, reflective title for readers interested in mindset and balance.</p>
-            </article>
-            <article class="book-card">
-                <div class="cover-art">
-                    <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=900&auto=format&fit=crop" alt="Books stacked on a table">
-                </div>
-                <h3>Fresh arrivals</h3>
-                <p>Rotating staff picks that keep the BookVerse front shelf feeling alive.</p>
-            </article>
-        </div>
-
-        <aside class="stack">
-            <div class="spotlight-panel">
-                <h2>Borrowing guide</h2>
-                <p>Select a title, review its shelf details, and move to the borrowed page to track your active loans.</p>
-                <div class="badge-row" style="margin-top: 16px;">
-                    <span class="chip active">3-week standard period</span>
-                    <span class="chip">Renewable when available</span>
-                </div>
-            </div>
-            <div class="list-card">
-                <h3>Reader note</h3>
-                <p>Use the dashboard for circulation summaries and the profile page for your reading progress snapshot.</p>
-            </div>
-        </aside>
+        {% endfor %}
     </div>
+
+    <aside class="catalog-panel reveal">
+        <h2>Borrowing rhythm</h2>
+        <p>Books move from catalog to your borrowed shelf immediately after checkout. Returning a title makes it available again.</p>
+        <div class="progress-list">
+            <div>
+                <span>Catalog</span>
+                <strong>{{ books|length }} books</strong>
+            </div>
+            <div>
+                <span>Categories</span>
+                <strong>{{ categories|length }} shelves</strong>
+            </div>
+            <div>
+                <span>Session access</span>
+                <strong>{{ 'Active' if session.get('user_id') else 'Login required' }}</strong>
+            </div>
+        </div>
+    </aside>
 </section>
 {% endblock %}
