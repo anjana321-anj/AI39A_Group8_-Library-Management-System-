@@ -25,3 +25,4 @@ DATABASE_CONFIG = {
 def get_database_connection():
     """Create a MySQL connection using the BookVerse configuration."""
     return pymysql.connect(**DATABASE_CONFIG)
+
