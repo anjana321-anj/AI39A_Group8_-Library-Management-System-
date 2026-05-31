@@ -108,4 +108,40 @@
         </article>
     </div>
 </section>
+
+/* static/style.css */
+
+/* Add spacing between the main sections */
+.surface {
+    margin-bottom: 4rem; /* Adds a nice gap between sections */
+    padding: 2rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto; /* Centers the content */
+}
+
+/* Add margin to the hero section for better focus */
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem; /* Space between text and visual */
+    margin-bottom: 3rem;
+}
+
+/* Margin for cards to keep them from touching */
+.book-grid, .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem; /* The 'gutter' between cards */
+    margin-top: 2rem;
+}
+
+/* Styling the buttons for better visibility */
+.btn {
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-right: 1rem;
+}
+
 {% endblock %}
