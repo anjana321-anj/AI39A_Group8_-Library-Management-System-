@@ -5,26 +5,35 @@
 {% block content %}
 <section class="surface">
     <div class="hero-grid">
+
         <div class="stack">
             <span class="eyebrow">Reader-first library space</span>
-            <h1 class="headline">A bright, modern shelf for every chapter of your reading life.</h1>
+
+            <h1 class="headline">
+                A bright, modern shelf for every chapter of your reading life.
+            </h1>
+
             <p class="subheadline">
                 BookVerse helps students and readers discover books, manage borrowing, and keep their reading flow
                 organized in one calm interface inspired by clean skies and open pages.
             </p>
+
             <div class="hero-actions">
                 <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse the catalog</a>
                 <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Start a reader profile</a>
             </div>
+
             <div class="metric-grid">
                 <article class="metric-card">
                     <h3>8,420+</h3>
                     <p>Books already organized into easy-to-scan shelves.</p>
                 </article>
+
                 <article class="metric-card">
                     <h3>1,201</h3>
                     <p>Members borrowing titles, saving lists, and tracking returns.</p>
                 </article>
+
                 <article class="metric-card">
                     <h3>12</h3>
                     <p>Featured collections curated for study, leisure, and growth.</p>
@@ -34,27 +43,36 @@
 
         <aside class="hero-visual">
             <div class="visual-stack">
+
                 <div class="visual-banner">
                     <h3>Today's shelf focus</h3>
                     <p>Self-growth, literary fiction, and student favorites are trending right now.</p>
                 </div>
+
                 <div class="visual-card">
                     <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=900&auto=format&fit=crop" alt="Open book">
+
                     <div class="stack">
                         <strong>Calm borrowing flow</strong>
                         <small>Move from discovery to checkout with a clear path and easy due-date visibility.</small>
+
                         <div class="badge-row">
                             <span class="chip active">Smart discovery</span>
                             <span class="chip">Due-date tracking</span>
                         </div>
                     </div>
                 </div>
+
                 <div class="quote-card">
-                    <blockquote>"A library interface should feel as inviting as the books it protects."</blockquote>
+                    <blockquote>
+                        "A library interface should feel as inviting as the books it protects."
+                    </blockquote>
                     <footer>BookVerse design note</footer>
                 </div>
+
             </div>
         </aside>
+
     </div>
 </section>
 
@@ -69,23 +87,19 @@
 
     <div class="book-grid">
         <article class="book-card">
-            <div class="cover-art">
-                <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=900&auto=format&fit=crop" alt="Poetry collection">
-            </div>
+            <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=900&auto=format&fit=crop">
             <h3>Poetry and reflection</h3>
             <p>Short, meaningful reads for quiet evenings and quick inspiration.</p>
         </article>
+
         <article class="book-card">
-            <div class="cover-art">
-                <img src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=900&auto=format&fit=crop" alt="Fiction shelf">
-            </div>
+            <img src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=900&auto=format&fit=crop">
             <h3>Modern fiction</h3>
             <p>Layered stories and memorable voices for readers who like emotional range.</p>
         </article>
+
         <article class="book-card">
-            <div class="cover-art">
-                <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=900&auto=format&fit=crop" alt="Library aisle">
-            </div>
+            <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=900&auto=format&fit=crop">
             <h3>Study-ready aisles</h3>
             <p>Focused collections for coursework, projects, and independent research.</p>
         </article>
@@ -96,52 +110,19 @@
     <div class="feature-grid">
         <article class="feature-card">
             <h3>Quick catalog search</h3>
-            <p>Readers can jump from interest to title without digging through cluttered lists.</p>
+            <p>Jump from interest to title without cluttered lists.</p>
         </article>
+
         <article class="feature-card">
             <h3>Borrowing visibility</h3>
-            <p>Due dates, statuses, and active loans stay visible from the dashboard and profile pages.</p>
+            <p>Due dates and active loans always visible in dashboard.</p>
         </article>
+
         <article class="feature-card">
             <h3>Consistent templates</h3>
-            <p>Every route now renders within one shared theme instead of mixing mockups and blank files.</p>
+            <p>All pages now use one unified design system.</p>
         </article>
     </div>
 </section>
-
-/* static/style.css */
-
-/* Add spacing between the main sections */
-.surface {
-    margin-bottom: 4rem; /* Adds a nice gap between sections */
-    padding: 2rem;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto; /* Centers the content */
-}
-
-/* Add margin to the hero section for better focus */
-.hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem; /* Space between text and visual */
-    margin-bottom: 3rem;
-}
-
-/* Margin for cards to keep them from touching */
-.book-grid, .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem; /* The 'gutter' between cards */
-    margin-top: 2rem;
-}
-
-/* Styling the buttons for better visibility */
-.btn {
-    padding: 0.75rem 1.5rem;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-right: 1rem;
-}
-
 {% endblock %}
+
