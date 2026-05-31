@@ -1,3 +1,20 @@
+<<<<<<< HEAD
+{% extends 'base.html' %}
+
+{% block title %}BookVerse - Analytics Workspace{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell dashboard-viewport-constraint">
+
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-brand">
+            <h2>BookVerse</h2>
+            <p>System Intelligence</p>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link active">Workspace Overview</a>
+            <a href="#" class="sidebar-link">Catalog Registers</a>
+=======
 {% extends "base.html" %}
 
 {% block title %}Dashboard - BookVerse{% endblock %}
@@ -12,10 +29,79 @@
             <a href="{{ url_for('auth.books') }}">Catalog</a>
             <a href="{{ url_for('auth.borrowed') }}">Borrowed</a>
             <a href="{{ url_for('auth.profile') }}">Profile</a>
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
         </nav>
     </aside>
 
     <div class="dashboard-main">
+<<<<<<< HEAD
+        <header class="dashboard-header">
+            <div class="dashboard-intro">
+                <h1>A bright, modern shelf for every chapter of your reading life.</h1>
+                <p>BookVerse helps students and readers discover books, manage borrowing, and track data.</p>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p class="stat-label">Books Organized</p>
+                <h3>8,420+</h3>
+                <div class="stat-meta">
+                    <span>Easy-to-scan shelves</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Active Members</p>
+                <h3>1,201</h3>
+                <div class="stat-meta">
+                    <span>Tracking active loans</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="data-panel">
+    <div class="panel-heading">
+        <h2>Your Active Loans</h2>
+        <span class="due-date-text">3 items currently borrowed</span>
+    </div>
+
+    <div class="borrow-layout">
+        <article class="loan-card">
+            <div class="loan-header">
+                <div>
+                    <h3>The Great Gatsby</h3>
+                    <span class="book-category">Classic Literature</span>
+                </div>
+                <span class="status-badge warning">Due in 3 days</span>
+            </div>
+            
+            <div class="loan-meta">
+                <span>Borrowed on: May 15</span>
+                <span>Due: June 01</span>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%;"></div>
+            </div>
+        </article>
+        
+        </div>
+</div>
+   </div>
+        <div class="thumbnail-body">
+            <h3>The Great Gatsby</h3>
+            <p>F. Scott Fitzgerald</p>
+            <div class="book-meta">
+                <span class="status-badge success">Available</span>
+            </div>
+        </div>
+    </article>
+</div>
+
+{% endblock %}
+=======
         <section class="dashboard-hero reveal">
             <div>
                 <span class="eyebrow">Library analytics</span>
@@ -104,3 +190,4 @@
     </div>
 </section>
 {% endblock %}
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94

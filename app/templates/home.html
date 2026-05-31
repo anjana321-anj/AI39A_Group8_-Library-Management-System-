@@ -1,5 +1,128 @@
 {% extends "base.html" %}
 
+<<<<<<< HEAD
+{% block title %}Home - BookVerse{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="hero-grid">
+
+        <div class="stack">
+            <span class="eyebrow">Reader-first library space</span>
+
+            <h1 class="headline">
+                A bright, modern shelf for every chapter of your reading life.
+            </h1>
+
+            <p class="subheadline">
+                BookVerse helps students and readers discover books, manage borrowing, and keep their reading flow
+                organized in one calm interface inspired by clean skies and open pages.
+            </p>
+
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse the catalog</a>
+                <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Start a reader profile</a>
+            </div>
+
+            <div class="metric-grid">
+                <article class="metric-card">
+                    <h3>8,420+</h3>
+                    <p>Books already organized into easy-to-scan shelves.</p>
+                </article>
+
+                <article class="metric-card">
+                    <h3>1,201</h3>
+                    <p>Members borrowing titles, saving lists, and tracking returns.</p>
+                </article>
+
+                <article class="metric-card">
+                    <h3>12</h3>
+                    <p>Featured collections curated for study, leisure, and growth.</p>
+                </article>
+            </div>
+        </div>
+
+        <aside class="hero-visual">
+            <div class="visual-stack">
+
+                <div class="visual-banner">
+                    <h3>Today's shelf focus</h3>
+                    <p>Self-growth, literary fiction, and student favorites are trending right now.</p>
+                </div>
+
+                <div class="visual-card">
+                    <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=900&auto=format&fit=crop" alt="Open book">
+
+                    <div class="stack">
+                        <strong>Calm borrowing flow</strong>
+                        <small>Move from discovery to checkout with a clear path and easy due-date visibility.</small>
+
+                        <div class="badge-row">
+                            <span class="chip active">Smart discovery</span>
+                            <span class="chip">Due-date tracking</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quote-card">
+                    <blockquote>
+                        "A library interface should feel as inviting as the books it protects."
+                    </blockquote>
+                    <footer>BookVerse design note</footer>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
+</section>
+
+<section class="surface">
+    <div class="section-header">
+        <div>
+            <h2>Curated shelves</h2>
+            <p>These sections mirror the same blue, airy visual language across the whole site.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('auth.dashboard') }}">Open dashboard</a>
+    </div>
+
+    <div class="book-grid">
+        <article class="book-card">
+            <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=900&auto=format&fit=crop">
+            <h3>Poetry and reflection</h3>
+            <p>Short, meaningful reads for quiet evenings and quick inspiration.</p>
+        </article>
+
+        <article class="book-card">
+            <img src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=900&auto=format&fit=crop">
+            <h3>Modern fiction</h3>
+            <p>Layered stories and memorable voices for readers who like emotional range.</p>
+        </article>
+
+        <article class="book-card">
+            <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=900&auto=format&fit=crop">
+            <h3>Study-ready aisles</h3>
+            <p>Focused collections for coursework, projects, and independent research.</p>
+        </article>
+    </div>
+</section>
+
+<section class="surface">
+    <div class="feature-grid">
+        <article class="feature-card">
+            <h3>Quick catalog search</h3>
+            <p>Jump from interest to title without cluttered lists.</p>
+        </article>
+
+        <article class="feature-card">
+            <h3>Borrowing visibility</h3>
+            <p>Due dates and active loans always visible in dashboard.</p>
+        </article>
+
+        <article class="feature-card">
+            <h3>Consistent templates</h3>
+            <p>All pages now use one unified design system.</p>
+=======
 {% block title %}BookVerse - Modern Digital Library{% endblock %}
 
 {% block content %}
@@ -94,7 +217,12 @@
             <span class="feature-icon">03</span>
             <h3>Smooth interactions</h3>
             <p>Reveal animations, counters, ripple buttons, and polished hover states add life without heavy libraries.</p>
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
         </article>
     </div>
 </section>
 {% endblock %}
+<<<<<<< HEAD
+
+=======
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94

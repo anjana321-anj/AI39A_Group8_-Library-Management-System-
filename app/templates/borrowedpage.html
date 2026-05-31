@@ -3,6 +3,65 @@
 {% block title %}Borrowed Books - BookVerse{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
+<section class="surface">
+    <span class="eyebrow">Borrowed books</span>
+    <h1 class="headline">Track every active loan without losing the calm feel of the rest of the app.</h1>
+    <p class="subheadline">
+        The borrowed page now works as a full template and keeps due dates, statuses, and next actions visible.
+    </p>
+</section>
+
+<section class="surface">
+    <div class="split-grid">
+        <article class="borrow-panel">
+            <h2>Active loans</h2>
+            <p>Use these cards to review due dates and spot items that need a faster follow-up.</p>
+            <div class="list">
+                <div class="borrow-row">
+                    <div>
+                        <p class="row-title">The Alchemist</p>
+                        <p class="muted">Borrowed by Rahul Sharma. Return is overdue and needs follow-up.</p>
+                    </div>
+                    <span class="due-pill warning">Overdue</span>
+                </div>
+                <div class="borrow-row">
+                    <div>
+                        <p class="row-title">Atomic Habits</p>
+                        <p class="muted">Borrowed by Priya Patel. Due June 02, 2026 with normal status.</p>
+                    </div>
+                    <span class="due-pill success">On track</span>
+                </div>
+                <div class="borrow-row">
+                    <div>
+                        <p class="row-title">Educated</p>
+                        <p class="muted">Borrowed by Aman Verma. Due June 10, 2026 and currently active.</p>
+                    </div>
+                    <span class="due-pill info">Active</span>
+                </div>
+            </div>
+        </article>
+
+        <aside class="borrow-panel">
+            <h2>Helpful next steps</h2>
+            <p>Borrowing actions can grow into backend features later without changing the page structure again.</p>
+            <div class="stack">
+                <div class="list-card">
+                    <h3>Send reminders</h3>
+                    <p>Prioritize overdue items first, then due-soon titles within the next 72 hours.</p>
+                </div>
+                <div class="list-card">
+                    <h3>Offer renewal when possible</h3>
+                    <p>Active loans can be extended as long as no reader is waiting on the same title.</p>
+                </div>
+                <div class="list-card">
+                    <h3>Return to catalog</h3>
+                    <p>After a return, books move back into the books page and dashboard circulation counts.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+=======
 <section class="page-hero reveal">
     <span class="eyebrow">Borrowed shelf</span>
     <h1>Your active and returned books.</h1>
@@ -42,5 +101,6 @@
             <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Books</a>
         </div>
     {% endif %}
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
 </section>
 {% endblock %}
