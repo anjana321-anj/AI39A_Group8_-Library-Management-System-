@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root {
     --white: #ffffff;
     --page: #f7fcff;
@@ -1677,3 +1678,6 @@ td span {
 .subheadline {
     color: #4a5568;
 }
+=======
+@import url("css/main.css");
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94

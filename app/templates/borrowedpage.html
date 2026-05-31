@@ -3,6 +3,7 @@
 {% block title %}Borrowed Books - BookVerse{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <section class="surface">
     <span class="eyebrow">Borrowed books</span>
     <h1 class="headline">Track every active loan without losing the calm feel of the rest of the app.</h1>
@@ -60,5 +61,46 @@
             </div>
         </aside>
     </div>
+=======
+<section class="page-hero reveal">
+    <span class="eyebrow">Borrowed shelf</span>
+    <h1>Your active and returned books.</h1>
+    <p>Return borrowed titles from this protected page. Returned books become available in the catalog again.</p>
+</section>
+
+<section class="borrow-layout reveal">
+    {% if borrowed_books %}
+        {% for loan in borrowed_books %}
+            <article class="loan-card tilt-card">
+                <img src="{{ loan.image }}" alt="{{ loan.title }}">
+                <div class="loan-body">
+                    <div>
+                        <span class="book-category">{{ loan.category }}</span>
+                        <h2>{{ loan.title }}</h2>
+                        <p>{{ loan.author }}</p>
+                    </div>
+                    <div class="loan-meta">
+                        <span>Borrowed {{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'recently' }}</span>
+                        <span>Due {{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'soon' }}</span>
+                    </div>
+                    <div class="loan-actions">
+                        <span class="status-badge {{ 'success' if loan.status == 'returned' else 'warning' }}">{{ loan.status|title }}</span>
+                        {% if loan.status == 'borrowed' %}
+                            <form method="post" action="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">
+                                <button class="btn btn-small btn-primary" type="submit" data-ripple>Return</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% endfor %}
+    {% else %}
+        <div class="empty-panel">
+            <h2>No borrowed books yet.</h2>
+            <p>Your borrowed shelf will fill up after you borrow a title from the catalog.</p>
+            <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Books</a>
+        </div>
+    {% endif %}
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
 </section>
 {% endblock %}
