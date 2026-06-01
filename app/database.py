@@ -422,6 +422,188 @@ def delete_book(book_id):
     return execute("DELETE FROM books WHERE id = %s", (book_id,))
 
 
+def search_books(query, category=None, available_only=False):
+    """
+    Advanced search for books by title, author, or description.
+    Supports filtering by category and availability.
+    """
+    sql = "SELECT * FROM books WHERE (title LIKE %s OR author LIKE %s OR description LIKE %s)"
+    params = [f"%{query}%", f"%{query}%", f"%{query}%"]
+    
+    if category:
+        sql += " AND category = %s"
+        params.append(category)
+    
+    if available_only:
+        sql += " AND available = 1"
+    
+    sql += " ORDER BY title ASC"
+    return fetch_all(sql, params)
+
+
+def get_books_by_category(category):
+    """Retrieve all books in a specific category with availability status."""
+    return fetch_all(
+        "SELECT * FROM books WHERE category = %s ORDER BY title ASC",
+        (category,)
+    )
+
+
+def get_available_books_count():
+    """Get total count of available books."""
+    result = fetch_one("SELECT COUNT(*) as count FROM books WHERE available = 1")
+    return result["count"] if result else 0
+
+
+def get_popular_books(limit=10):
+    """Get most borrowed books (popular books)."""
+    return fetch_all(
+        """
+        SELECT b.*, COUNT(br.id) as borrow_count
+        FROM books b
+        LEFT JOIN borrowed_books br ON b.id = br.book_id
+        GROUP BY b.id
+        ORDER BY borrow_count DESC
+        LIMIT %s
+        """,
+        (limit,)
+    )
+
+
+def add_book_rating(user_id, book_id, rating, review_text=None):
+    """
+    Add or update a book rating and review.
+    Rating should be 1-5 stars.
+    """
+    if not 1 <= rating <= 5:
+        return False
+    
+    return execute(
+        """
+        INSERT INTO book_ratings (user_id, book_id, rating, review, created_at)
+        VALUES (%s, %s, %s, %s, NOW())
+        ON DUPLICATE KEY UPDATE
+        rating = VALUES(rating),
+        review = VALUES(review),
+        created_at = NOW()
+        """,
+        (user_id, book_id, rating, review_text)
+    )
+
+
+def get_book_ratings(book_id):
+    """Get all ratings and reviews for a book."""
+    return fetch_all(
+        """
+        SELECT br.*, u.username
+        FROM book_ratings br
+        JOIN users u ON br.user_id = u.id
+        WHERE br.book_id = %s
+        ORDER BY br.created_at DESC
+        """,
+        (book_id,)
+    )
+
+
+def get_average_book_rating(book_id):
+    """Get average rating for a book."""
+    result = fetch_one(
+        "SELECT AVG(rating) as avg_rating FROM book_ratings WHERE book_id = %s",
+        (book_id,)
+    )
+    return result["avg_rating"] if result and result["avg_rating"] else 0
+
+
+def add_to_favorites(user_id, book_id):
+    """Add a book to user's favorites/wishlist."""
+    return execute(
+        """
+        INSERT INTO user_favorites (user_id, book_id, added_at)
+        VALUES (%s, %s, NOW())
+        ON DUPLICATE KEY UPDATE added_at = NOW()
+        """,
+        (user_id, book_id)
+    )
+
+
+def remove_from_favorites(user_id, book_id):
+    """Remove a book from user's favorites."""
+    return execute(
+        "DELETE FROM user_favorites WHERE user_id = %s AND book_id = %s",
+        (user_id, book_id)
+    )
+
+
+def get_user_favorites(user_id):
+    """Get all favorite books for a user."""
+    return fetch_all(
+        """
+        SELECT b.* FROM books b
+        JOIN user_favorites uf ON b.id = uf.book_id
+        WHERE uf.user_id = %s
+        ORDER BY uf.added_at DESC
+        """,
+        (user_id,)
+    )
+
+
+def is_favorite(user_id, book_id):
+    """Check if a book is in user's favorites."""
+    result = fetch_one(
+        "SELECT id FROM user_favorites WHERE user_id = %s AND book_id = %s",
+        (user_id, book_id)
+    )
+    return result is not None
+
+
+def get_user_reading_history(user_id, limit=10):
+    """Get user's reading history (borrowed books)."""
+    return fetch_all(
+        """
+        SELECT b.*, br.borrow_date, br.due_date, br.return_date, br.status
+        FROM borrowed_books br
+        JOIN books b ON br.book_id = b.id
+        WHERE br.user_id = %s
+        ORDER BY br.borrow_date DESC
+        LIMIT %s
+        """,
+        (user_id, limit)
+    )
+
+
+def get_overdue_books(user_id):
+    """Get books that are overdue for a user."""
+    return fetch_all(
+        """
+        SELECT b.*, br.due_date, DATEDIFF(NOW(), br.due_date) as days_overdue
+        FROM borrowed_books br
+        JOIN books b ON br.book_id = b.id
+        WHERE br.user_id = %s AND br.status = 'borrowed' AND br.due_date < NOW()
+        ORDER BY br.due_date ASC
+        """,
+        (user_id,)
+    )
+
+
+def get_library_statistics():
+    """Get overall library statistics."""
+    stats = {}
+    
+    total_books = fetch_one("SELECT COUNT(*) as count FROM books")
+    stats["total_books"] = total_books["count"] if total_books else 0
+    
+    available_books = fetch_one("SELECT COUNT(*) as count FROM books WHERE available = 1")
+    stats["available_books"] = available_books["count"] if available_books else 0
+    
+    borrowed_books = fetch_one("SELECT COUNT(*) as count FROM borrowed_books WHERE status = 'borrowed'")
+    stats["borrowed_books"] = borrowed_books["count"] if borrowed_books else 0
+    
+    total_users = fetch_one("SELECT COUNT(*) as count FROM users")
+    stats["total_users"] = total_users["count"] if total_users else 0
+    
+    return stats
+
+
 def borrow_book(user_id, book_id):
     connection = get_connection()
     try:
@@ -527,3 +709,280 @@ def get_user_skills(user_id):
         "SELECT skill_name, proficiency_level FROM skills WHERE user_id = %s ORDER BY id DESC",
         (user_id,),
     )
+
+
+def log_user_activity(user_id, activity_type, activity_description, book_id=None):
+    """
+    Log user activities for tracking and analytics.
+    Activity types: login, borrow, return, review, search, etc.
+    """
+    return execute(
+        """
+        INSERT INTO user_activity_log (user_id, activity_type, activity_description, book_id, timestamp)
+        VALUES (%s, %s, %s, %s, NOW())
+        """,
+        (user_id, activity_type, activity_description, book_id)
+    )
+
+
+def get_user_activity_log(user_id, limit=50):
+    """Get activity log for a specific user."""
+    return fetch_all(
+        """
+        SELECT activity_type, activity_description, book_id, timestamp
+        FROM user_activity_log
+        WHERE user_id = %s
+        ORDER BY timestamp DESC
+        LIMIT %s
+        """,
+        (user_id, limit)
+    )
+
+
+def get_reading_statistics(user_id):
+    """Get comprehensive reading statistics for a user."""
+    stats = {}
+    
+    # Total books borrowed
+    total_borrowed = fetch_one(
+        "SELECT COUNT(*) as count FROM borrowed_books WHERE user_id = %s",
+        (user_id,)
+    )
+    stats["total_borrowed"] = total_borrowed["count"] if total_borrowed else 0
+    
+    # Currently borrowed
+    currently_borrowed = fetch_one(
+        "SELECT COUNT(*) as count FROM borrowed_books WHERE user_id = %s AND status = 'borrowed'",
+        (user_id,)
+    )
+    stats["currently_borrowed"] = currently_borrowed["count"] if currently_borrowed else 0
+    
+    # Books returned
+    returned = fetch_one(
+        "SELECT COUNT(*) as count FROM borrowed_books WHERE user_id = %s AND status = 'returned'",
+        (user_id,)
+    )
+    stats["books_returned"] = returned["count"] if returned else 0
+    
+    # Favorite books count
+    favorites = fetch_one(
+        "SELECT COUNT(*) as count FROM user_favorites WHERE user_id = %s",
+        (user_id,)
+    )
+    stats["favorite_books"] = favorites["count"] if favorites else 0
+    
+    # Average books per month
+    monthly = fetch_one(
+        """
+        SELECT COUNT(*) as count FROM borrowed_books
+        WHERE user_id = %s AND borrow_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        """,
+        (user_id,)
+    )
+    stats["books_this_month"] = monthly["count"] if monthly else 0
+    
+    return stats
+
+
+def get_recommended_books(user_id, limit=10):
+    """
+    Get book recommendations based on user's reading history and ratings.
+    Recommends books in same categories as highly-rated books.
+    """
+    return fetch_all(
+        """
+        SELECT DISTINCT b.*, AVG(br.rating) as avg_rating
+        FROM books b
+        JOIN book_ratings br ON b.id = br.book_id
+        WHERE b.category IN (
+            SELECT DISTINCT b2.category
+            FROM borrowed_books bb
+            JOIN books b2 ON bb.book_id = b2.id
+            WHERE bb.user_id = %s
+        )
+        AND b.id NOT IN (
+            SELECT book_id FROM borrowed_books WHERE user_id = %s
+        )
+        AND b.id NOT IN (
+            SELECT book_id FROM user_favorites WHERE user_id = %s
+        )
+        GROUP BY b.id
+        ORDER BY avg_rating DESC
+        LIMIT %s
+        """,
+        (user_id, user_id, user_id, limit)
+    )
+
+
+def get_trending_books(days=30, limit=10):
+    """Get trending books based on recent borrow activity."""
+    return fetch_all(
+        """
+        SELECT b.*, COUNT(br.id) as borrow_count
+        FROM books b
+        JOIN borrowed_books br ON b.id = br.book_id
+        WHERE br.borrow_date > DATE_SUB(NOW(), INTERVAL %s DAY)
+        GROUP BY b.id
+        ORDER BY borrow_count DESC
+        LIMIT %s
+        """,
+        (days, limit)
+    )
+
+
+def get_category_statistics():
+    """Get statistics for each book category."""
+    return fetch_all(
+        """
+        SELECT 
+            category,
+            COUNT(*) as total_books,
+            SUM(available) as available_books,
+            ROUND(SUM(available) / COUNT(*) * 100, 2) as availability_rate
+        FROM books
+        GROUP BY category
+        ORDER BY total_books DESC
+        """
+    )
+
+
+def send_notification(user_id, notification_type, title, message):
+    """
+    Send notification to user.
+    Types: due_date_reminder, book_available, return_confirmation, etc.
+    """
+    return execute(
+        """
+        INSERT INTO notifications (user_id, notification_type, title, message, is_read, created_at)
+        VALUES (%s, %s, %s, %s, 0, NOW())
+        """,
+        (user_id, notification_type, title, message)
+    )
+
+
+def get_user_notifications(user_id, unread_only=False):
+    """Get notifications for a user."""
+    query = "SELECT * FROM notifications WHERE user_id = %s"
+    params = [user_id]
+    
+    if unread_only:
+        query += " AND is_read = 0"
+    
+    query += " ORDER BY created_at DESC"
+    return fetch_all(query, params)
+
+
+def mark_notification_as_read(notification_id):
+    """Mark a notification as read."""
+    return execute(
+        "UPDATE notifications SET is_read = 1 WHERE id = %s",
+        (notification_id,)
+    )
+
+
+def get_admin_dashboard_stats():
+    """Get comprehensive dashboard statistics for admin."""
+    stats = {}
+    
+    # User statistics
+    total_users = fetch_one("SELECT COUNT(*) as count FROM users")
+    stats["total_users"] = total_users["count"] if total_users else 0
+    
+    verified_users = fetch_one("SELECT COUNT(*) as count FROM users WHERE email_verified = 1")
+    stats["verified_users"] = verified_users["count"] if verified_users else 0
+    
+    admin_users = fetch_one("SELECT COUNT(*) as count FROM users WHERE is_admin = 1")
+    stats["admin_users"] = admin_users["count"] if admin_users else 0
+    
+    # Book statistics
+    total_books = fetch_one("SELECT COUNT(*) as count FROM books")
+    stats["total_books"] = total_books["count"] if total_books else 0
+    
+    available_books = fetch_one("SELECT COUNT(*) as count FROM books WHERE available = 1")
+    stats["available_books"] = available_books["count"] if available_books else 0
+    
+    # Borrowing statistics
+    active_borrows = fetch_one("SELECT COUNT(*) as count FROM borrowed_books WHERE status = 'borrowed'")
+    stats["active_borrows"] = active_borrows["count"] if active_borrows else 0
+    
+    overdue_count = fetch_one(
+        "SELECT COUNT(*) as count FROM borrowed_books WHERE status = 'borrowed' AND due_date < NOW()"
+    )
+    stats["overdue_count"] = overdue_count["count"] if overdue_count else 0
+    
+    # Engagement statistics
+    total_ratings = fetch_one("SELECT COUNT(*) as count FROM book_ratings")
+    stats["total_ratings"] = total_ratings["count"] if total_ratings else 0
+    
+    total_favorites = fetch_one("SELECT COUNT(*) as count FROM user_favorites")
+    stats["total_favorites"] = total_favorites["count"] if total_favorites else 0
+    
+    return stats
+
+
+def get_recently_added_books(limit=20):
+    """Get recently added books."""
+    return fetch_all(
+        "SELECT * FROM books ORDER BY id DESC LIMIT %s",
+        (limit,)
+    )
+
+
+def search_advanced(search_params):
+    """
+    Advanced search with multiple filter options.
+    Supports: title, author, category, rating_min, available_only
+    """
+    query = "SELECT b.* FROM books b LEFT JOIN book_ratings br ON b.id = br.book_id WHERE 1=1"
+    params = []
+    
+    if search_params.get("title"):
+        query += " AND b.title LIKE %s"
+        params.append(f"%{search_params['title']}%")
+    
+    if search_params.get("author"):
+        query += " AND b.author LIKE %s"
+        params.append(f"%{search_params['author']}%")
+    
+    if search_params.get("category"):
+        query += " AND b.category = %s"
+        params.append(search_params["category"])
+    
+    if search_params.get("rating_min"):
+        query += " AND br.rating >= %s"
+        params.append(search_params["rating_min"])
+    
+    if search_params.get("available_only"):
+        query += " AND b.available = 1"
+    
+    query += " GROUP BY b.id ORDER BY b.title ASC"
+    return fetch_all(query, params)
+
+
+def update_user_last_login(user_id):
+    """Update user's last login timestamp."""
+    return execute(
+        "UPDATE users SET last_login = NOW() WHERE id = %s",
+        (user_id,)
+    )
+
+
+def get_user_statistics_summary(user_id):
+    """Get a comprehensive summary of user statistics."""
+    user = get_user_by_id(user_id)
+    if not user:
+        return None
+    
+    stats = {
+        "username": user["username"],
+        "email": user["email"],
+        "email_verified": user["email_verified"],
+        "is_admin": user["is_admin"],
+        "created_at": str(user["created_at"]) if user["created_at"] else None,
+    }
+    
+    # Add reading statistics
+    reading_stats = get_reading_statistics(user_id)
+    stats.update(reading_stats)
+    
+    return stats
