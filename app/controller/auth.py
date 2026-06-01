@@ -8,26 +8,48 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.database import (
     add_book,
+    add_book_rating,
+    add_to_favorites,
     borrow_book,
     clear_password_reset_token,
     create_password_reset_request,
     create_user,
     delete_book,
     delete_user,
+    fetch_all,
+    get_admin_dashboard_stats,
     get_all_books,
     get_all_users,
+    get_average_book_rating,
     get_book,
+    get_books_by_category,
+    get_category_statistics,
     get_dashboard_stats,
+    get_library_statistics,
+    get_popular_books,
+    get_recommended_books,
     get_recent_activity,
+    get_reading_statistics,
+    get_recently_added_books,
+    get_trending_books,
     get_user_by_email,
     get_user_by_id,
     get_user_by_reset_token,
     get_user_by_verification_token,
     get_user_borrowed_books,
+    get_user_favorites,
+    get_user_notifications,
+    get_user_reading_history,
     get_user_skills,
+    is_favorite,
     list_books,
+    log_user_activity,
     mark_email_verified,
+    mark_notification_as_read,
+    remove_from_favorites,
     return_book,
+    search_advanced,
+    search_books,
     set_email_verification_token,
     update_book,
     update_user_email_username,
@@ -354,6 +376,217 @@ class AuthController:
             flash("You cannot delete your own account while signed in.", "warning")
             return redirect(url_for("auth.admin_users"))
         delete_user(user_id)
+        flash("User deleted successfully.", "success")
+        return redirect(url_for("auth.admin_users"))
+
+    def search_books(self):
+        """Handle book search with advanced filtering."""
+        query = request.args.get("q", "").strip()
+        category = request.args.get("category", "").strip()
+        available_only = request.args.get("available_only") == "on"
+        
+        if not query and not category:
+            flash("Please enter a search query or select a category.", "info")
+            return render_template("books.html", books=[])
+        
+        if query and category:
+            books = search_books(query, category, available_only)
+        elif query:
+            books = search_books(query, available_only=available_only)
+        else:
+            books = get_books_by_category(category)
+        
+        return render_template("books.html", books=books, search_query=query)
+
+    def add_book_rating(self, book_id):
+        """Add or update a book rating and review."""
+        if "user_id" not in session:
+            flash("Please log in to rate books.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        if request.method == "POST":
+            rating = request.form.get("rating", type=int)
+            review = request.form.get("review", "").strip()
+            
+            if not rating or rating < 1 or rating > 5:
+                flash("Rating must be between 1 and 5 stars.", "danger")
+                return redirect(url_for("auth.view_book", book_id=book_id))
+            
+            user_id = session["user_id"]
+            add_book_rating(user_id, book_id, rating, review)
+            flash("Rating submitted successfully!", "success")
+            log_user_activity(user_id, "review", f"Rated book {book_id}", book_id)
+            
+            return redirect(url_for("auth.view_book", book_id=book_id))
+
+    def add_favorite(self, book_id):
+        """Add book to user favorites."""
+        if "user_id" not in session:
+            flash("Please log in to add favorites.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        user_id = session["user_id"]
+        add_to_favorites(user_id, book_id)
+        flash("Book added to favorites!", "success")
+        log_user_activity(user_id, "favorite", f"Added book to favorites", book_id)
+        
+        return redirect(request.referrer or url_for("auth.books"))
+
+    def remove_favorite(self, book_id):
+        """Remove book from user favorites."""
+        if "user_id" not in session:
+            flash("Please log in.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        user_id = session["user_id"]
+        remove_from_favorites(user_id, book_id)
+        flash("Book removed from favorites.", "success")
+        
+        return redirect(request.referrer or url_for("auth.books"))
+
+    def my_favorites(self):
+        """Display user's favorite books."""
+        if "user_id" not in session:
+            flash("Please log in to view favorites.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        user_id = session["user_id"]
+        favorites = get_user_favorites(user_id)
+        
+        return render_template("my_favorites.html", books=favorites)
+
+    def reading_history(self):
+        """Display user's reading history."""
+        if "user_id" not in session:
+            flash("Please log in to view reading history.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        user_id = session["user_id"]
+        history = get_user_reading_history(user_id, limit=50)
+        
+        return render_template("reading_history.html", reading_history=history)
+
+    def recommendations(self):
+        """Get book recommendations for user."""
+        if "user_id" not in session:
+            flash("Please log in for recommendations.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        user_id = session["user_id"]
+        recommendations = get_recommended_books(user_id, limit=20)
+        
+        return render_template("recommendations.html", books=recommendations)
+
+    def trending_books(self):
+        """Display trending books."""
+        trending = get_trending_books(days=30, limit=20)
+        return render_template("trending.html", books=trending)
+
+    def library_stats(self):
+        """Display library statistics."""
+        stats = get_library_statistics()
+        categories = get_category_statistics()
+        popular = get_popular_books(limit=10)
+        
+        return render_template("library_stats.html", 
+                             stats=stats, 
+                             categories=categories,
+                             popular_books=popular)
+
+    @login_required
+    def my_stats(self):
+        """Display user's personal statistics."""
+        user_id = session["user_id"]
+        stats = get_reading_statistics(user_id)
+        overdue = get_overdue_books(user_id)
+        
+        return render_template("my_stats.html", stats=stats, overdue_books=overdue)
+
+    @login_required
+    def my_notifications(self):
+        """Display user's notifications."""
+        user_id = session["user_id"]
+        notifications = get_user_notifications(user_id)
+        
+        return render_template("notifications.html", notifications=notifications)
+
+    def mark_notification_read(self, notification_id):
+        """Mark notification as read."""
+        if "user_id" not in session:
+            return {"error": "Unauthorized"}, 401
+        
+        mark_notification_as_read(notification_id)
+        return {"success": True}
+
+    @admin_required
+    def admin_dashboard(self):
+        """Admin dashboard with comprehensive statistics."""
+        stats = get_admin_dashboard_stats()
+        recent_books = get_recently_added_books(limit=10)
+        trending = get_trending_books(limit=10)
+        category_stats = get_category_statistics()
+        
+        return render_template("admin_dashboard.html",
+                             stats=stats,
+                             recent_books=recent_books,
+                             trending_books=trending,
+                             category_stats=category_stats)
+
+    @admin_required
+    def admin_reports(self):
+        """Generate admin reports."""
+        if request.method == "POST":
+            report_type = request.form.get("report_type")
+            
+            if report_type == "overdue":
+                # Get all overdue books across all users
+                overdue_stats = fetch_all(
+                    """
+                    SELECT u.username, b.title, br.due_date, 
+                           DATEDIFF(NOW(), br.due_date) as days_overdue
+                    FROM borrowed_books br
+                    JOIN users u ON br.user_id = u.id
+                    JOIN books b ON br.book_id = b.id
+                    WHERE br.status = 'borrowed' AND br.due_date < NOW()
+                    ORDER BY br.due_date ASC
+                    """
+                )
+                return render_template("admin_reports.html", 
+                                     report_type="overdue",
+                                     data=overdue_stats)
+            
+            elif report_type == "popularity":
+                popularity = get_popular_books(limit=50)
+                return render_template("admin_reports.html",
+                                     report_type="popularity",
+                                     data=popularity)
+        
+        return render_template("admin_reports.html")
+
+    def advanced_search(self):
+        """Advanced search with multiple filters."""
+        if request.method == "GET":
+            search_params = {
+                "title": request.args.get("title", "").strip(),
+                "author": request.args.get("author", "").strip(),
+                "category": request.args.get("category", "").strip(),
+                "rating_min": request.args.get("rating_min", type=int),
+                "available_only": request.args.get("available_only") == "on"
+            }
+            
+            # Remove empty parameters
+            search_params = {k: v for k, v in search_params.items() if v}
+            
+            if search_params:
+                results = search_advanced(search_params)
+            else:
+                results = []
+            
+            return render_template("advanced_search.html", 
+                                 results=results,
+                                 search_params=search_params)
+        
+        return render_template("advanced_search.html")
         flash("User removed from the platform.", "success")
         return redirect(url_for("auth.admin_users"))
 
