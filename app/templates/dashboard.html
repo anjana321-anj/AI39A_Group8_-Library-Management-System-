@@ -12,6 +12,10 @@
             <a href="{{ url_for('auth.books') }}">Catalog</a>
             <a href="{{ url_for('auth.borrowed') }}">Borrowed</a>
             <a href="{{ url_for('auth.profile') }}">Profile</a>
+            {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('auth.admin_users') }}">User Management</a>
+                <a href="{{ url_for('auth.admin_books') }}">Book Management</a>
+            {% endif %}
         </nav>
     </aside>
 

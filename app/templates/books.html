@@ -31,6 +31,7 @@
                     <p>{{ book.description }}</p>
                     <div class="book-meta">
                         <span>{{ book.author }}</span>
+                        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}" data-ripple>Details</a>
                         {% if book.available %}
                             {% if session.get('user_id') %}
                                 <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
