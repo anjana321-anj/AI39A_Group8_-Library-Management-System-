@@ -1078,6 +1078,10 @@ td span {
     text-align: center;
 }
 
+.profile-card .btn + .btn {
+    margin-top: 10px;
+}
+
 .avatar {
     display: grid;
     place-items: center;
@@ -1154,6 +1158,84 @@ td span {
 
 .feature-strip {
     padding: 0;
+}
+
+.admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-actions form {
+    margin: 0;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.full-field {
+    grid-column: 1 / -1;
+}
+
+.book-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.book-detail-layout h1 {
+    margin: 12px 0;
+    font-family: "Playfair Display", serif;
+    font-size: 3rem;
+    line-height: 1.05;
+}
+
+.book-detail-layout p {
+    color: var(--ink-soft);
+    line-height: 1.75;
+}
+
+.detail-cover {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: var(--radius-lg);
+    background: var(--glass);
+    box-shadow: var(--shadow-md);
+}
+
+.detail-cover img {
+    width: 100%;
+    height: 100%;
+    min-height: 520px;
+    object-fit: cover;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 22px 0;
+}
+
+.detail-grid div {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.detail-grid span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .feature-strip article {
@@ -1296,7 +1378,8 @@ td span {
     .dashboard-grid,
     .profile-layout,
     .contact-layout,
-    .story-grid {
+    .story-grid,
+    .book-detail-layout {
         grid-template-columns: 1fr;
     }
 
@@ -1385,7 +1468,9 @@ td span {
     .hero-metrics,
     .auth-stats,
     .contact-cards,
-    .footer-grid {
+    .footer-grid,
+    .admin-form-grid,
+    .detail-grid {
         grid-template-columns: 1fr;
     }
 
