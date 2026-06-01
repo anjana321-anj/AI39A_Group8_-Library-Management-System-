@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - BookVerse{% endblock %}
+
+{% block content %}
+<section class="auth-screen">
+    <div class="auth-visual reveal">
+        <span class="eyebrow">Admin Panel</span>
+        <h1 class="hero-title">Edit user access.</h1>
+        <p class="hero-copy">Update the selected user name, email, role, or account status.</p>
+    </div>
+
+    <form class="auth-card reveal" method="post" data-loading-form>
+        <div class="form-heading">
+            <h2>Edit User</h2>
+            <p>{{ user.email }}</p>
+        </div>
+        <label class="field">
+            <span>User Name</span>
+            <input type="text" name="username" value="{{ user.username }}" required>
+        </label>
+        <label class="field">
+            <span>Email Address</span>
+            <input type="email" name="email" value="{{ user.email }}" required>
+        </label>
+        <label class="field">
+            <span>Role</span>
+            <select name="role">
+                <option value="user" {{ 'selected' if user.role == 'user' else '' }}>User</option>
+                <option value="admin" {{ 'selected' if user.role == 'admin' else '' }}>Admin</option>
+            </select>
+        </label>
+        <label class="field">
+            <span>Status</span>
+            <select name="status">
+                <option value="active" {{ 'selected' if user.status == 'active' else '' }}>Active</option>
+                <option value="inactive" {{ 'selected' if user.status == 'inactive' else '' }}>Inactive</option>
+            </select>
+        </label>
+        <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+            <span class="btn-label">Save User</span>
+            <span class="btn-loader"></span>
+        </button>
+    </form>
+</section>
+{% endblock %}
