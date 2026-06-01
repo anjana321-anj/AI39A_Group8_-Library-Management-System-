@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - BookVerse{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell">
+    <aside class="dashboard-sidebar reveal">
+        <span class="eyebrow">Workspace</span>
+        <h2>{{ session.get('username', 'Reader') }}</h2>
+        <nav>
+            <a class="active" href="{{ url_for('auth.dashboard') }}">Overview</a>
+            <a href="{{ url_for('auth.books') }}">Catalog</a>
+            <a href="{{ url_for('auth.borrowed') }}">Borrowed</a>
+            <a href="{{ url_for('auth.profile') }}">Profile</a>
+        </nav>
+    </aside>
+
+    <div class="dashboard-main">
+        <section class="dashboard-hero reveal">
+            <div>
+                <span class="eyebrow">Library analytics</span>
+                <h1>Welcome back, {{ session.get('username', 'Reader') }}.</h1>
+                <p>Monitor the catalog, active loans, and recent reading movement from one clean dashboard.</p>
+                {% if session.get('is_admin') %}
+                    <p class="form-note">Admin mode active. Use the admin panel to manage books and users.</p>
+                {% endif %}
+            </div>
+            <div class="dashboard-hero-actions">
+                <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Borrow a Book</a>
+                {% if session.get('is_admin') %}
+                    <a class="btn btn-secondary" href="{{ url_for('auth.admin_books') }}" data-ripple>Manage Catalog</a>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="stats-grid reveal">
+            <article class="stat-widget">
+                <span>Total Books</span>
+                <strong data-counter="{{ stats.books }}">0</strong>
+                <small>{{ stats.available }} currently available</small>
+            </article>
+            <article class="stat-widget">
+                <span>Members</span>
+                <strong data-counter="{{ stats.members }}">0</strong>
+                <small>Registered readers</small>
+            </article>
+            <article class="stat-widget">
+                <span>Active Loans</span>
+                <strong data-counter="{{ stats.borrowed }}">0</strong>
+                <small>Books in circulation</small>
+            </article>
+            <article class="stat-widget accent-widget">
+                <span>Availability</span>
+                <strong>{{ ((stats.available / stats.books) * 100)|round|int if stats.books else 0 }}%</strong>
+                <small>Catalog ready to borrow</small>
+            </article>
+        </section>
+
+        <section class="dashboard-grid reveal">
+            <article class="data-panel">
+                <div class="panel-heading">
+                    <h2>Catalog health</h2>
+                    <a href="{{ url_for('auth.books') }}">View all</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in books[:6] %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ book.title }}</strong>
+                                        <span>{{ book.author }}</span>
+                                    </td>
+                                    <td>{{ book.category }}</td>
+                                    <td><span class="status-badge {{ 'warning' if not book.available else 'success' }}">{{ 'Available' if book.available else 'Borrowed' }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="data-panel">
+                <div class="panel-heading">
+                    <h2>Recent activity</h2>
+                    <a href="{{ url_for('auth.borrowed') }}">Open borrowed</a>
+                </div>
+                <div class="activity-list">
+                    {% if recent_activity %}
+                        {% for item in recent_activity %}
+                            <div class="activity-item">
+                                <span class="activity-dot"></span>
+                                <div>
+                                    <strong>{{ item.username }} borrowed {{ item.title }}</strong>
+                                    <small>{{ item.status|title }} on {{ item.borrow_date.strftime('%b %d, %Y') if item.borrow_date else 'recently' }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">No borrowing activity yet. Borrow a book to see this panel come alive.</p>
+                    {% endif %}
+                </div>
+            </article>
+        </section>
+    </div>
+</section>
+{% endblock %}
