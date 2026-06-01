@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Book Management - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Book Management</h1>
+    <p>Add, edit, delete, and update availability for catalog books.</p>
+    <a class="btn btn-primary" href="{{ url_for('auth.add_book') }}" data-ripple>Add Book</a>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Books</h2>
+        <a href="{{ url_for('auth.admin_users') }}">User Management</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Book Title</th>
+                    <th>Author</th>
+                    <th>Genre</th>
+                    <th>Copies</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                    <tr>
+                        <td><strong>{{ book.title }}</strong><span>{{ book.isbn or 'No ISBN' }}</span></td>
+                        <td>{{ book.author }}</td>
+                        <td>{{ book.category }}</td>
+                        <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
+                        <td><span class="status-badge {{ 'success' if book.availability_status == 'Available' else 'warning' }}">{{ book.availability_status }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_book', book_id=book.id) }}">Edit Book</a>
+                                <form method="post" action="{{ url_for('auth.delete_book', book_id=book.id) }}">
+                                    <button class="btn btn-small btn-disabled" type="submit">Delete Book</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
