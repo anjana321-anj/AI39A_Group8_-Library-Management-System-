@@ -2,6 +2,7 @@
 
 {% block title %}Login - BookVerse{% endblock %}
 
+<<<<<<< HEAD
 {% block header_actions %}
 <a class="ghost-link" href="{{ url_for('auth.login_enhanced') }}">Try enhanced experience</a>
 <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Create account</a>
@@ -113,5 +114,58 @@
         </aside>
 
     </div>
+=======
+{% block content %}
+<section class="auth-screen">
+    <div class="auth-visual reveal">
+        <span class="eyebrow">Welcome back</span>
+        <h1 class="hero-title">Return to your reading dashboard.</h1>
+        <p class="hero-copy">
+            Sign in to manage borrowed books, browse available titles, and keep your library activity organized.
+        </p>
+        <div class="auth-stats">
+            <div>
+                <strong data-counter="21">0</strong>
+                <span>day borrow cycle</span>
+            </div>
+            <div>
+                <strong data-counter="6">0</strong>
+                <span>starter books seeded</span>
+            </div>
+            <div>
+                <strong data-counter="4">0</strong>
+                <span>secure tables</span>
+            </div>
+        </div>
+    </div>
+
+    <form class="auth-card reveal" method="post" data-loading-form>
+        <div class="form-heading">
+            <h2>Sign in</h2>
+            <p>Use your registered email and password.</p>
+        </div>
+        <label class="field">
+            <span>Email address</span>
+            <input type="email" name="email" placeholder="reader@bookverse.com" required autocomplete="email">
+        </label>
+        <label class="field password-field">
+            <span>Password</span>
+            <input type="password" name="password" placeholder="Enter password" required autocomplete="current-password" data-password-input>
+            <button type="button" class="field-icon" aria-label="Show password" data-password-toggle>Show</button>
+        </label>
+        <div class="form-row">
+            <label class="check-field">
+                <input type="checkbox" name="remember">
+                <span>Remember me</span>
+            </label>
+            <a href="{{ url_for('auth.register') }}">Create account</a>
+        </div>
+        <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+            <span class="btn-label">Open Dashboard</span>
+            <span class="btn-loader"></span>
+        </button>
+        <p class="form-note">Dashboard, borrowed books, and profile pages are protected by session login.</p>
+    </form>
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
 </section>
 {% endblock %}

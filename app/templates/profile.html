@@ -3,6 +3,7 @@
 {% block title %}Profile - BookVerse{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <section class="surface">
     <div class="profile-grid">
         <div class="stack">
@@ -71,6 +72,60 @@
             <h3>Educated</h3>
             <p>Due June 10, 2026. Biography shelf, memoir focus, high demand.</p>
         </article>
+=======
+<section class="profile-layout">
+    <aside class="profile-card reveal">
+        <div class="avatar">{{ user.username[:1]|upper if user else 'B' }}</div>
+        <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
+        <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
+        <div class="profile-meta">
+            <span>Member since</span>
+            <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
+        </div>
+        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
+    </aside>
+
+    <div class="profile-main">
+        <section class="stats-grid reveal">
+            <article class="stat-widget">
+                <span>Total Loans</span>
+                <strong data-counter="{{ borrowed_books|length }}">0</strong>
+                <small>All borrowed records</small>
+            </article>
+            <article class="stat-widget">
+                <span>Active</span>
+                <strong data-counter="{{ borrowed_books|selectattr('status', 'equalto', 'borrowed')|list|length }}">0</strong>
+                <small>Currently on your shelf</small>
+            </article>
+            <article class="stat-widget">
+                <span>Skills</span>
+                <strong data-counter="{{ skills|length }}">0</strong>
+                <small>Profile learning tags</small>
+            </article>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Reading activity</h2>
+                <a href="{{ url_for('auth.borrowed') }}">Manage returns</a>
+            </div>
+            <div class="activity-list">
+                {% if borrowed_books %}
+                    {% for loan in borrowed_books[:5] %}
+                        <div class="activity-item">
+                            <span class="activity-dot"></span>
+                            <div>
+                                <strong>{{ loan.title }}</strong>
+                                <small>{{ loan.status|title }} &middot; {{ loan.author }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No reading activity yet. Your first borrowed book will appear here.</p>
+                {% endif %}
+            </div>
+        </section>
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
     </div>
 </section>
 {% endblock %}

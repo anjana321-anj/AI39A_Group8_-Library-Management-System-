@@ -139,6 +139,7 @@ class AuthController:
 
     @login_required
     def dashboard(self):
+        # Keeps your clean database integration rather than hardcoded mock data strings
         stats = get_dashboard_stats()
         books = list_books()
         recent_activity = get_recent_activity()

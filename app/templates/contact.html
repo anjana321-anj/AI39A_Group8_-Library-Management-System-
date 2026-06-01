@@ -3,6 +3,7 @@
 {% block title %}Contact - BookVerse{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <section class="surface">
     <div class="contact-grid">
         <div class="stack">
@@ -54,5 +55,54 @@
             </form>
         </aside>
     </div>
+=======
+<section class="contact-layout">
+    <div class="page-hero reveal">
+        <span class="eyebrow">Contact</span>
+        <h1>Reach the BookVerse library desk.</h1>
+        <p>Send catalog requests, borrowing questions, or support messages from a clean responsive contact page.</p>
+        <div class="contact-cards">
+            <article>
+                <span>Mail</span>
+                <strong>hello@bookverse.local</strong>
+            </article>
+            <article>
+                <span>Desk</span>
+                <strong>Mon - Sat, 9 AM - 5 PM</strong>
+            </article>
+        </div>
+    </div>
+
+    <form class="auth-card reveal" method="post" data-loading-form>
+        <div class="form-heading">
+            <h2>Send message</h2>
+            <p>We will keep this ready for backend contact handling.</p>
+        </div>
+        <label class="field">
+            <span>Your name</span>
+            <input type="text" name="name" placeholder="Reader name" required>
+        </label>
+        <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="reader@bookverse.com" required>
+        </label>
+        <label class="field">
+            <span>Topic</span>
+            <select name="topic">
+                <option>Borrowing help</option>
+                <option>Catalog request</option>
+                <option>Account support</option>
+            </select>
+        </label>
+        <label class="field">
+            <span>Message</span>
+            <textarea name="message" placeholder="How can the library team help?" required></textarea>
+        </label>
+        <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+            <span class="btn-label">Send Message</span>
+            <span class="btn-loader"></span>
+        </button>
+    </form>
+>>>>>>> 62c4c41348aeef323b4e994be30d06c5cd94bd94
 </section>
 {% endblock %}
