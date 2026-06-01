@@ -7,7 +7,11 @@ import pymysql
 SECRET_KEY = os.getenv("SECRET_KEY", "random-secret-key")
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
+<<<<<<< HEAD
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "thulolado")
+=======
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "Anjana@2064")
+>>>>>>> origin/main
 MYSQL_DB = os.getenv("MYSQL_DB", os.getenv("MYSQL_DATABASE", "class_db"))
 MYSQL_DATABASE = MYSQL_DB
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))

@@ -9,14 +9,49 @@
         <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
         <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
         <div class="profile-meta">
+<<<<<<< HEAD
+=======
+            <span>Verified email</span>
+            <strong>{{ 'Yes' if user.email_verified else 'No' }}</strong>
+        </div>
+        <div class="profile-meta">
+>>>>>>> origin/main
             <span>Member since</span>
             <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
         </div>
         <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
+<<<<<<< HEAD
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
     </aside>
 
     <div class="profile-main">
+=======
+        {% if not user.email_verified %}
+            <a class="text-link" href="{{ url_for('auth.verify_email') }}">Resend verification</a>
+        {% endif %}
+    </aside>
+
+    <div class="profile-main">
+        <section class="form-card reveal">
+            <div class="form-heading">
+                <h2>Edit profile</h2>
+                <p>Update your display name and email address without leaving your dashboard.</p>
+            </div>
+            <form method="post">
+                <label class="field">
+                    <span>Username</span>
+                    <input type="text" name="username" value="{{ user.username }}" required autocomplete="username">
+                </label>
+                <label class="field">
+                    <span>Email address</span>
+                    <input type="email" name="email" value="{{ user.email }}" required autocomplete="email">
+                </label>
+                <button class="btn btn-primary btn-wide" type="submit" data-ripple>Save profile</button>
+            </form>
+            <p class="form-note">To change your password, use the <a href="{{ url_for('auth.forgot_password') }}">reset password</a> flow.</p>
+        </section>
+
+>>>>>>> origin/main
         <section class="stats-grid reveal">
             <article class="stat-widget">
                 <span>Total Loans</span>

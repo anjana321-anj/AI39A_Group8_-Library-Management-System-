@@ -48,6 +48,12 @@
 
             <div class="nav-actions">
                 {% if session.get('user_id') %}
+<<<<<<< HEAD
+=======
+                    {% if session.get('is_admin') %}
+                        <a class="text-link" href="{{ url_for('auth.admin_books') }}">Admin</a>
+                    {% endif %}
+>>>>>>> origin/main
                     <a class="text-link" href="{{ url_for('auth.profile') }}">{{ session.get('username', 'Profile') }}</a>
                     <form method="post" action="{{ url_for('auth.logout') }}">
                         <button class="btn btn-ghost" type="submit" data-ripple>Logout</button>
@@ -104,9 +110,15 @@
                 <a href="{{ url_for('auth.contact') }}">Library Desk</a>
                 <a href="mailto:hello@bookverse.local">hello@bookverse.local</a>
                 <span class="social-row">
+<<<<<<< HEAD
                     <a href="#" aria-label="BookVerse LinkedIn">in</a>
                     <a href="#" aria-label="BookVerse GitHub">gh</a>
                     <a href="#" aria-label="BookVerse Instagram">ig</a>
+=======
+                    <a href="https://www.linkedin.com/" aria-label="BookVerse LinkedIn" target="_blank" rel="noreferrer">LinkedIn</a>
+                    <a href="https://github.com/" aria-label="BookVerse GitHub" target="_blank" rel="noreferrer">GitHub</a>
+                    <a href="https://instagram.com/" aria-label="BookVerse Instagram" target="_blank" rel="noreferrer">Instagram</a>
+>>>>>>> origin/main
                 </span>
             </div>
         </div>

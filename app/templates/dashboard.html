@@ -21,8 +21,21 @@
                 <span class="eyebrow">Library analytics</span>
                 <h1>Welcome back, {{ session.get('username', 'Reader') }}.</h1>
                 <p>Monitor the catalog, active loans, and recent reading movement from one clean dashboard.</p>
+<<<<<<< HEAD
             </div>
             <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Borrow a Book</a>
+=======
+                {% if session.get('is_admin') %}
+                    <p class="form-note">Admin mode active. Use the admin panel to manage books and users.</p>
+                {% endif %}
+            </div>
+            <div class="dashboard-hero-actions">
+                <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Borrow a Book</a>
+                {% if session.get('is_admin') %}
+                    <a class="btn btn-secondary" href="{{ url_for('auth.admin_books') }}" data-ripple>Manage Catalog</a>
+                {% endif %}
+            </div>
+>>>>>>> origin/main
         </section>
 
         <section class="stats-grid reveal">
