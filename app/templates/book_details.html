@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - BookVerse{% endblock %}
+
+{% block content %}
+<section class="book-detail-layout reveal">
+    <div class="detail-cover">
+        <img src="{{ book.image or 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=900&auto=format&fit=crop' }}" alt="{{ book.title }}">
+    </div>
+    <article class="data-panel">
+        <span class="eyebrow">{{ book.category }}</span>
+        <h1>{{ book.title }}</h1>
+        <p>{{ book.description or 'No description available.' }}</p>
+        <div class="detail-grid">
+            <div><span>Author</span><strong>{{ book.author }}</strong></div>
+            <div><span>Genre</span><strong>{{ book.category }}</strong></div>
+            <div><span>ISBN</span><strong>{{ book.isbn or 'N/A' }}</strong></div>
+            <div><span>Publisher</span><strong>{{ book.publisher or 'N/A' }}</strong></div>
+            <div><span>Publication Year</span><strong>{{ book.publication_year or 'N/A' }}</strong></div>
+            <div><span>Language</span><strong>{{ book.language or 'English' }}</strong></div>
+            <div><span>Total Copies</span><strong>{{ book.total_copies }}</strong></div>
+            <div><span>Available Copies</span><strong>{{ book.available_copies }}</strong></div>
+            <div><span>Availability Status</span><strong>{{ book.availability_status }}</strong></div>
+        </div>
+        {% if book.available and book.availability_status == 'Available' and book.available_copies > 0 %}
+            {% if session.get('user_id') %}
+                <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
+                    <button class="btn btn-primary" type="submit" data-ripple>Borrow Book</button>
+                </form>
+            {% else %}
+                <a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('auth.book_details', book_id=book.id)) }}">Sign In to Borrow</a>
+            {% endif %}
+        {% else %}
+            <span class="status-badge warning">Unavailable</span>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}
