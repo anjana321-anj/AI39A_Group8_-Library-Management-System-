@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>User Management</h1>
+    <p>Manage BookVerse users, roles, and account status.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Users</h2>
+        <a href="{{ url_for('auth.admin_books') }}">Book Management</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>User Name</th>
+                    <th>Email Address</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role|title }}</td>
+                        <td><span class="status-badge {{ 'success' if user.status == 'active' else 'warning' }}">{{ user.status|title }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_user', user_id=user.id) }}">Edit User</a>
+                                <form method="post" action="{{ url_for('auth.delete_user', user_id=user.id) }}">
+                                    <button class="btn btn-small btn-disabled" type="submit">Delete User</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
