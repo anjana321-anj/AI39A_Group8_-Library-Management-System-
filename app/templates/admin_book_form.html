@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Book' if book else 'Add Book' }} - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>{{ 'Edit Book' if book else 'Add Book' }}</h1>
+    <p>Complete the book information and availability fields.</p>
+</section>
+
+<form class="data-panel reveal admin-form-grid" method="post" data-loading-form>
+    <label class="field">
+        <span>Book Title</span>
+        <input type="text" name="title" value="{{ book.title if book else '' }}" required>
+    </label>
+    <label class="field">
+        <span>Author</span>
+        <input type="text" name="author" value="{{ book.author if book else '' }}" required>
+    </label>
+    <label class="field">
+        <span>Genre</span>
+        <input type="text" name="genre" value="{{ book.category if book else '' }}" required>
+    </label>
+    <label class="field">
+        <span>ISBN</span>
+        <input type="text" name="isbn" value="{{ book.isbn if book and book.isbn else '' }}">
+    </label>
+    <label class="field">
+        <span>Publication Year</span>
+        <input type="number" name="publication_year" value="{{ book.publication_year if book and book.publication_year else '' }}" min="0">
+    </label>
+    <label class="field">
+        <span>Publisher</span>
+        <input type="text" name="publisher" value="{{ book.publisher if book and book.publisher else '' }}">
+    </label>
+    <label class="field">
+        <span>Language</span>
+        <input type="text" name="language" value="{{ book.language if book and book.language else 'English' }}">
+    </label>
+    <label class="field">
+        <span>Book Cover Image</span>
+        <input type="url" name="image" value="{{ book.image if book and book.image else '' }}" placeholder="https://...">
+    </label>
+    <label class="field">
+        <span>Total Copies</span>
+        <input type="number" name="total_copies" value="{{ book.total_copies if book else 1 }}" min="1" required>
+    </label>
+    <label class="field">
+        <span>Available Copies</span>
+        <input type="number" name="available_copies" value="{{ book.available_copies if book else 1 }}" min="0" required>
+    </label>
+    <label class="field">
+        <span>Availability Status</span>
+        <select name="availability_status">
+            <option value="Available" {{ 'selected' if not book or book.availability_status == 'Available' else '' }}>Available</option>
+            <option value="Unavailable" {{ 'selected' if book and book.availability_status == 'Unavailable' else '' }}>Unavailable</option>
+        </select>
+    </label>
+    <label class="field full-field">
+        <span>Description</span>
+        <textarea name="description">{{ book.description if book and book.description else '' }}</textarea>
+    </label>
+    <div class="form-row full-field">
+        <button class="btn btn-primary" type="submit" data-ripple>
+            <span class="btn-label">{{ 'Save Book' if book else 'Add Book' }}</span>
+            <span class="btn-loader"></span>
+        </button>
+        <a class="btn btn-secondary" href="{{ url_for('auth.admin_books') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}
