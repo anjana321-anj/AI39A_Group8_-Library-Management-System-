@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Books - BookVerse Admin{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin panel</span>
+    <h1>Book catalog management</h1>
+    <p>Create, edit, and remove titles from the library catalog.</p>
+    <a class="btn btn-primary" href="{{ url_for('auth.add_book') }}" data-ripple>Add new book</a>
+</section>
+
+<section class="table-wrap reveal">
+    <table>
+        <thead>
+            <tr>
+                <th>Cover</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr>
+                    <td><img class="table-cover" src="{{ book.image }}" alt="{{ book.title }}"></td>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.author }}</td>
+                    <td>{{ book.category }}</td>
+                    <td>{{ 'Available' if book.available else 'Unavailable' }}</td>
+                    <td>
+                        <a class="text-link" href="{{ url_for('auth.edit_book', book_id=book.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('auth.delete_book', book_id=book.id) }}" style="display:inline-block; margin-left:0.75rem;">
+                            <button class="btn btn-ghost btn-small" type="submit" data-ripple>Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
