@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - BookVerse{% endblock %}
+
+{% block content %}
+<section class="profile-layout">
+    <aside class="profile-card reveal">
+        <div class="avatar">{{ user.username[:1]|upper if user else 'B' }}</div>
+        <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
+        <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
+        <div class="profile-meta">
+            <span>Verified email</span>
+            <strong>{{ 'Yes' if user.email_verified else 'No' }}</strong>
+        </div>
+        <div class="profile-meta">
+            <span>Member since</span>
+            <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
+        </div>
+        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
+        {% if not user.email_verified %}
+            <a class="text-link" href="{{ url_for('auth.verify_email') }}">Resend verification</a>
+        {% endif %}
+    </aside>
+
+    <div class="profile-main">
+        <section class="form-card reveal">
+            <div class="form-heading">
+                <h2>Edit profile</h2>
+                <p>Update your display name and email address without leaving your dashboard.</p>
+            </div>
+            <form method="post">
+                <label class="field">
+                    <span>Username</span>
+                    <input type="text" name="username" value="{{ user.username }}" required autocomplete="username">
+                </label>
+                <label class="field">
+                    <span>Email address</span>
+                    <input type="email" name="email" value="{{ user.email }}" required autocomplete="email">
+                </label>
+                <button class="btn btn-primary btn-wide" type="submit" data-ripple>Save profile</button>
+            </form>
+            <p class="form-note">To change your password, use the <a href="{{ url_for('auth.forgot_password') }}">reset password</a> flow.</p>
+        </section>
+
+        <section class="stats-grid reveal">
+            <article class="stat-widget">
+                <span>Total Loans</span>
+                <strong data-counter="{{ borrowed_books|length }}">0</strong>
+                <small>All borrowed records</small>
+            </article>
+            <article class="stat-widget">
+                <span>Active</span>
+                <strong data-counter="{{ borrowed_books|selectattr('status', 'equalto', 'borrowed')|list|length }}">0</strong>
+                <small>Currently on your shelf</small>
+            </article>
+            <article class="stat-widget">
+                <span>Skills</span>
+                <strong data-counter="{{ skills|length }}">0</strong>
+                <small>Profile learning tags</small>
+            </article>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Reading activity</h2>
+                <a href="{{ url_for('auth.borrowed') }}">Manage returns</a>
+            </div>
+            <div class="activity-list">
+                {% if borrowed_books %}
+                    {% for loan in borrowed_books[:5] %}
+                        <div class="activity-item">
+                            <span class="activity-dot"></span>
+                            <div>
+                                <strong>{{ loan.title }}</strong>
+                                <small>{{ loan.status|title }} &middot; {{ loan.author }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No reading activity yet. Your first borrowed book will appear here.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}
