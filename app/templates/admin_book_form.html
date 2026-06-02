@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Book' if action == 'edit' else 'Add Book' }} – BookVerse Admin{% endblock %}
+
+{% block content %}
+<section class="form-page reveal">
+    <div class="form-card form-card-wide">
+        <div class="form-card-header">
+            <h1>{{ '✏️ Edit Book' if action == 'edit' else '➕ Add New Book' }}</h1>
+            <p>{{ 'Update this book\'s details in the catalog.' if action == 'edit' else 'Add a new book to the BookVerse catalog.' }}</p>
+        </div>
+
+        <form method="post"
+              action="{{ url_for('auth.admin_edit_book', book_id=book.id) if action == 'edit' else url_for('auth.admin_add_book') }}"
+              novalidate>
+
+            <fieldset class="fieldset-group">
+                <legend>Basic Details</legend>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="title">Book Title <span class="required">*</span></label>
+                        <input type="text" id="title" name="title" class="form-control"
+                               value="{{ book.title if book else '' }}" placeholder="e.g. The Alchemist" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="author">Author <span class="required">*</span></label>
+                        <input type="text" id="author" name="author" class="form-control"
+                               value="{{ book.author if book else '' }}" placeholder="e.g. Paulo Coelho" required>
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="category">Category <span class="required">*</span></label>
+                        <input type="text" id="category" name="category" class="form-control"
+                               value="{{ book.category if book else '' }}" placeholder="e.g. Fiction" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="language">Language</label>
+                        <input type="text" id="language" name="language" class="form-control"
+                               value="{{ book.language if book else 'English' }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="4"
+                              placeholder="Short synopsis of the book...">{{ book.description if book else '' }}</textarea>
+                </div>
+            </fieldset>
+
+            <fieldset class="fieldset-group">
+                <legend>Publication Details</legend>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="isbn">ISBN</label>
+                        <input type="text" id="isbn" name="isbn" class="form-control"
+                               value="{{ book.isbn if book else '' }}" placeholder="978-...">
+                    </div>
+                    <div class="form-group">
+                        <label for="publisher">Publisher</label>
+                        <input type="text" id="publisher" name="publisher" class="form-control"
+                               value="{{ book.publisher if book else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="year" class="form-control"
+                               value="{{ book.year if book else '' }}" min="1000" max="2099">
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="pages">Pages</label>
+                        <input type="number" id="pages" name="pages" class="form-control"
+                               value="{{ book.pages if book else '' }}" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="image">Cover Image URL</label>
+                        <input type="url" id="image" name="image" class="form-control"
+                               value="{{ book.image if book else '' }}"
+                               placeholder="https://...">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="fieldset-group">
+                <legend>Availability</legend>
+                <div class="form-group availability-toggle">
+                    <label class="toggle-label">
+                        <input type="radio" name="available" value="1"
+                               {{ 'checked' if not book or book.get('available', 1) in [1, '1', True] else '' }}>
+                        <span class="toggle-opt available">✓ Available</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="radio" name="available" value="0"
+                               {{ 'checked' if book and book.get('available', 1) in [0, '0', False] else '' }}>
+                        <span class="toggle-opt unavailable">✗ Unavailable</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit" data-ripple>
+                    {{ 'Save Changes' if action == 'edit' else 'Add to Catalog' }}
+                </button>
+                <a class="btn btn-ghost" href="{{ url_for('auth.dashboard') }}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
