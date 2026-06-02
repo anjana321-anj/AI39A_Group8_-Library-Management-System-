@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}BookVerse – Modern Digital Library{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="hero-copy reveal">
+        <span class="eyebrow">Premium student library</span>
+        <h1 class="hero-title">BookVerse</h1>
+        <p class="hero-copy-text">
+            A clean digital library platform for discovering books, borrowing titles, and managing reading progress
+            through a secure modern dashboard.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Catalog</a>
+            <a class="btn btn-secondary" href="{{ url_for('auth.register') }}" data-ripple>Start Reading</a>
+            <a class="btn btn-glass" href="{{ url_for('auth.dashboard') }}" data-ripple>Explore Dashboard</a>
+        </div>
+        <div class="hero-metrics">
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.books if stats else 0 }}">0</strong>
+                <span>Books</span>
+            </div>
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.available if stats else 0 }}">0</strong>
+                <span>Available</span>
+            </div>
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.members if stats else 0 }}">0</strong>
+                <span>Readers</span>
+            </div>
+            <div class="metric-chip">
+                <strong data-counter="{{ stats.borrowed if stats else 0 }}">0</strong>
+                <span>Borrowed</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-stage reveal">
+        <div class="hero-orbit-card card-one">
+            <span>Trending</span>
+            <strong>{{ books[0].title if books else "Atomic Habits" }}</strong>
+        </div>
+        <div class="book-stack">
+            {% for book in books %}
+            <article class="floating-book" style="--delay: {{ loop.index0 * 120 }}ms;">
+                <img src="{{ book.image }}" alt="{{ book.title }}">
+                <div>
+                    <strong>{{ book.title }}</strong>
+                    <span>{{ book.author }}</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="hero-orbit-card card-two">
+            <span>Available now</span>
+            <strong>{{ stats.available if stats else 0 }} titles</strong>
+        </div>
+    </div>
+</section>
+
+<section class="section-band reveal">
+    <div class="section-heading">
+        <span class="eyebrow">Curated shelves</span>
+        <h2>Designed for fast discovery and calm browsing.</h2>
+        <p>Premium cards, availability states, and responsive grids keep the catalog readable on every screen.</p>
+    </div>
+    <div class="shelf-grid">
+        {% for book in books %}
+        <article class="book-card tilt-card">
+            <div class="book-cover">
+                <img src="{{ book.image }}" alt="{{ book.title }}">
+                <span class="availability-badge {{ '' if book.available else 'badge-unavailable' }}">
+                    {{ 'Available' if book.available else 'Unavailable' }}
+                </span>
+            </div>
+            <div class="book-body">
+                <span class="book-category">{{ book.category }}</span>
+                <h3>{{ book.title }}</h3>
+                <p>{{ book.description }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section-band reveal">
+    <div class="feature-strip">
+        <article>
+            <span class="feature-icon">01</span>
+            <h3>Secure Sessions</h3>
+            <p>Dashboard, profile, and borrowed books stay open while your session is active. Logout clears it instantly.</p>
+        </article>
+        <article>
+            <span class="feature-icon">02</span>
+            <h3>Password Recovery</h3>
+            <p>Forgot your password? Request a reset link via email, verify, and set a new password securely.</p>
+        </article>
+        <article>
+            <span class="feature-icon">03</span>
+            <h3>Admin Controls</h3>
+            <p>Admins can add, edit, and delete books and user accounts directly from the dashboard.</p>
+        </article>
+        <article>
+            <span class="feature-icon">04</span>
+            <h3>Availability States</h3>
+            <p>Every book shows a clear Available or Unavailable badge so readers know at a glance.</p>
+        </article>
+    </div>
+</section>
+{% endblock %}
