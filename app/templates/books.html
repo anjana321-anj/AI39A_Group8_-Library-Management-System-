@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Book Catalog – BookVerse{% endblock %}
+
+{% block content %}
+<section class="catalog-hero reveal">
+    <h1>Book Catalog</h1>
+    <p>Browse our full collection. Available books can be borrowed immediately.</p>
+
+    <div class="catalog-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="available">Available</button>
+        <button class="filter-btn" data-filter="unavailable">Unavailable</button>
+        {% for cat in categories %}
+        <button class="filter-btn" data-filter="{{ cat | lower | replace(' ', '-') }}">{{ cat }}</button>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="catalog-grid reveal">
+    {% for book in books %}
+    <div class="book-card-catalog"
+         data-availability="{{ 'available' if book.available else 'unavailable' }}"
+         data-category="{{ book.category | lower | replace(' ', '-') }}">
+
+        <div class="book-badge {{ 'badge-available' if book.available else 'badge-unavailable' }}">
+            {{ '✓ Available' if book.available else '✗ Unavailable' }}
+        </div>
+
+        <a href="{{ url_for('auth.book_detail', book_id=book.id) }}" class="book-img-link">
+            <img class="book-img-catalog"
+                 src="{{ book.image or 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400' }}"
+                 alt="{{ book.title }}" loading="lazy">
+        </a>
+
+        <div class="book-card-body">
+            <span class="badge badge-category">{{ book.category }}</span>
+            <h3><a class="text-link" href="{{ url_for('auth.book_detail', book_id=book.id) }}">{{ book.title }}</a></h3>
+            <p class="book-author">by {{ book.author }}</p>
+            {% if book.description %}
+            <p class="book-desc">{{ book.description[:90] }}{% if book.description|length > 90 %}…{% endif %}</p>
+            {% endif %}
+
+            <div class="book-card-actions">
+                <a class="btn btn-sm btn-ghost" href="{{ url_for('auth.book_detail', book_id=book.id) }}">View Details</a>
+                {% if session.get('user_id') and book.available %}
+                <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}" style="display:inline;">
+                    <button class="btn btn-sm btn-primary" type="submit" data-ripple>Borrow</button>
+                </form>
+                {% elif not book.available %}
+                <button class="btn btn-sm btn-unavailable" disabled>Unavailable</button>
+                {% elif not session.get('user_id') %}
+                <a class="btn btn-sm btn-primary" href="{{ url_for('auth.login') }}">Sign in to Borrow</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p class="empty-msg">No books in the catalog yet.</p>
+    {% endfor %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+    const btns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.book-card-catalog');
+    btns.forEach(btn => {
+        btn.addEventListener('click', function(){
+            btns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const filter = this.dataset.filter;
+            cards.forEach(card => {
+                if(filter === 'all'){
+                    card.style.display = '';
+                } else if(filter === 'available' || filter === 'unavailable'){
+                    card.style.display = card.dataset.availability === filter ? '' : 'none';
+                } else {
+                    card.style.display = card.dataset.category === filter ? '' : 'none';
+                }
+            });
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Edit User – BookVerse Admin{% endblock %}
+
+{% block content %}
+<section class="form-page reveal">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h1>✏️ Edit User</h1>
+            <p>Update profile details for <strong>{{ target_user.username }}</strong></p>
+        </div>
+
+        <form method="post"
+              action="{{ url_for('auth.admin_edit_user', user_id=target_user.id) }}"
+              novalidate>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label for="username">Display Name</label>
+                    <input type="text" id="username" name="username" class="form-control"
+                           value="{{ target_user.username or '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control"
+                           value="{{ target_user.email or '' }}" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="contact_email">Contact Email</label>
+                <input type="email" id="contact_email" name="contact_email" class="form-control"
+                       value="{{ target_user.contact_email or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="linkedin_url">LinkedIn URL</label>
+                <input type="url" id="linkedin_url" name="linkedin_url" class="form-control"
+                       value="{{ target_user.linkedin_url or '' }}"
+                       placeholder="https://linkedin.com/in/...">
+            </div>
+            <div class="form-group">
+                <label for="github_url">GitHub URL</label>
+                <input type="url" id="github_url" name="github_url" class="form-control"
+                       value="{{ target_user.github_url or '' }}"
+                       placeholder="https://github.com/...">
+            </div>
+            <div class="form-group">
+                <label for="instagram_url">Instagram URL</label>
+                <input type="url" id="instagram_url" name="instagram_url" class="form-control"
+                       value="{{ target_user.instagram_url or '' }}"
+                       placeholder="https://instagram.com/...">
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit" data-ripple>Save Changes</button>
+                <a class="btn btn-ghost" href="{{ url_for('auth.dashboard') }}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

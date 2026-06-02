@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}My Borrowed Books – BookVerse{% endblock %}
+
+{% block content %}
+<section class="catalog-hero reveal">
+    <h1>📚 My Borrowed Books</h1>
+    <p>Track books you have borrowed and return them when finished.</p>
+</section>
+
+<section class="catalog-grid reveal">
+    {% for b in borrowed_books %}
+    <div class="book-card-catalog {{ 'book-returned-card' if b.status == 'returned' else '' }}">
+        <div class="book-badge {{ 'badge-available' if b.status == 'returned' else 'badge-borrowed' }}">
+            {{ '✓ Returned' if b.status == 'returned' else '🔖 Borrowed' }}
+        </div>
+
+        <img class="book-img-catalog"
+             src="{{ b.image or 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400' }}"
+             alt="{{ b.title }}" loading="lazy">
+
+        <div class="book-card-body">
+            <span class="badge badge-category">{{ b.category }}</span>
+            <h3>{{ b.title }}</h3>
+            <p class="book-author">by {{ b.author }}</p>
+            <div class="borrow-dates">
+                <small>Borrowed: {{ b.borrow_date.strftime('%d %b %Y') if b.borrow_date else '—' }}</small>
+                {% if b.status == 'borrowed' %}
+                <small class="{{ 'overdue' if b.due_date and b.due_date < now else '' }}">
+                    Due: {{ b.due_date.strftime('%d %b %Y') if b.due_date else '—' }}
+                </small>
+                {% else %}
+                <small>Returned: {{ b.return_date.strftime('%d %b %Y') if b.return_date else '—' }}</small>
+                {% endif %}
+            </div>
+
+            {% if b.status == 'borrowed' %}
+            <form method="post" action="{{ url_for('auth.return_borrowed', borrowed_id=b.id) }}">
+                <button class="btn btn-sm btn-primary" type="submit" data-ripple
+                        onclick="return confirm('Return \'{{ b.title | e }}\'?');">
+                    Return Book
+                </button>
+            </form>
+            {% else %}
+            <span class="returned-label">Returned ✓</span>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <h3>No borrowed books</h3>
+        <p>Browse the catalog and borrow your first book!</p>
+        <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Catalog</a>
+    </div>
+    {% endfor %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Inject Python's datetime.utcnow equivalent for overdue check
+window.now = new Date();
+</script>
+{% endblock %}
