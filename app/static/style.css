@@ -1,0 +1,9 @@
+/*
+ * BookVerse – style.css
+ * ----------------------
+ * This file is the legacy CSS entry-point kept for backward compatibility.
+ * All real styles live in css/main.css and are imported below.
+ * Do not add styles here; use app/static/css/main.css instead.
+ */
+
+@import url("css/main.css");
