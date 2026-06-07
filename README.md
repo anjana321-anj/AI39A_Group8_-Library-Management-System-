@@ -76,8 +76,35 @@ BookVerse offers a range of features to enhance the online library experience, i
 
 <img width="941" height="431" alt="cp1" src="https://github.com/user-attachments/assets/41ad9776-2553-45c0-8a60-33032f7a0703" /><img width="945" height="319" alt="cp2" src="https://github.com/user-attachments/assets/94cc548c-66b2-4631-8c46-b95e19dc4d83" />
 
+---
 
+### Services Page
 
+<img width="943" height="329" alt="sp1" src="https://github.com/user-attachments/assets/1b183d5d-d454-4e7d-b7fe-e4dc2c36dfa6" /><img width="938" height="336" alt="sp2" src="https://github.com/user-attachments/assets/5b29185f-b31e-4a2e-b18c-fa3a2c8d6a09" /><img width="941" height="172" alt="sp3" src="https://github.com/user-attachments/assets/ce16def6-f20c-46b2-a7be-ed2ed157bcbc" />
 
+---
 
+### Books Page
+
+<img width="935" height="352" alt="bp1" src="https://github.com/user-attachments/assets/583373c0-e08b-4ba2-b553-f0d300fb40d9" /><img width="934" height="359" alt="bp2" src="https://github.com/user-attachments/assets/f8e0b9b7-2b2b-4240-9492-02808bfa610d" /><img width="935" height="170" alt="bp3" src="https://github.com/user-attachments/assets/19ac55e8-bd53-4b8e-8591-a852fcf4a927" />
+
+---
+
+### Borrowed Page
+
+<img width="935" height="434" alt="bo1" src="https://github.com/user-attachments/assets/20c5c942-51d7-422b-b422-ff7d5e988db6" /><img width="935" height="224" alt="bo2" src="https://github.com/user-attachments/assets/c606410a-95fa-47a4-b55d-81610ae42ac6" />
+
+---
+
+## Contributors
+
+This project was made possible by the hard work and dedication of the following contributors:
+1. Aakriti A.C
+2. Aendawi Baral
+3. Anim Shrestha
+4. Anjana Sharma
+5. Deshantar B.C
+6. Kritesh Maharjan
+
+Thank you for visiting our repository! We hope you enjoy using the **Bookverse**.
 
