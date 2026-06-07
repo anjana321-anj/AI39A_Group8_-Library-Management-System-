@@ -48,6 +48,7 @@ BookVerse offers a range of features to enhance the online library experience, i
 2. CSS
 3. Figma
 4. pymysql
+5. JavaScript
 
 ---
 
