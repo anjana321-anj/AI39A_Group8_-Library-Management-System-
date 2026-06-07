@@ -14,6 +14,8 @@ Welcome to BookVerse — where reading meets technology. Developed by Group 8 fo
 git clone https://github.com/anjana321-anj/AI39A_Group8_-Library-Management-System-
 ```
 
+---
+
 ## Links
 
 ### Youtube link:
@@ -24,6 +26,8 @@ git clone https://github.com/anjana321-anj/AI39A_Group8_-Library-Management-Syst
 
 ### Figma link: https://www.figma.com/design/uZ5ymjL5GRQWmQyL8Sjapr/Bookverse-Website-UI?node-id=82-8&p=f&t=IKq0Eq5fhGZ0OcYP-0
 
+---
+
 ## Features
 
 BookVerse offers a range of features to enhance the online library experience, including:
@@ -33,3 +37,21 @@ BookVerse offers a range of features to enhance the online library experience, i
 3. Book borrowing, returning, and reservation management
 4. Favorites and personal reading list for registered users
 5. Admin dashboard for managing books, users, and borrow records
+
+---
+
+## Technologies
+
+### The website was developed using the following technologies:
+
+1. HTML
+2. CSS
+3. Figma
+4. pymysql
+
+---
+
+## Screenshots
+
+### Here's a sneak peek of what the website looks like:
+
