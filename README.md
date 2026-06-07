@@ -55,3 +55,12 @@ BookVerse offers a range of features to enhance the online library experience, i
 
 ### Here's a sneak peek of what the website looks like:
 
+<img width="938" height="441" alt="landing page(1)" src="https://github.com/user-attachments/assets/f2a0349d-2cca-45bd-bdce-2a8ae589513e" />
+<img width="940" height="433" alt="Landing page(2)" src="https://github.com/user-attachments/assets/c0f444c9-d7bb-4849-9971-30b25f05964e" />
+<img width="939" height="433" alt="Landing page(3)" src="https://github.com/user-attachments/assets/af67a0e6-d96d-45ed-b734-472b2683e988" />
+<img width="940" height="182" alt="Landing page(4)" src="https://github.com/user-attachments/assets/091247a7-8cc4-428a-b8fb-d1e15efff6b9" />
+
+
+
+
+
