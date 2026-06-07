@@ -55,10 +55,7 @@ BookVerse offers a range of features to enhance the online library experience, i
 
 ### Here's a sneak peek of what the website looks like:
 
-<img width="936" height="434" alt="lp1" src="https://github.com/user-attachments/assets/d0d51daf-cfd5-451b-939a-7b8ca54f11b5" />
-<img width="938" height="363" alt="lp2" src="https://github.com/user-attachments/assets/6ffecd8a-f971-437d-ac35-5daf09775ec4" />
-<img width="939" height="371" alt="lp3" src="https://github.com/user-attachments/assets/ac779994-d9e2-4369-b60d-303528a9ebd7" />
-<img width="933" height="180" alt="lp4" src="https://github.com/user-attachments/assets/d841d2f9-ce1b-41fe-a104-be851577fb53" />
+<img width="936" height="434" alt="lp1" src="https://github.com/user-attachments/assets/d0d51daf-cfd5-451b-939a-7b8ca54f11b5" /><img width="938" height="363" alt="lp2" src="https://github.com/user-attachments/assets/6ffecd8a-f971-437d-ac35-5daf09775ec4" /><img width="939" height="371" alt="lp3" src="https://github.com/user-attachments/assets/ac779994-d9e2-4369-b60d-303528a9ebd7" /><img width="933" height="180" alt="lp4" src="https://github.com/user-attachments/assets/d841d2f9-ce1b-41fe-a104-be851577fb53" />
 
 ---
 
@@ -70,15 +67,13 @@ BookVerse offers a range of features to enhance the online library experience, i
 
 ### Registration Page
 
-<img width="941" height="437" alt="rp1" src="https://github.com/user-attachments/assets/cae89bb0-5dae-4842-a51a-11fc0bc2c1c1" />
-<img width="935" height="324" alt="rp2" src="https://github.com/user-attachments/assets/7e7633f4-f479-4dce-8a91-709323aca1f0" />
+<img width="941" height="437" alt="rp1" src="https://github.com/user-attachments/assets/cae89bb0-5dae-4842-a51a-11fc0bc2c1c1" /><img width="935" height="324" alt="rp2" src="https://github.com/user-attachments/assets/7e7633f4-f479-4dce-8a91-709323aca1f0" />
 
 ---
 
 ### Contact Page
 
-<img width="941" height="431" alt="cp1" src="https://github.com/user-attachments/assets/41ad9776-2553-45c0-8a60-33032f7a0703" />
-<img width="945" height="319" alt="cp2" src="https://github.com/user-attachments/assets/94cc548c-66b2-4631-8c46-b95e19dc4d83" />
+<img width="941" height="431" alt="cp1" src="https://github.com/user-attachments/assets/41ad9776-2553-45c0-8a60-33032f7a0703" /><img width="945" height="319" alt="cp2" src="https://github.com/user-attachments/assets/94cc548c-66b2-4631-8c46-b95e19dc4d83" />
 
 
 
