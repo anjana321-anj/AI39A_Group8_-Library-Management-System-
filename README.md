@@ -32,11 +32,11 @@ git clone https://github.com/anjana321-anj/AI39A_Group8_-Library-Management-Syst
 
 BookVerse offers a range of features to enhance the online library experience, including:
 
-1. User authentication and role-based access control (Admin & Member)
-2. Book search and filter by title, author, genre, or availability
-3. Book borrowing, returning, and reservation management
-4. Favorites and personal reading list for registered users
-5. Admin dashboard for managing books, users, and borrow records
+1. **Complete Auth System** — Secure user registration and login with email verification and self-service password reset, ensuring only verified members access the platform.
+2. **Smart Book Catalog & Discovery** — Admins can add, edit, and delete books while users browse a full catalog with detailed views, real-time availability checks, and powerful search and filter tools.
+3. **Borrow, Reserve & Buy** — Members can borrow physical books, join a waitlist for unavailable titles, reserve or purchase books directly, and return them with automated due-date reminders.
+4. **Fines, Reviews & Favourites** — Late returns trigger automatic fine calculation with integrated online payment; users can also rate and review books and save favourites for quick access.
+5. **Admin Control & Reporting** — A dedicated admin dashboard covers full user management, borrowing history, fine reports, activity logs, data backup, and reservation oversight — all in one place.
 
 ---
 
@@ -47,8 +47,18 @@ BookVerse offers a range of features to enhance the online library experience, i
 1. HTML
 2. CSS
 3. Figma
-4. pymysql
+4. MySQL Workbench
 5. JavaScript
+6. VS Code
+7. Python
+8. MS Teams
+9. Draw.io
+10. MS Word/Excel/Google Docs
+11. Git & GitHub
+12. Canva
+13. Google Search Engine
+14. Jinja
+15. Flask
 
 ---
 
@@ -99,12 +109,9 @@ BookVerse offers a range of features to enhance the online library experience, i
 ## Contributors
 
 This project was made possible by the hard work and dedication of the following contributors:
-1. Aakriti A.C
-2. Aendawi Baral
-3. Anim Shrestha
-4. Anjana Sharma
+1. Anjana Sharma
+2. Anim Shrestha
+3. Aendawi Baral
+4. Aakriti A.C
 5. Deshantar B.C
 6. Kritesh Maharjan
-
-Thank you for visiting our repository! We hope you enjoy using the **Bookverse**.
-
