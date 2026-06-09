@@ -48,17 +48,16 @@ BookVerse offers a range of features to enhance the online library experience, i
 2. CSS
 3. Figma
 4. MySQL Workbench
-5. JavaScript
-6. VS Code
-7. Python
-8. MS Teams
-9. Draw.io
-10. MS Word/Excel/Google Docs
-11. Git & GitHub
-12. Canva
-13. Google Search Engine
-14. Jinja
-15. Flask
+5. VS Code
+6. Python
+7. MS Teams
+8. Draw.io
+9. MS Word/Excel/Google Docs
+10. Git & GitHub
+11. Canva
+12. Google Search Engine
+13. Jinja
+14. Flask
 
 ---
 
