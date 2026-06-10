@@ -8,10 +8,13 @@
         <div class="avatar">{{ user.username[:1]|upper if user else 'B' }}</div>
         <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
         <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
+        <p>{{ user.phone_number or user.phone or 'Phone not added' }}</p>
+        <p>{{ user.address or 'Address not added' }}</p>
         <div class="profile-meta">
             <span>Member since</span>
             <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
         </div>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Reset Password</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.favourites') }}" data-ripple>Favourites</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reservations') }}" data-ripple>Reservations</a>
@@ -79,6 +82,41 @@
                 {% else %}
                     <p class="empty-state">No notifications yet.</p>
                 {% endif %}
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Profile Updates</h2>
+                <a href="{{ url_for('auth.edit_profile') }}">Edit profile</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Field</th>
+                            <th>Old Value</th>
+                            <th>New Value</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for update in profile_updates %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ update.field_name|replace('_', ' ')|title }}</td>
+                                <td>{{ update.old_value or 'N/A' }}</td>
+                                <td>{{ update.new_value or 'N/A' }}</td>
+                                <td>{{ update.created_at.strftime('%b %d, %Y') if update.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No profile updates recorded yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </section>
     </div>
