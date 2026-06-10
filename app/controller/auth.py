@@ -1,13 +1,17 @@
 from functools import wraps
 from datetime import datetime, timedelta
 from email.message import EmailMessage
+import csv
 import hashlib
+import io
+import os
 import secrets
 import smtplib
 
 import pymysql
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import Response, flash, redirect, render_template, request, send_file, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
 import config
 from app.database import (
@@ -16,27 +20,42 @@ from app.database import (
     cancel_reservation,
     create_book,
     create_fine_payment,
+    create_backup_record,
+    create_notification,
     create_order,
     create_password_reset_token,
     create_reservation,
     create_user,
     delete_book,
+    delete_borrow_record,
     delete_fine_payment,
+    delete_fine_record,
+    delete_notification,
+    delete_notification_admin,
     delete_order,
     delete_review,
+    delete_library_review,
     delete_reservation,
+    delete_waitlist_admin,
     delete_user,
     expire_reservations,
+    force_return_borrow_record,
     generate_return_reminders,
+    get_active_profile_picture,
     get_book,
+    get_book_review_eligibility,
+    get_book_review_statistics,
+    get_borrow_record,
     get_dashboard_stats,
     get_favourite_book_ids,
     get_fine_payment,
     get_fine_per_day,
+    get_library_review_summary,
     get_library_rating_summary,
     get_order,
     get_recent_activity,
     get_reservation,
+    get_user_library_review,
     get_user_active_borrowed_books,
     get_user_borrowed_books,
     get_user_book_rating,
@@ -45,26 +64,52 @@ from app.database import (
     get_user_skills,
     get_valid_password_reset_token,
     is_book_favourite,
+    join_waitlist,
+    leave_waitlist,
+    list_activity_logs,
     list_admin_fine_payments,
+    list_admin_fine_records,
+    list_admin_book_reviews,
+    list_admin_borrows,
+    list_admin_library_reviews,
+    list_admin_notifications,
     list_admin_orders,
+    list_admin_profile_pictures,
     list_admin_reservations,
+    list_admin_waitlists,
+    list_backup_history,
     list_book_reviews,
+    list_borrow_timeline,
+    list_profile_picture_history,
     list_books,
     list_profile_updates,
+    list_review_moderation_logs,
+    list_security_logs,
     list_user_reviews_and_ratings,
     list_user_favourites,
     list_user_fines,
     list_user_notifications,
     list_user_orders,
+    list_user_waitlists,
     list_user_profile_updates,
     list_user_reservations,
     list_users,
+    log_security_event,
     mark_password_reset_token_used,
+    mark_notification_read,
+    moderate_book_review,
+    moderate_library_review,
     refresh_fine_records,
     remove_favourite,
+    remove_profile_picture,
+    restore_profile_picture,
     return_book,
+    save_profile_picture,
     set_book_rating,
+    update_borrow_record,
     update_fine_payment,
+    update_fine_record,
+    update_fine_record_status,
     update_fine_payment_status,
     update_fine_per_day,
     update_book,
@@ -76,9 +121,14 @@ from app.database import (
     update_reservation_status,
     update_user,
     update_user_password_hash,
+    update_waitlist_admin,
+    upsert_library_review,
     upsert_review,
     log_event,
 )
+
+PROFILE_UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "uploads", "profile_pictures")
+ALLOWED_PROFILE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 
 
 def login_required(view):
@@ -150,9 +200,12 @@ class AuthController:
                 session["user_id"] = user["id"]
                 session["username"] = user["username"]
                 session["role"] = user.get("role", "user")
+                log_security_event(user["id"], email, "login", request.remote_addr, "Successful login")
+                log_event(user["id"], "login", "user", user["id"], "User logged in")
                 flash(f"Welcome back, {user['username']}.", "success")
                 return redirect(request.args.get("next") or url_for("auth.dashboard"))
             else:
+                log_security_event(user["id"] if user else None, email, "failed_login", request.remote_addr, "Failed login attempt")
                 flash("Invalid email or password.", "danger")
 
         return render_template(template_name)
@@ -192,6 +245,9 @@ class AuthController:
         return render_template("register.html")
 
     def logout(self):
+        if session.get("user_id"):
+            log_security_event(session["user_id"], None, "logout", request.remote_addr, "Successful logout")
+            log_event(session["user_id"], "logout", "user", session["user_id"], "User logged out")
         session.clear()
         flash("You have been signed out.", "info")
         return redirect(url_for("auth.login"))
@@ -368,6 +424,8 @@ class AuthController:
         skills = get_user_skills(session["user_id"])
         notifications = list_user_notifications(session["user_id"], limit=5)
         profile_updates = list_user_profile_updates(session["user_id"])
+        profile_picture = get_active_profile_picture(session["user_id"])
+        picture_history = list_profile_picture_history(session["user_id"])
         return render_template(
             "profile.html",
             user=user,
@@ -375,7 +433,38 @@ class AuthController:
             skills=skills,
             notifications=notifications,
             profile_updates=profile_updates,
+            profile_picture=profile_picture,
+            picture_history=picture_history,
         )
+
+    @login_required
+    def update_profile_picture(self):
+        action = request.form.get("action", "upload")
+        if action == "remove":
+            if remove_profile_picture(session["user_id"], session["user_id"]):
+                flash("Profile picture removed successfully.", "success")
+            else:
+                flash("No active profile picture was found.", "warning")
+            return redirect(url_for("auth.profile"))
+
+        uploaded_file = request.files.get("profile_picture")
+        if not uploaded_file or not uploaded_file.filename:
+            flash("Choose a profile picture to upload.", "warning")
+            return redirect(url_for("auth.profile"))
+
+        extension = uploaded_file.filename.rsplit(".", 1)[-1].lower() if "." in uploaded_file.filename else ""
+        if extension not in ALLOWED_PROFILE_EXTENSIONS:
+            flash("Profile picture must be PNG, JPG, JPEG, WEBP, or GIF.", "warning")
+            return redirect(url_for("auth.profile"))
+
+        os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
+        safe_name = secure_filename(uploaded_file.filename)
+        filename = f"user_{session['user_id']}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{safe_name}"
+        absolute_path = os.path.join(PROFILE_UPLOAD_FOLDER, filename)
+        uploaded_file.save(absolute_path)
+        save_profile_picture(session["user_id"], f"/static/uploads/profile_pictures/{filename}", session["user_id"])
+        flash("Profile picture updated successfully.", "success")
+        return redirect(url_for("auth.profile"))
 
     @login_required
     def edit_profile(self):
@@ -459,6 +548,7 @@ class AuthController:
                 flash("New passwords do not match.", "warning")
             else:
                 update_user_password_hash(user["id"], generate_password_hash(password))
+                log_event(user["id"], "password_change", "user", user["id"], "Password changed")
                 flash("Password updated successfully.", "success")
                 return redirect(url_for("auth.profile"))
 
@@ -481,6 +571,7 @@ class AuthController:
         recent_activity = get_recent_activity()
         notifications = list_user_notifications(session["user_id"], limit=5)
         user = get_user_by_id(session["user_id"])
+        profile_picture = get_active_profile_picture(session["user_id"])
         active_borrows = get_user_active_borrowed_books(session["user_id"])
         active_reservations = list_user_reservations(session["user_id"])
         outstanding_fines = [
@@ -494,6 +585,7 @@ class AuthController:
             recent_activity=recent_activity,
             notifications=notifications,
             user=user,
+            profile_picture=profile_picture,
             active_borrow_count=len(active_borrows),
             active_reservation_count=len(active_reservations),
             outstanding_fine_total=sum(float(fine.get("total_fine") or 0) for fine in outstanding_fines),
@@ -501,8 +593,19 @@ class AuthController:
 
     @login_required
     def borrowed(self):
-        borrowed_books = get_user_active_borrowed_books(session["user_id"])
-        return render_template("borrowedpage.html", borrowed_books=borrowed_books)
+        borrowed_books = get_user_borrowed_books(session["user_id"])
+        current_borrows = [
+            loan for loan in borrowed_books if loan.get("status") in {"borrowed", "overdue"}
+        ]
+        returned_books = [
+            loan for loan in borrowed_books if loan.get("status") == "returned"
+        ]
+        return render_template(
+            "borrowedpage.html",
+            borrowed_books=borrowed_books,
+            current_borrows=current_borrows,
+            returned_books=returned_books,
+        )
 
     def login_enhanced(self):
         return self._login_template("index_enhanced.html")
@@ -513,6 +616,7 @@ class AuthController:
         if not book:
             flash("That book could not be found.", "warning")
         elif borrow_book(session["user_id"], book_id):
+            log_event(session["user_id"], "borrow_book", "book", book_id, "Book borrowed")
             flash(f"You borrowed {book['title']}.", "success")
         else:
             flash(f"{book['title']} is not available right now.", "warning")
@@ -539,7 +643,31 @@ class AuthController:
             average_rating=average,
             total_reviews=len([review for review in reviews if review.get("review_text")]),
             total_ratings=len(rated),
+            library_review=get_user_library_review(session["user_id"]),
+            library_summary=get_library_review_summary(),
+            book_statistics=get_book_review_statistics(),
         )
+
+    @login_required
+    def submit_library_review(self):
+        rating = self._safe_int(request.form.get("rating"), 0)
+        review_text = request.form.get("review_text", "").strip()
+        if rating < 1 or rating > 5:
+            flash("Choose a library rating from 1 to 5 stars.", "warning")
+        elif len(review_text) < 5:
+            flash("Library review must be at least 5 characters.", "warning")
+        elif len(review_text) > 1200:
+            flash("Library review is too long. Please keep it under 1200 characters.", "warning")
+        else:
+            upsert_library_review(session["user_id"], rating, review_text)
+            flash("Library review saved successfully.", "success")
+        return redirect(url_for("auth.reviews_ratings"))
+
+    @login_required
+    def remove_library_review(self):
+        delete_library_review(session["user_id"])
+        flash("Library review deleted successfully.", "success")
+        return redirect(url_for("auth.reviews_ratings"))
 
     @login_required
     def favourites(self):
@@ -575,6 +703,7 @@ class AuthController:
         else:
             reservation_id = create_reservation(session["user_id"], book_id)
             if reservation_id:
+                log_event(session["user_id"], "reserve_book", "reservation", reservation_id, "Book reserved")
                 flash("Reservation request submitted.", "success")
             else:
                 flash("We could not reserve that book right now.", "warning")
@@ -685,6 +814,7 @@ class AuthController:
             elif create_fine_payment(
                 session["user_id"], fine_record_id, payment_method, transaction_id, amount, proof
             ):
+                log_event(session["user_id"], "fine_payment", "fine_record", fine_record_id, "Fine payment submitted")
                 flash("Fine payment submitted for verification.", "success")
                 return redirect(url_for("auth.fine_payments"))
             else:
@@ -707,14 +837,18 @@ class AuthController:
     @login_required
     def add_review(self, book_id):
         review_text = request.form.get("review_text", "").strip()
+        action_type = get_book_review_eligibility(session["user_id"], book_id)
         if not get_book(book_id):
             flash("Book not found.", "warning")
+        elif not action_type:
+            flash("You can review a book after borrowing, reserving, or purchasing it.", "warning")
         elif len(review_text) < 5:
             flash("Review must be at least 5 characters.", "warning")
         elif len(review_text) > 1200:
             flash("Review is too long. Please keep it under 1200 characters.", "warning")
         else:
-            upsert_review(session["user_id"], book_id, review_text)
+            upsert_review(session["user_id"], book_id, review_text, action_type)
+            log_event(session["user_id"], "review_submission", "book", book_id, "Book review submitted")
             flash("Review saved.", "success")
         return redirect(url_for("auth.book_details", book_id=book_id))
 
@@ -727,12 +861,16 @@ class AuthController:
     @login_required
     def rate_book(self, book_id):
         rating = self._safe_int(request.form.get("rating"), 0)
+        action_type = get_book_review_eligibility(session["user_id"], book_id)
         if rating < 1 or rating > 5:
             flash("Choose a rating from 1 to 5 stars.", "warning")
         elif not get_book(book_id):
             flash("Book not found.", "warning")
+        elif not action_type:
+            flash("You can rate a book after borrowing, reserving, or purchasing it.", "warning")
         else:
-            set_book_rating(session["user_id"], book_id, rating)
+            set_book_rating(session["user_id"], book_id, rating, action_type)
+            log_event(session["user_id"], "rating_submission", "book", book_id, "Book rating submitted")
             flash("Rating saved.", "success")
         return redirect(url_for("auth.book_details", book_id=book_id))
 
@@ -1104,6 +1242,7 @@ class AuthController:
             book=book,
             is_favourite=is_book_favourite(user_id, book_id) if user_id else False,
             user_rating=get_user_book_rating(user_id, book_id) if user_id else 0,
+            review_eligibility=get_book_review_eligibility(user_id, book_id) if user_id else None,
             reviews=list_book_reviews(book_id),
             library_rating=get_library_rating_summary(),
         )

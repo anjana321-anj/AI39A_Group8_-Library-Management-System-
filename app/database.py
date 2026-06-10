@@ -179,9 +179,9 @@ def _ensure_users_table(cursor):
 
     cursor.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'admin'")
     if cursor.fetchone()["total"] == 0:
-        admin_hash = generate_password_hash("Admin@12345")
+        admin_hash = generate_password_hash("Admin123")
         insert_columns = ["username", "email", "password_hash", "role", "status"]
-        values = ["Admin", "admin@admin.com", admin_hash, "admin", "active"]
+        values = ["BookVerse Admin", "admin@bookverse.com", admin_hash, "admin", "active"]
         if "name" in columns:
             insert_columns.append("name")
             values.append("Admin")
@@ -828,6 +828,574 @@ def _ensure_feature_tables(cursor):
         )
         """
     )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS library_reviews (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            rating INT NOT NULL,
+            review_text TEXT NOT NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'Visible',
+            is_pinned TINYINT(1) NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL,
+            UNIQUE KEY uq_library_review_user (user_id),
+            CONSTRAINT fk_library_reviews_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT chk_library_review_rating CHECK (rating BETWEEN 1 AND 5)
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS library_ratings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            rating INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL,
+            UNIQUE KEY uq_library_rating_user (user_id),
+            CONSTRAINT fk_library_ratings_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT chk_library_rating_range CHECK (rating BETWEEN 1 AND 5)
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS review_moderation_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            review_type VARCHAR(30) NOT NULL,
+            review_id INT NOT NULL,
+            admin_user_id INT NULL,
+            action VARCHAR(40) NOT NULL,
+            note VARCHAR(255) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_review_moderation_admin
+                FOREIGN KEY (admin_user_id) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS profile_pictures (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            image_path VARCHAR(500) NOT NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'Active',
+            upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            modified_date TIMESTAMP NULL,
+            removed_at TIMESTAMP NULL,
+            removed_by INT NULL,
+            CONSTRAINT fk_profile_pictures_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_profile_pictures_removed_by
+                FOREIGN KEY (removed_by) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS profile_picture_history (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            picture_id INT NULL,
+            action VARCHAR(40) NOT NULL,
+            image_path VARCHAR(500) NULL,
+            admin_user_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_profile_picture_history_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_profile_picture_history_picture
+                FOREIGN KEY (picture_id) REFERENCES profile_pictures(id)
+                ON DELETE SET NULL,
+            CONSTRAINT fk_profile_picture_history_admin
+                FOREIGN KEY (admin_user_id) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS waitlists (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            book_id INT NOT NULL,
+            join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            notification_date TIMESTAMP NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'Active',
+            admin_note VARCHAR(255) NULL,
+            UNIQUE KEY uq_waitlist_user_book (user_id, book_id),
+            CONSTRAINT fk_waitlists_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_waitlists_book
+                FOREIGN KEY (book_id) REFERENCES books(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS waitlist_history (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            waitlist_id INT NULL,
+            user_id INT NOT NULL,
+            book_id INT NOT NULL,
+            action VARCHAR(40) NOT NULL,
+            note VARCHAR(255) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_waitlist_history_waitlist
+                FOREIGN KEY (waitlist_id) REFERENCES waitlists(id)
+                ON DELETE SET NULL,
+            CONSTRAINT fk_waitlist_history_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_waitlist_history_book
+                FOREIGN KEY (book_id) REFERENCES books(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS borrow_history (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            borrowed_id INT NULL,
+            user_id INT NOT NULL,
+            book_id INT NOT NULL,
+            action VARCHAR(40) NOT NULL,
+            status VARCHAR(30) NOT NULL,
+            note VARCHAR(255) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_borrow_history_borrowed
+                FOREIGN KEY (borrowed_id) REFERENCES borrowed_books(id)
+                ON DELETE SET NULL,
+            CONSTRAINT fk_borrow_history_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_borrow_history_book
+                FOREIGN KEY (book_id) REFERENCES books(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS borrow_reports (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            report_name VARCHAR(120) NOT NULL,
+            generated_by INT NULL,
+            file_path VARCHAR(500) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_borrow_reports_admin
+                FOREIGN KEY (generated_by) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS fine_reports (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            report_name VARCHAR(120) NOT NULL,
+            generated_by INT NULL,
+            file_path VARCHAR(500) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_fine_reports_admin
+                FOREIGN KEY (generated_by) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS backup_history (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            backup_type VARCHAR(40) NOT NULL,
+            file_path VARCHAR(500) NULL,
+            admin_user_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_backup_history_admin
+                FOREIGN KEY (admin_user_id) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS security_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+            email VARCHAR(255) NULL,
+            event_type VARCHAR(80) NOT NULL,
+            ip_address VARCHAR(80) NULL,
+            summary VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_security_logs_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE SET NULL
+        )
+        """
+    )
+    _ensure_column(
+        cursor,
+        "book_reviews",
+        "action_type",
+        "ALTER TABLE book_reviews ADD COLUMN action_type VARCHAR(30) NULL AFTER review_text",
+    )
+    _ensure_column(
+        cursor,
+        "book_reviews",
+        "status",
+        "ALTER TABLE book_reviews ADD COLUMN status VARCHAR(30) NOT NULL DEFAULT 'Visible' AFTER action_type",
+    )
+    _ensure_column(
+        cursor,
+        "book_reviews",
+        "is_pinned",
+        "ALTER TABLE book_reviews ADD COLUMN is_pinned TINYINT(1) NOT NULL DEFAULT 0 AFTER status",
+    )
+    _ensure_column(
+        cursor,
+        "book_reviews",
+        "deleted_at",
+        "ALTER TABLE book_reviews ADD COLUMN deleted_at TIMESTAMP NULL AFTER updated_at",
+    )
+    _ensure_column(
+        cursor,
+        "fine_records",
+        "reason",
+        "ALTER TABLE fine_records ADD COLUMN reason VARCHAR(255) NOT NULL DEFAULT 'Overdue return' AFTER user_id",
+    )
+
+
+def _seed_sprint_accounts_and_activity(cursor):
+    seed_accounts = [
+        ("BookVerse Admin", "admin@bookverse.com", "Admin123", "admin", "active", "9800000000"),
+        ("Hari Sharma", "hari@gmail.com", "hari456hari", "user", "active", "9811000001"),
+        ("Sita Thapa", "sita@gmail.com", "sita456sita", "user", "active", "9811000002"),
+        ("Ram Karki", "ram@gmail.com", "ram456ram", "user", "active", "9811000003"),
+        ("Gita Rai", "gita@gmail.com", "gita456gita", "user", "active", "9811000004"),
+        ("Bishal Gurung", "bishal@gmail.com", "bishal456", "user", "active", "9811000005"),
+        ("Sabin Lama", "sabin@gmail.com", "sabin456", "user", "active", "9811000006"),
+        ("Suman Adhikari", "suman@gmail.com", "suman456", "user", "active", "9811000007"),
+        ("Prakash Shrestha", "prakash@gmail.com", "prakash456", "user", "active", "9811000008"),
+        ("Anita Bhandari", "anita@gmail.com", "anita456", "user", "active", "9811000009"),
+        ("Puja Basnet", "puja@gmail.com", "puja456", "user", "active", "9811000010"),
+        ("Nirmala KC", "nirmala@gmail.com", "nirmala456", "user", "active", "9811000011"),
+        ("Aashish Maharjan", "aashish@gmail.com", "aashish456", "user", "active", "9811000012"),
+        ("Meena Tamang", "meena@gmail.com", "meena456", "user", "active", "9811000013"),
+        ("Roshan Poudel", "roshan@gmail.com", "roshan456", "user", "active", "9811000014"),
+        ("Kabita Nepal", "kabita@gmail.com", "kabita456", "user", "active", "9811000015"),
+    ]
+
+    for username, email, password, role, status, phone in seed_accounts:
+        password_hash = generate_password_hash(password)
+        cursor.execute(
+            """
+            INSERT INTO users (username, email, password_hash, role, status, phone, phone_number, address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'Kathmandu, Nepal')
+            ON DUPLICATE KEY UPDATE
+                username = VALUES(username),
+                password_hash = VALUES(password_hash),
+                role = VALUES(role),
+                status = VALUES(status),
+                phone = VALUES(phone),
+                phone_number = VALUES(phone_number)
+            """,
+            (username, email, password_hash, role, status, phone, phone),
+        )
+
+    cursor.execute("UPDATE users SET role = 'user' WHERE role = 'admin' AND LOWER(email) != 'admin@bookverse.com'")
+
+    cursor.execute("SELECT id, email FROM users WHERE email IN %s", ([account[1] for account in seed_accounts],))
+    users = {row["email"]: row["id"] for row in cursor.fetchall()}
+    cursor.execute("SELECT id FROM books ORDER BY id ASC LIMIT 8")
+    book_ids = [row["id"] for row in cursor.fetchall()]
+    if not book_ids:
+        return
+
+    def book(index):
+        return book_ids[index % len(book_ids)]
+
+    def user(email):
+        return users.get(email)
+
+    def insert_activity(actor_id, event_type, entity_type, entity_id, summary):
+        cursor.execute(
+            """
+            INSERT INTO activity_logs (actor_user_id, event_type, entity_type, entity_id, summary)
+            SELECT %s, %s, %s, %s, %s
+            FROM DUAL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM activity_logs
+                WHERE actor_user_id <=> %s AND event_type = %s AND entity_type = %s
+                  AND entity_id <=> %s AND summary = %s
+            )
+            """,
+            (actor_id, event_type, entity_type, entity_id, summary, actor_id, event_type, entity_type, entity_id, summary),
+        )
+
+    def insert_borrow(email, book_id, status, days_ago, returned_days_ago=None):
+        user_id = user(email)
+        if not user_id:
+            return None
+        cursor.execute(
+            """
+            SELECT id FROM borrowed_books
+            WHERE user_id = %s AND book_id = %s AND status = %s
+            LIMIT 1
+            """,
+            (user_id, book_id, status),
+        )
+        existing = cursor.fetchone()
+        if existing:
+            return existing["id"]
+        return_date_sql = "DATE_SUB(NOW(), INTERVAL %s DAY)" if returned_days_ago is not None else "NULL"
+        params = [user_id, book_id, days_ago, days_ago]
+        if returned_days_ago is not None:
+            params.append(returned_days_ago)
+        params.append(status)
+        cursor.execute(
+            f"""
+            INSERT INTO borrowed_books (user_id, book_id, borrow_date, due_date, return_date, status)
+            VALUES (%s, %s, DATE_SUB(NOW(), INTERVAL %s DAY),
+                    DATE_ADD(DATE_SUB(NOW(), INTERVAL %s DAY), INTERVAL 21 DAY),
+                    {return_date_sql}, %s)
+            """,
+            tuple(params),
+        )
+        borrowed_id = cursor.lastrowid
+        cursor.execute(
+            """
+            INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+            VALUES (%s, %s, %s, 'Seeded', %s, 'Sample sprint activity')
+            """,
+            (borrowed_id, user_id, book_id, status),
+        )
+        insert_activity(user_id, "borrow_book", "borrowed_book", borrowed_id, "Sample borrow activity")
+        return borrowed_id
+
+    hari_borrow = insert_borrow("hari@gmail.com", book(0), "borrowed", 4)
+    insert_borrow("puja@gmail.com", book(1), "returned", 18, returned_days_ago=2)
+    insert_borrow("nirmala@gmail.com", book(2), "borrowed", 2)
+    insert_borrow("nirmala@gmail.com", book(3), "returned", 30, returned_days_ago=5)
+    overdue_borrow = insert_borrow("aashish@gmail.com", book(4), "overdue", 35)
+    gita_borrow = insert_borrow("gita@gmail.com", book(5), "returned", 42, returned_days_ago=6)
+    meena_borrow = insert_borrow("meena@gmail.com", book(6), "overdue", 34)
+
+    for email, book_index in (("sita@gmail.com", 1), ("kabita@gmail.com", 5)):
+        user_id = user(email)
+        if user_id:
+            cursor.execute(
+                """
+                INSERT INTO reservations (user_id, book_id, expiry_date, status, admin_note)
+                SELECT %s, %s, DATE_ADD(NOW(), INTERVAL 2 DAY), 'Pending', 'Sample active reservation'
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM reservations
+                    WHERE user_id = %s AND book_id = %s AND status IN ('Pending', 'Approved')
+                )
+                """,
+                (user_id, book(book_index), user_id, book(book_index)),
+            )
+            insert_activity(user_id, "reserve_book", "book", book(book_index), "Sample reservation activity")
+
+    ram_id = user("ram@gmail.com")
+    if ram_id:
+        cursor.execute(
+            """
+            SELECT id FROM orders WHERE user_id = %s AND book_id = %s LIMIT 1
+            """,
+            (ram_id, book(2)),
+        )
+        order = cursor.fetchone()
+        if not order:
+            cursor.execute(
+                """
+                INSERT INTO orders (user_id, book_id, quantity, unit_price, total_amount, status, payment_method, payment_reference, payment_note)
+                SELECT %s, books.id, 1, books.price, books.price, 'Paid', 'QR Payment', 'SEED-QR-001', 'Seed purchase receipt'
+                FROM books WHERE books.id = %s
+                """,
+                (ram_id, book(2)),
+            )
+            order_id = cursor.lastrowid
+            cursor.execute(
+                """
+                INSERT IGNORE INTO book_purchases (order_id, user_id, book_id, quantity, amount, payment_method, status)
+                SELECT %s, %s, books.id, 1, books.price, 'QR Payment', 'Paid'
+                FROM books WHERE books.id = %s
+                """,
+                (order_id, ram_id, book(2)),
+            )
+            cursor.execute(
+                """
+                INSERT IGNORE INTO purchase_receipts (order_id, receipt_number, amount, payment_method, payment_status)
+                SELECT %s, %s, books.price, 'QR Payment', 'Paid'
+                FROM books WHERE books.id = %s
+                """,
+                (order_id, f"BV-SEED-{order_id:05d}", book(2)),
+            )
+            insert_activity(ram_id, "purchase_book", "order", order_id, "Sample purchase activity")
+
+    for email, borrowed_id in (("gita@gmail.com", gita_borrow), ("meena@gmail.com", meena_borrow)):
+        user_id = user(email)
+        if user_id and borrowed_id:
+            cursor.execute(
+                """
+                INSERT INTO fine_records (borrowed_id, user_id, reason, overdue_days, fine_per_day, total_fine, status)
+                SELECT %s, %s, 'Overdue return', 14, 10.00, 140.00, 'Pending'
+                FROM DUAL
+                WHERE NOT EXISTS (SELECT 1 FROM fine_records WHERE borrowed_id = %s AND user_id = %s)
+                """,
+                (borrowed_id, user_id, borrowed_id, user_id),
+            )
+            insert_activity(user_id, "fine_payment", "fine_record", cursor.lastrowid or None, "Sample fine activity")
+
+    bishal_id = user("bishal@gmail.com")
+    if bishal_id:
+        cursor.execute(
+            """
+            INSERT INTO library_reviews (user_id, rating, review_text, status, is_pinned)
+            VALUES (%s, 5, 'BookVerse feels organized, clear, and easy to use for students.', 'Visible', 1)
+            ON DUPLICATE KEY UPDATE rating = VALUES(rating), review_text = VALUES(review_text), status = 'Visible'
+            """,
+            (bishal_id,),
+        )
+        cursor.execute(
+            """
+            INSERT INTO library_ratings (user_id, rating)
+            VALUES (%s, 5)
+            ON DUPLICATE KEY UPDATE rating = VALUES(rating), updated_at = CURRENT_TIMESTAMP
+            """,
+            (bishal_id,),
+        )
+        insert_activity(bishal_id, "library_review", "library_review", None, "Sample library review")
+
+    for email, rating, text, book_index, action_type in (
+        ("sabin@gmail.com", 4, "A practical and memorable read for focused learners.", 0, "Borrowed"),
+        ("roshan@gmail.com", 5, "Excellent book with strong ideas and clear examples.", 2, "Purchased"),
+    ):
+        user_id = user(email)
+        if user_id:
+            cursor.execute(
+                """
+                INSERT INTO book_reviews (user_id, book_id, rating, review_text, action_type, status)
+                VALUES (%s, %s, %s, %s, %s, 'Visible')
+                ON DUPLICATE KEY UPDATE
+                    rating = VALUES(rating),
+                    review_text = VALUES(review_text),
+                    action_type = VALUES(action_type),
+                    status = 'Visible'
+                """,
+                (user_id, book(book_index), rating, text, action_type),
+            )
+            cursor.execute(
+                """
+                INSERT INTO ratings (user_id, book_id, rating)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE rating = VALUES(rating)
+                """,
+                (user_id, book(book_index), rating),
+            )
+            cursor.execute(
+                """
+                INSERT INTO reviews (user_id, book_id, review_text)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE review_text = VALUES(review_text)
+                """,
+                (user_id, book(book_index), text),
+            )
+            insert_activity(user_id, "book_review", "book", book(book_index), "Sample book review")
+
+    suman_id = user("suman@gmail.com")
+    if suman_id:
+        cursor.execute(
+            """
+            INSERT INTO waitlists (user_id, book_id, status, admin_note)
+            VALUES (%s, %s, 'Active', 'Sample waitlist record')
+            ON DUPLICATE KEY UPDATE status = 'Active', admin_note = VALUES(admin_note)
+            """,
+            (suman_id, book(6)),
+        )
+        waitlist_id = cursor.lastrowid
+        cursor.execute(
+            """
+            INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+            VALUES (%s, %s, %s, 'Joined', 'Sample waitlist history')
+            """,
+            (waitlist_id or None, suman_id, book(6)),
+        )
+        insert_activity(suman_id, "waitlist_join", "book", book(6), "Sample waitlist activity")
+
+    prakash_id = user("prakash@gmail.com")
+    if prakash_id:
+        cursor.execute(
+            """
+            INSERT INTO profile_updates (user_id, field_name, old_value, new_value)
+            SELECT %s, 'address', 'Lalitpur', 'Kathmandu, Nepal'
+            FROM DUAL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM profile_updates
+                WHERE user_id = %s AND field_name = 'address' AND new_value = 'Kathmandu, Nepal'
+            )
+            """,
+            (prakash_id, prakash_id),
+        )
+        insert_activity(prakash_id, "profile_updated", "user", prakash_id, "Sample profile update")
+
+    anita_id = user("anita@gmail.com")
+    if anita_id:
+        cursor.execute(
+            """
+            SELECT id FROM profile_pictures
+            WHERE user_id = %s AND image_path = '/static/images/default-avatar.png'
+            LIMIT 1
+            """,
+            (anita_id,),
+        )
+        picture = cursor.fetchone()
+        if not picture:
+            cursor.execute(
+                """
+                INSERT INTO profile_pictures (user_id, image_path, status)
+                VALUES (%s, '/static/images/default-avatar.png', 'Active')
+                """,
+                (anita_id,),
+            )
+            picture_id = cursor.lastrowid
+            cursor.execute(
+                """
+                INSERT INTO profile_picture_history (user_id, picture_id, action, image_path)
+                VALUES (%s, %s, 'Uploaded', '/static/images/default-avatar.png')
+                """,
+                (anita_id, picture_id),
+            )
+            insert_activity(anita_id, "profile_picture_change", "profile_picture", picture_id, "Sample profile picture change")
+
+    admin_id = user("admin@bookverse.com")
+    insert_activity(admin_id, "admin_login_ready", "security", None, "Seed admin account prepared")
+    cursor.execute(
+        """
+        INSERT INTO notifications (user_id, title, message, notification_type, related_id)
+        SELECT id, 'Welcome to BookVerse', 'Your sprint demo account is ready for testing.', 'system', NULL
+        FROM users
+        WHERE email IN %s
+          AND NOT EXISTS (
+              SELECT 1 FROM notifications
+              WHERE notifications.user_id = users.id AND title = 'Welcome to BookVerse'
+          )
+        """,
+        ([account[1] for account in seed_accounts if account[3] == "user"],),
+    )
 
 
 def initialize_mysql_database():
@@ -870,6 +1438,25 @@ def initialize_mysql_database():
             )
             """
         )
+        _ensure_column(
+            cursor,
+            "borrowed_books",
+            "due_date",
+            "ALTER TABLE borrowed_books ADD COLUMN due_date DATETIME NULL AFTER borrow_date",
+        )
+        _ensure_column(
+            cursor,
+            "borrowed_books",
+            "fine_amount",
+            "ALTER TABLE borrowed_books ADD COLUMN fine_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER return_date",
+        )
+        cursor.execute(
+            """
+            UPDATE borrowed_books
+            SET due_date = DATE_ADD(borrow_date, INTERVAL 21 DAY)
+            WHERE due_date IS NULL
+            """
+        )
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS skills (
@@ -901,6 +1488,7 @@ def initialize_mysql_database():
         _ensure_feature_tables(cursor)
         _seed_books(cursor)
         _refresh_sample_books(cursor)
+        _seed_sprint_accounts_and_activity(cursor)
         connection.commit()
         print(f"MySQL database '{database_name}' is ready.")
         return True
@@ -1001,13 +1589,15 @@ BOOK_SELECT_WITH_METRICS = """
         borrowed_user.username AS borrowed_by
     FROM books
     LEFT JOIN (
-        SELECT book_id, ROUND(AVG(rating), 1) AS average_rating, COUNT(*) AS total_ratings
-        FROM ratings
+        SELECT book_id, ROUND(AVG(rating), 1) AS average_rating, COUNT(rating) AS total_ratings
+        FROM book_reviews
+        WHERE rating IS NOT NULL AND status = 'Visible' AND deleted_at IS NULL
         GROUP BY book_id
     ) AS book_rating ON book_rating.book_id = books.id
     LEFT JOIN (
         SELECT book_id, COUNT(*) AS review_count
-        FROM reviews
+        FROM book_reviews
+        WHERE review_text IS NOT NULL AND status = 'Visible' AND deleted_at IS NULL
         GROUP BY book_id
     ) AS book_reviews ON book_reviews.book_id = books.id
     LEFT JOIN (
@@ -1021,7 +1611,7 @@ BOOK_SELECT_WITH_METRICS = """
     LEFT JOIN (
         SELECT borrowed_books.book_id, MAX(borrowed_books.id) AS latest_borrow_id
         FROM borrowed_books
-        WHERE borrowed_books.status = 'borrowed'
+        WHERE borrowed_books.status IN ('borrowed', 'overdue')
         GROUP BY borrowed_books.book_id
     ) AS latest_borrow ON latest_borrow.book_id = books.id
     LEFT JOIN borrowed_books AS borrowed_record ON borrowed_record.id = latest_borrow.latest_borrow_id
@@ -1096,6 +1686,55 @@ def create_book(data):
     )
 
 
+def notify_waitlisted_users(book_id):
+    connection = get_connection()
+    notified = 0
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, user_id
+                FROM waitlists
+                WHERE book_id = %s AND status = 'Active'
+                ORDER BY join_date ASC
+                """,
+                (book_id,),
+            )
+            for waitlist in cursor.fetchall():
+                cursor.execute(
+                    """
+                    UPDATE waitlists
+                    SET status = 'Notified',
+                        notification_date = NOW(),
+                        admin_note = COALESCE(admin_note, 'Book availability notification sent')
+                    WHERE id = %s
+                    """,
+                    (waitlist["id"],),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+                    VALUES (%s, %s, %s, 'Notified', 'Book became available')
+                    """,
+                    (waitlist["id"], waitlist["user_id"], book_id),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO notifications (user_id, title, message, notification_type, related_id)
+                    VALUES (%s, 'Book available', 'A book from your waitlist is now available.', 'waitlist', %s)
+                    """,
+                    (waitlist["user_id"], book_id),
+                )
+                notified += 1
+            connection.commit()
+    except pymysql.MySQLError:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+    return notified
+
+
 def update_book(book_id, data):
     inventory = _normalized_book_inventory(data)
     execute(
@@ -1139,6 +1778,8 @@ def update_book(book_id, data):
             book_id,
         ),
     )
+    if inventory["stock_quantity"] > 0:
+        notify_waitlisted_users(book_id)
 
 
 def delete_book(book_id):
@@ -1172,10 +1813,18 @@ def borrow_book(user_id, book_id):
             new_status = "Available" if new_available else "Out of Stock"
             cursor.execute(
                 """
-                INSERT INTO borrowed_books (user_id, book_id, status)
-                VALUES (%s, %s, 'borrowed')
+                INSERT INTO borrowed_books (user_id, book_id, due_date, status)
+                VALUES (%s, %s, DATE_ADD(NOW(), INTERVAL 21 DAY), 'borrowed')
                 """,
                 (user_id, book_id),
+            )
+            borrowed_id = cursor.lastrowid
+            cursor.execute(
+                """
+                INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+                VALUES (%s, %s, %s, 'Borrowed', 'borrowed', 'Book borrowed by user')
+                """,
+                (borrowed_id, user_id, book_id),
             )
             cursor.execute(
                 """
@@ -1190,7 +1839,7 @@ def borrow_book(user_id, book_id):
                 (new_stock, new_stock, new_available, new_status, book_id),
             )
             connection.commit()
-            return loan["book_id"]
+            return True
     except pymysql.MySQLError:
         connection.rollback()
         raise
@@ -1215,10 +1864,18 @@ def return_book(user_id, borrowed_id):
             cursor.execute(
                 """
                 UPDATE borrowed_books
-                SET status = 'returned', return_date = CURRENT_TIMESTAMP
+                SET status = 'returned',
+                    return_date = CURRENT_TIMESTAMP
                 WHERE id = %s
                 """,
                 (borrowed_id,),
+            )
+            cursor.execute(
+                """
+                INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+                VALUES (%s, %s, %s, 'Returned', 'returned', 'Book returned by user')
+                """,
+                (borrowed_id, user_id, loan["book_id"]),
             )
             cursor.execute(
                 """
@@ -1233,8 +1890,42 @@ def return_book(user_id, borrowed_id):
                 """,
                 (loan["book_id"],),
             )
+            cursor.execute(
+                """
+                SELECT id, user_id
+                FROM waitlists
+                WHERE book_id = %s AND status = 'Active'
+                ORDER BY join_date ASC
+                """,
+                (loan["book_id"],),
+            )
+            for waitlist in cursor.fetchall():
+                cursor.execute(
+                    """
+                    UPDATE waitlists
+                    SET status = 'Notified',
+                        notification_date = NOW(),
+                        admin_note = COALESCE(admin_note, 'Book availability notification sent')
+                    WHERE id = %s
+                    """,
+                    (waitlist["id"],),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+                    VALUES (%s, %s, %s, 'Notified', 'Book became available')
+                    """,
+                    (waitlist["id"], waitlist["user_id"], loan["book_id"]),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO notifications (user_id, title, message, notification_type, related_id)
+                    VALUES (%s, 'Book available', 'A book from your waitlist is now available.', 'waitlist', %s)
+                    """,
+                    (waitlist["user_id"], loan["book_id"]),
+                )
             connection.commit()
-            return True
+            return loan["book_id"]
     except pymysql.MySQLError:
         connection.rollback()
         raise
@@ -1247,8 +1938,10 @@ def get_user_borrowed_books(user_id):
         """
         SELECT
             borrowed_books.id,
+            borrowed_books.book_id,
             borrowed_books.borrow_date,
             borrowed_books.return_date,
+            borrowed_books.fine_amount,
             borrowed_books.status,
             books.title,
             books.author,
@@ -1261,7 +1954,7 @@ def get_user_borrowed_books(user_id):
             books.available_copies,
             books.availability_status,
             books.image,
-            DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY) AS due_date
+            COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS due_date
         FROM borrowed_books
         INNER JOIN books ON borrowed_books.book_id = books.id
         WHERE borrowed_books.user_id = %s
@@ -1278,8 +1971,10 @@ def get_user_active_borrowed_books(user_id):
         FROM (
             SELECT
                 borrowed_books.id,
+                borrowed_books.book_id,
                 borrowed_books.borrow_date,
                 borrowed_books.return_date,
+                borrowed_books.fine_amount,
                 borrowed_books.status,
                 books.title,
                 books.author,
@@ -1292,11 +1987,11 @@ def get_user_active_borrowed_books(user_id):
                 books.available_copies,
                 books.availability_status,
                 books.image,
-                DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY) AS due_date
+                COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS due_date
             FROM borrowed_books
             INNER JOIN books ON borrowed_books.book_id = books.id
             WHERE borrowed_books.user_id = %s
-              AND borrowed_books.status = 'borrowed'
+              AND borrowed_books.status IN ('borrowed', 'overdue')
         ) AS active_loans
         ORDER BY borrow_date DESC
         """,
@@ -1305,13 +2000,39 @@ def get_user_active_borrowed_books(user_id):
 
 
 def get_dashboard_stats():
+    library_summary = fetch_one(
+        """
+        SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average_rating,
+               COUNT(*) AS total_reviews
+        FROM library_reviews
+        WHERE status = 'Visible' AND deleted_at IS NULL
+        """
+    )
     return {
         "books": fetch_one("SELECT COUNT(*) AS total FROM books")["total"],
         "members": fetch_one("SELECT COUNT(*) AS total FROM users")["total"],
+        "active_users": fetch_one("SELECT COUNT(*) AS total FROM users WHERE status = 'active'")["total"],
         "borrowed": fetch_one(
-            "SELECT COUNT(*) AS total FROM borrowed_books WHERE status = 'borrowed'"
+            "SELECT COUNT(*) AS total FROM borrowed_books WHERE status IN ('borrowed', 'overdue')"
         )["total"],
         "available": fetch_one("SELECT COUNT(*) AS total FROM books WHERE available = 1")["total"],
+        "reserved": fetch_one(
+            "SELECT COUNT(*) AS total FROM reservations WHERE status IN ('Pending', 'Approved') AND expiry_date >= NOW()"
+        )["total"],
+        "purchased": fetch_one("SELECT COUNT(*) AS total FROM orders WHERE status IN ('Paid', 'Processing', 'Completed')")["total"],
+        "outstanding_fines": fetch_one(
+            "SELECT COALESCE(SUM(total_fine), 0) AS total FROM fine_records WHERE status NOT IN ('Paid', 'Approved')"
+        )["total"],
+        "average_library_rating": library_summary["average_rating"] if library_summary else 0,
+        "library_reviews": library_summary["total_reviews"] if library_summary else 0,
+        "book_reviews": fetch_one(
+            "SELECT COUNT(*) AS total FROM book_reviews WHERE review_text IS NOT NULL AND status = 'Visible' AND deleted_at IS NULL"
+        )["total"],
+        "pending_waitlists": fetch_one("SELECT COUNT(*) AS total FROM waitlists WHERE status = 'Active'")["total"],
+        "notifications_sent": fetch_one("SELECT COUNT(*) AS total FROM notifications")["total"],
+        "security_alerts": fetch_one(
+            "SELECT COUNT(*) AS total FROM security_logs WHERE event_type IN ('failed_login', 'suspicious_activity', 'lockout')"
+        )["total"],
     }
 
 
@@ -2083,7 +2804,7 @@ def delete_order(order_id):
         connection.close()
 
 
-def upsert_review(user_id, book_id, review_text):
+def upsert_review(user_id, book_id, review_text, action_type=None):
     review_id = execute(
         """
         INSERT INTO reviews (user_id, book_id, review_text)
@@ -2096,26 +2817,45 @@ def upsert_review(user_id, book_id, review_text):
     )
     execute(
         """
-        INSERT INTO book_reviews (user_id, book_id, review_text)
-        VALUES (%s, %s, %s)
+        INSERT INTO book_reviews (user_id, book_id, review_text, action_type, status, deleted_at)
+        VALUES (%s, %s, %s, %s, 'Visible', NULL)
         ON DUPLICATE KEY UPDATE
             review_text = VALUES(review_text),
+            action_type = COALESCE(VALUES(action_type), action_type),
+            status = 'Visible',
+            deleted_at = NULL,
             updated_at = CURRENT_TIMESTAMP
         """,
-        (user_id, book_id, review_text),
+        (user_id, book_id, review_text, action_type),
     )
     return review_id
 
 
 def delete_review(review_id, user_id=None, is_admin=False):
     review = fetch_one("SELECT user_id, book_id FROM reviews WHERE id = %s", (review_id,))
-    if is_admin:
-        execute("DELETE FROM reviews WHERE id = %s", (review_id,))
-    else:
-        execute("DELETE FROM reviews WHERE id = %s AND user_id = %s", (review_id, user_id))
-    if review and (is_admin or review["user_id"] == user_id):
+    book_review = None
+    if not review:
+        book_review = fetch_one("SELECT user_id, book_id FROM book_reviews WHERE id = %s", (review_id,))
+        review = book_review
+    if not review:
+        return
+    if is_admin or review["user_id"] == user_id:
         execute(
-            "UPDATE book_reviews SET review_text = NULL WHERE user_id = %s AND book_id = %s",
+            """
+            DELETE FROM reviews
+            WHERE user_id = %s AND book_id = %s
+            """,
+            (review["user_id"], review["book_id"]),
+        )
+        execute(
+            """
+            UPDATE book_reviews
+            SET review_text = NULL,
+                status = CASE WHEN rating IS NULL THEN 'Deleted' ELSE status END,
+                deleted_at = CASE WHEN rating IS NULL THEN CURRENT_TIMESTAMP ELSE deleted_at END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s AND book_id = %s
+            """,
             (review["user_id"], review["book_id"]),
         )
 
@@ -2123,17 +2863,21 @@ def delete_review(review_id, user_id=None, is_admin=False):
 def list_book_reviews(book_id):
     return fetch_all(
         """
-        SELECT reviews.*, users.username
-        FROM reviews
-        INNER JOIN users ON reviews.user_id = users.id
-        WHERE reviews.book_id = %s
-        ORDER BY COALESCE(reviews.updated_at, reviews.review_date) DESC
+        SELECT book_reviews.*, users.username
+        FROM book_reviews
+        INNER JOIN users ON book_reviews.user_id = users.id
+        WHERE book_reviews.book_id = %s
+          AND book_reviews.review_text IS NOT NULL
+          AND book_reviews.status = 'Visible'
+          AND book_reviews.deleted_at IS NULL
+        ORDER BY book_reviews.is_pinned DESC,
+                 COALESCE(book_reviews.updated_at, book_reviews.review_date) DESC
         """,
         (book_id,),
     )
 
 
-def set_book_rating(user_id, book_id, rating):
+def set_book_rating(user_id, book_id, rating, action_type=None):
     rating_id = execute(
         """
         INSERT INTO ratings (user_id, book_id, rating)
@@ -2146,13 +2890,16 @@ def set_book_rating(user_id, book_id, rating):
     )
     execute(
         """
-        INSERT INTO book_reviews (user_id, book_id, rating)
-        VALUES (%s, %s, %s)
+        INSERT INTO book_reviews (user_id, book_id, rating, action_type, status, deleted_at)
+        VALUES (%s, %s, %s, %s, 'Visible', NULL)
         ON DUPLICATE KEY UPDATE
             rating = VALUES(rating),
+            action_type = COALESCE(VALUES(action_type), action_type),
+            status = 'Visible',
+            deleted_at = NULL,
             updated_at = CURRENT_TIMESTAMP
         """,
-        (user_id, book_id, rating),
+        (user_id, book_id, rating, action_type),
     )
     return rating_id
 
@@ -2166,23 +2913,7 @@ def get_user_book_rating(user_id, book_id):
 
 
 def get_library_rating_summary():
-    summary = fetch_one(
-        """
-        SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average_rating,
-               COUNT(*) AS total_reviews
-        FROM ratings
-        """
-    )
-    distribution = fetch_all(
-        """
-        SELECT rating, COUNT(*) AS total
-        FROM ratings
-        GROUP BY rating
-        ORDER BY rating DESC
-        """
-    )
-    summary["distribution"] = {row["rating"]: row["total"] for row in distribution}
-    return summary
+    return get_library_review_summary()
 
 
 def list_user_reviews_and_ratings(user_id):
@@ -2195,6 +2926,8 @@ def list_user_reviews_and_ratings(user_id):
             books.image,
             book_reviews.rating,
             book_reviews.review_text,
+            book_reviews.action_type,
+            book_reviews.status,
             book_reviews.review_date,
             book_reviews.updated_at,
             COALESCE(book_rating.average_rating, 0) AS average_rating,
@@ -2204,10 +2937,11 @@ def list_user_reviews_and_ratings(user_id):
         LEFT JOIN (
             SELECT book_id, ROUND(AVG(rating), 1) AS average_rating, COUNT(rating) AS total_ratings
             FROM book_reviews
-            WHERE rating IS NOT NULL
+            WHERE rating IS NOT NULL AND status = 'Visible' AND deleted_at IS NULL
             GROUP BY book_id
         ) AS book_rating ON book_rating.book_id = books.id
         WHERE book_reviews.user_id = %s
+          AND book_reviews.deleted_at IS NULL
         ORDER BY COALESCE(book_reviews.updated_at, book_reviews.review_date) DESC
         """,
         (user_id,),
@@ -2224,6 +2958,866 @@ def list_user_notifications(user_id, limit=8):
         LIMIT %s
         """,
         (user_id, limit),
+    )
+
+
+def log_security_event(user_id, email, event_type, ip_address, summary):
+    try:
+        execute(
+            """
+            INSERT INTO security_logs (user_id, email, event_type, ip_address, summary)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (user_id, email, event_type, ip_address, summary[:255]),
+        )
+        log_event(user_id, event_type, "security", None, summary)
+    except pymysql.MySQLError:
+        pass
+
+
+def get_library_review_summary():
+    summary = fetch_one(
+        """
+        SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average_rating,
+               COUNT(*) AS total_reviews
+        FROM library_reviews
+        WHERE status = 'Visible' AND deleted_at IS NULL
+        """
+    )
+    distribution = fetch_all(
+        """
+        SELECT rating, COUNT(*) AS total
+        FROM library_reviews
+        WHERE status = 'Visible' AND deleted_at IS NULL
+        GROUP BY rating
+        ORDER BY rating DESC
+        """
+    )
+    featured = fetch_all(
+        """
+        SELECT library_reviews.*, users.username
+        FROM library_reviews
+        INNER JOIN users ON library_reviews.user_id = users.id
+        WHERE library_reviews.status = 'Visible'
+          AND library_reviews.deleted_at IS NULL
+          AND library_reviews.is_pinned = 1
+        ORDER BY library_reviews.updated_at DESC, library_reviews.created_at DESC
+        LIMIT 6
+        """
+    )
+    latest = fetch_all(
+        """
+        SELECT library_reviews.*, users.username
+        FROM library_reviews
+        INNER JOIN users ON library_reviews.user_id = users.id
+        WHERE library_reviews.status = 'Visible'
+          AND library_reviews.deleted_at IS NULL
+        ORDER BY COALESCE(library_reviews.updated_at, library_reviews.created_at) DESC
+        LIMIT 10
+        """
+    )
+    return {
+        "average_rating": summary["average_rating"] if summary else 0,
+        "total_reviews": summary["total_reviews"] if summary else 0,
+        "distribution": {row["rating"]: row["total"] for row in distribution},
+        "featured": featured,
+        "latest": latest,
+    }
+
+
+def get_user_library_review(user_id):
+    return fetch_one(
+        """
+        SELECT *
+        FROM library_reviews
+        WHERE user_id = %s AND deleted_at IS NULL
+        """,
+        (user_id,),
+    )
+
+
+def upsert_library_review(user_id, rating, review_text):
+    review_id = execute(
+        """
+        INSERT INTO library_reviews (user_id, rating, review_text, status)
+        VALUES (%s, %s, %s, 'Visible')
+        ON DUPLICATE KEY UPDATE
+            rating = VALUES(rating),
+            review_text = VALUES(review_text),
+            status = 'Visible',
+            deleted_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (user_id, rating, review_text),
+    )
+    execute(
+        """
+        INSERT INTO library_ratings (user_id, rating)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE rating = VALUES(rating), updated_at = CURRENT_TIMESTAMP
+        """,
+        (user_id, rating),
+    )
+    log_event(user_id, "library_review_submitted", "library_review", review_id or user_id, "Library review submitted")
+    return review_id
+
+
+def delete_library_review(user_id):
+    review = get_user_library_review(user_id)
+    execute(
+        """
+        UPDATE library_reviews
+        SET status = 'Deleted',
+            deleted_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = %s
+        """,
+        (user_id,),
+    )
+    if review:
+        log_event(user_id, "library_review_deleted", "library_review", review["id"], "Library review deleted")
+
+
+def list_admin_library_reviews():
+    return fetch_all(
+        """
+        SELECT library_reviews.*, users.username, users.email
+        FROM library_reviews
+        INNER JOIN users ON library_reviews.user_id = users.id
+        ORDER BY library_reviews.is_pinned DESC,
+                 COALESCE(library_reviews.updated_at, library_reviews.created_at) DESC
+        """
+    )
+
+
+def list_review_moderation_logs(review_type=None, review_id=None):
+    params = []
+    filters = []
+    if review_type:
+        filters.append("review_moderation_logs.review_type = %s")
+        params.append(review_type)
+    if review_id:
+        filters.append("review_moderation_logs.review_id = %s")
+        params.append(review_id)
+    where_sql = "WHERE " + " AND ".join(filters) if filters else ""
+    return fetch_all(
+        f"""
+        SELECT review_moderation_logs.*, users.username AS admin_name
+        FROM review_moderation_logs
+        LEFT JOIN users ON review_moderation_logs.admin_user_id = users.id
+        {where_sql}
+        ORDER BY review_moderation_logs.created_at DESC
+        LIMIT 100
+        """,
+        tuple(params),
+    )
+
+
+def moderate_library_review(review_id, action, admin_user_id):
+    updates = {
+        "pin": ("is_pinned = 1", "Pinned"),
+        "unpin": ("is_pinned = 0", "Unpinned"),
+        "hide": ("status = 'Hidden'", "Hidden"),
+        "delete": ("status = 'Deleted', deleted_at = CURRENT_TIMESTAMP", "Deleted"),
+        "restore": ("status = 'Visible', deleted_at = NULL", "Restored"),
+    }
+    if action not in updates:
+        return False
+    update_sql, label = updates[action]
+    execute(
+        f"""
+        UPDATE library_reviews
+        SET {update_sql},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+        """,
+        (review_id,),
+    )
+    execute(
+        """
+        INSERT INTO review_moderation_logs (review_type, review_id, admin_user_id, action, note)
+        VALUES ('library', %s, %s, %s, %s)
+        """,
+        (review_id, admin_user_id, label, f"Library review {label.lower()}"),
+    )
+    log_event(admin_user_id, "library_review_moderated", "library_review", review_id, f"Library review {label.lower()}")
+    return True
+
+
+def get_book_review_eligibility(user_id, book_id):
+    checks = [
+        (
+            "Borrowed",
+            """
+            SELECT id FROM borrowed_books
+            WHERE user_id = %s AND book_id = %s
+            LIMIT 1
+            """,
+        ),
+        (
+            "Reserved",
+            """
+            SELECT id FROM reservations
+            WHERE user_id = %s AND book_id = %s
+            LIMIT 1
+            """,
+        ),
+        (
+            "Purchased",
+            """
+            SELECT id FROM orders
+            WHERE user_id = %s AND book_id = %s
+              AND status IN ('Pending', 'Paid', 'Processing', 'Completed')
+            LIMIT 1
+            """,
+        ),
+    ]
+    for action_type, query in checks:
+        if fetch_one(query, (user_id, book_id)):
+            return action_type
+    return None
+
+
+def list_admin_book_reviews():
+    return fetch_all(
+        """
+        SELECT book_reviews.*, users.username, users.email, books.title, books.author
+        FROM book_reviews
+        INNER JOIN users ON book_reviews.user_id = users.id
+        INNER JOIN books ON book_reviews.book_id = books.id
+        WHERE book_reviews.review_text IS NOT NULL OR book_reviews.rating IS NOT NULL
+        ORDER BY book_reviews.is_pinned DESC,
+                 COALESCE(book_reviews.updated_at, book_reviews.review_date) DESC
+        """
+    )
+
+
+def moderate_book_review(review_id, action, admin_user_id):
+    updates = {
+        "pin": ("is_pinned = 1", "Pinned"),
+        "unpin": ("is_pinned = 0", "Unpinned"),
+        "hide": ("status = 'Hidden'", "Hidden"),
+        "delete": ("status = 'Deleted', deleted_at = CURRENT_TIMESTAMP", "Deleted"),
+        "restore": ("status = 'Visible', deleted_at = NULL", "Restored"),
+    }
+    if action not in updates:
+        return False
+    update_sql, label = updates[action]
+    execute(
+        f"""
+        UPDATE book_reviews
+        SET {update_sql},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+        """,
+        (review_id,),
+    )
+    execute(
+        """
+        INSERT INTO review_moderation_logs (review_type, review_id, admin_user_id, action, note)
+        VALUES ('book', %s, %s, %s, %s)
+        """,
+        (review_id, admin_user_id, label, f"Book review {label.lower()}"),
+    )
+    log_event(admin_user_id, "book_review_moderated", "book_review", review_id, f"Book review {label.lower()}")
+    return True
+
+
+def get_book_review_statistics():
+    top_rated = fetch_all(
+        """
+        SELECT books.id, books.title, books.author,
+               ROUND(AVG(book_reviews.rating), 1) AS average_rating,
+               COUNT(book_reviews.rating) AS total_ratings
+        FROM books
+        INNER JOIN book_reviews ON book_reviews.book_id = books.id
+        WHERE book_reviews.rating IS NOT NULL
+          AND book_reviews.status = 'Visible'
+          AND book_reviews.deleted_at IS NULL
+        GROUP BY books.id, books.title, books.author
+        ORDER BY average_rating DESC, total_ratings DESC
+        LIMIT 5
+        """
+    )
+    most_reviewed = fetch_all(
+        """
+        SELECT books.id, books.title, books.author,
+               COUNT(book_reviews.review_text) AS review_count
+        FROM books
+        INNER JOIN book_reviews ON book_reviews.book_id = books.id
+        WHERE book_reviews.review_text IS NOT NULL
+          AND book_reviews.status = 'Visible'
+          AND book_reviews.deleted_at IS NULL
+        GROUP BY books.id, books.title, books.author
+        ORDER BY review_count DESC
+        LIMIT 5
+        """
+    )
+    summary = fetch_one(
+        """
+        SELECT COALESCE(ROUND(AVG(rating), 1), 0) AS average_book_rating,
+               COUNT(rating) AS total_ratings,
+               COUNT(review_text) AS total_reviews
+        FROM book_reviews
+        WHERE status = 'Visible' AND deleted_at IS NULL
+        """
+    )
+    return {"top_rated": top_rated, "most_reviewed": most_reviewed, "summary": summary}
+
+
+def get_active_profile_picture(user_id):
+    return fetch_one(
+        """
+        SELECT *
+        FROM profile_pictures
+        WHERE user_id = %s AND status = 'Active'
+        ORDER BY modified_date DESC, upload_date DESC
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+
+
+def save_profile_picture(user_id, image_path, actor_user_id=None):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE profile_pictures
+                SET status = 'Removed',
+                    removed_at = NOW(),
+                    removed_by = %s,
+                    modified_date = NOW()
+                WHERE user_id = %s AND status = 'Active'
+                """,
+                (actor_user_id or user_id, user_id),
+            )
+            cursor.execute(
+                """
+                INSERT INTO profile_pictures (user_id, image_path, status, modified_date)
+                VALUES (%s, %s, 'Active', NOW())
+                """,
+                (user_id, image_path),
+            )
+            picture_id = cursor.lastrowid
+            cursor.execute(
+                """
+                INSERT INTO profile_picture_history (user_id, picture_id, action, image_path, admin_user_id)
+                VALUES (%s, %s, 'Uploaded', %s, %s)
+                """,
+                (user_id, picture_id, image_path, actor_user_id if actor_user_id != user_id else None),
+            )
+            connection.commit()
+            log_event(actor_user_id or user_id, "profile_picture_change", "profile_picture", picture_id, "Profile picture updated")
+            return picture_id
+    except pymysql.MySQLError:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def remove_profile_picture(user_id, actor_user_id=None):
+    picture = get_active_profile_picture(user_id)
+    if not picture:
+        return False
+    execute(
+        """
+        UPDATE profile_pictures
+        SET status = 'Removed',
+            removed_at = NOW(),
+            removed_by = %s,
+            modified_date = NOW()
+        WHERE id = %s
+        """,
+        (actor_user_id or user_id, picture["id"]),
+    )
+    execute(
+        """
+        INSERT INTO profile_picture_history (user_id, picture_id, action, image_path, admin_user_id)
+        VALUES (%s, %s, 'Removed', %s, %s)
+        """,
+        (user_id, picture["id"], picture["image_path"], actor_user_id if actor_user_id != user_id else None),
+    )
+    log_event(actor_user_id or user_id, "profile_picture_removed", "profile_picture", picture["id"], "Profile picture removed")
+    return True
+
+
+def restore_profile_picture(picture_id, admin_user_id):
+    picture = fetch_one("SELECT * FROM profile_pictures WHERE id = %s", (picture_id,))
+    if not picture:
+        return False
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE profile_pictures
+                SET status = 'Removed',
+                    removed_at = NOW(),
+                    removed_by = %s,
+                    modified_date = NOW()
+                WHERE user_id = %s AND status = 'Active'
+                """,
+                (admin_user_id, picture["user_id"]),
+            )
+            cursor.execute(
+                """
+                UPDATE profile_pictures
+                SET status = 'Active',
+                    removed_at = NULL,
+                    removed_by = NULL,
+                    modified_date = NOW()
+                WHERE id = %s
+                """,
+                (picture_id,),
+            )
+            cursor.execute(
+                """
+                INSERT INTO profile_picture_history (user_id, picture_id, action, image_path, admin_user_id)
+                VALUES (%s, %s, 'Restored', %s, %s)
+                """,
+                (picture["user_id"], picture_id, picture["image_path"], admin_user_id),
+            )
+            connection.commit()
+            log_event(admin_user_id, "profile_picture_restored", "profile_picture", picture_id, "Profile picture restored")
+            return True
+    except pymysql.MySQLError:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def list_profile_picture_history(user_id):
+    return fetch_all(
+        """
+        SELECT profile_picture_history.*, users.username AS admin_name
+        FROM profile_picture_history
+        LEFT JOIN users ON profile_picture_history.admin_user_id = users.id
+        WHERE profile_picture_history.user_id = %s
+        ORDER BY profile_picture_history.created_at DESC
+        """,
+        (user_id,),
+    )
+
+
+def list_admin_profile_pictures():
+    return fetch_all(
+        """
+        SELECT profile_pictures.*, users.username, users.email
+        FROM profile_pictures
+        INNER JOIN users ON profile_pictures.user_id = users.id
+        ORDER BY profile_pictures.modified_date DESC, profile_pictures.upload_date DESC
+        """
+    )
+
+
+def join_waitlist(user_id, book_id):
+    book = get_book(book_id)
+    if not book:
+        return None
+    waitlist_id = execute(
+        """
+        INSERT INTO waitlists (user_id, book_id, status, admin_note)
+        VALUES (%s, %s, 'Active', 'Joined by user')
+        ON DUPLICATE KEY UPDATE
+            status = 'Active',
+            notification_date = NULL,
+            admin_note = 'Rejoined by user'
+        """,
+        (user_id, book_id),
+    )
+    row = fetch_one("SELECT id FROM waitlists WHERE user_id = %s AND book_id = %s", (user_id, book_id))
+    waitlist_id = waitlist_id or row["id"]
+    execute(
+        """
+        INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+        VALUES (%s, %s, %s, 'Joined', 'User joined waitlist')
+        """,
+        (waitlist_id, user_id, book_id),
+    )
+    log_event(user_id, "waitlist_join", "book", book_id, "User joined waitlist")
+    return waitlist_id
+
+
+def leave_waitlist(user_id, waitlist_id):
+    waitlist = fetch_one(
+        "SELECT * FROM waitlists WHERE id = %s AND user_id = %s",
+        (waitlist_id, user_id),
+    )
+    if not waitlist:
+        return False
+    execute(
+        "UPDATE waitlists SET status = 'Left', admin_note = 'Left by user' WHERE id = %s",
+        (waitlist_id,),
+    )
+    execute(
+        """
+        INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+        VALUES (%s, %s, %s, 'Left', 'User left waitlist')
+        """,
+        (waitlist_id, user_id, waitlist["book_id"]),
+    )
+    log_event(user_id, "waitlist_leave", "book", waitlist["book_id"], "User left waitlist")
+    return True
+
+
+def list_user_waitlists(user_id):
+    return fetch_all(
+        """
+        SELECT waitlists.*, books.title, books.author, books.image, books.availability_status, books.stock_quantity
+        FROM waitlists
+        INNER JOIN books ON waitlists.book_id = books.id
+        WHERE waitlists.user_id = %s AND waitlists.status IN ('Active', 'Notified')
+        ORDER BY waitlists.join_date DESC
+        """,
+        (user_id,),
+    )
+
+
+def list_admin_waitlists():
+    return fetch_all(
+        """
+        SELECT waitlists.*, users.username, users.email, books.title, books.author
+        FROM waitlists
+        INNER JOIN users ON waitlists.user_id = users.id
+        INNER JOIN books ON waitlists.book_id = books.id
+        ORDER BY waitlists.join_date DESC
+        """
+    )
+
+
+def get_waitlist(waitlist_id):
+    return fetch_one(
+        """
+        SELECT waitlists.*, users.username, users.email, books.title, books.author
+        FROM waitlists
+        INNER JOIN users ON waitlists.user_id = users.id
+        INNER JOIN books ON waitlists.book_id = books.id
+        WHERE waitlists.id = %s
+        """,
+        (waitlist_id,),
+    )
+
+
+def update_waitlist_admin(waitlist_id, status, note, admin_user_id):
+    waitlist = get_waitlist(waitlist_id)
+    if not waitlist:
+        return False
+    execute(
+        "UPDATE waitlists SET status = %s, admin_note = %s WHERE id = %s",
+        (status, note, waitlist_id),
+    )
+    execute(
+        """
+        INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (waitlist_id, waitlist["user_id"], waitlist["book_id"], status, note),
+    )
+    log_event(admin_user_id, "waitlist_updated", "waitlist", waitlist_id, "Waitlist record updated")
+    return True
+
+
+def delete_waitlist_admin(waitlist_id, admin_user_id):
+    waitlist = get_waitlist(waitlist_id)
+    if not waitlist:
+        return False
+    execute(
+        """
+        INSERT INTO waitlist_history (waitlist_id, user_id, book_id, action, note)
+        VALUES (%s, %s, %s, 'Removed', 'Removed by admin')
+        """,
+        (waitlist_id, waitlist["user_id"], waitlist["book_id"]),
+    )
+    execute("DELETE FROM waitlists WHERE id = %s", (waitlist_id,))
+    log_event(admin_user_id, "waitlist_removed", "waitlist", waitlist_id, "Waitlist record removed")
+    return True
+
+
+def mark_notification_read(user_id, notification_id):
+    execute(
+        "UPDATE notifications SET is_read = 1 WHERE id = %s AND user_id = %s",
+        (notification_id, user_id),
+    )
+
+
+def delete_notification(user_id, notification_id):
+    execute("DELETE FROM notifications WHERE id = %s AND user_id = %s", (notification_id, user_id))
+
+
+def create_notification(user_id, title, message, notification_type="manual", related_id=None):
+    notification_id = execute(
+        """
+        INSERT INTO notifications (user_id, title, message, notification_type, related_id)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (user_id, title, message, notification_type, related_id),
+    )
+    log_event(user_id, "notification_sent", "notification", notification_id, title)
+    return notification_id
+
+
+def list_admin_notifications():
+    return fetch_all(
+        """
+        SELECT notifications.*, users.username, users.email
+        FROM notifications
+        INNER JOIN users ON notifications.user_id = users.id
+        ORDER BY notifications.created_at DESC
+        LIMIT 200
+        """
+    )
+
+
+def delete_notification_admin(notification_id, admin_user_id):
+    execute("DELETE FROM notifications WHERE id = %s", (notification_id,))
+    log_event(admin_user_id, "notification_deleted", "notification", notification_id, "Notification deleted")
+
+
+def list_activity_logs(search=None, event_type=None, limit=200):
+    params = []
+    filters = []
+    if search:
+        filters.append("(activity_logs.summary LIKE %s OR users.username LIKE %s OR activity_logs.event_type LIKE %s)")
+        value = f"%{search}%"
+        params.extend([value, value, value])
+    if event_type:
+        filters.append("activity_logs.event_type = %s")
+        params.append(event_type)
+    where_sql = "WHERE " + " AND ".join(filters) if filters else ""
+    params.append(limit)
+    return fetch_all(
+        f"""
+        SELECT activity_logs.*, users.username, users.email
+        FROM activity_logs
+        LEFT JOIN users ON activity_logs.actor_user_id = users.id
+        {where_sql}
+        ORDER BY activity_logs.created_at DESC
+        LIMIT %s
+        """,
+        tuple(params),
+    )
+
+
+def list_security_logs(search=None, limit=100):
+    params = []
+    where_sql = ""
+    if search:
+        where_sql = "WHERE email LIKE %s OR summary LIKE %s OR event_type LIKE %s"
+        value = f"%{search}%"
+        params.extend([value, value, value])
+    params.append(limit)
+    return fetch_all(
+        f"""
+        SELECT security_logs.*, users.username
+        FROM security_logs
+        LEFT JOIN users ON security_logs.user_id = users.id
+        {where_sql}
+        ORDER BY security_logs.created_at DESC
+        LIMIT %s
+        """,
+        tuple(params),
+    )
+
+
+def list_admin_borrows(search=None):
+    params = []
+    where_sql = ""
+    if search:
+        where_sql = "WHERE users.username LIKE %s OR users.email LIKE %s OR books.title LIKE %s OR borrowed_books.status LIKE %s"
+        value = f"%{search}%"
+        params.extend([value, value, value, value])
+    return fetch_all(
+        f"""
+        SELECT borrowed_books.*,
+               COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS display_due_date,
+               users.username,
+               users.email,
+               books.title,
+               books.author
+        FROM borrowed_books
+        INNER JOIN users ON borrowed_books.user_id = users.id
+        INNER JOIN books ON borrowed_books.book_id = books.id
+        {where_sql}
+        ORDER BY borrowed_books.borrow_date DESC
+        """,
+        tuple(params),
+    )
+
+
+def get_borrow_record(borrowed_id):
+    return fetch_one(
+        """
+        SELECT borrowed_books.*,
+               users.username,
+               users.email,
+               books.title,
+               books.author
+        FROM borrowed_books
+        INNER JOIN users ON borrowed_books.user_id = users.id
+        INNER JOIN books ON borrowed_books.book_id = books.id
+        WHERE borrowed_books.id = %s
+        """,
+        (borrowed_id,),
+    )
+
+
+def update_borrow_record(borrowed_id, due_date, status, fine_amount, admin_user_id):
+    borrow = get_borrow_record(borrowed_id)
+    if not borrow:
+        return False
+    execute(
+        """
+        UPDATE borrowed_books
+        SET due_date = %s,
+            status = %s,
+            fine_amount = %s,
+            return_date = CASE WHEN %s = 'returned' AND return_date IS NULL THEN NOW() ELSE return_date END
+        WHERE id = %s
+        """,
+        (due_date, status, fine_amount, status, borrowed_id),
+    )
+    execute(
+        """
+        INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+        VALUES (%s, %s, %s, 'Updated', %s, 'Borrow record updated by admin')
+        """,
+        (borrowed_id, borrow["user_id"], borrow["book_id"], status),
+    )
+    log_event(admin_user_id, "borrow_updated", "borrowed_book", borrowed_id, "Borrow record updated")
+    return True
+
+
+def force_return_borrow_record(borrowed_id, admin_user_id):
+    borrow = get_borrow_record(borrowed_id)
+    if not borrow:
+        return False
+    execute(
+        """
+        UPDATE borrowed_books
+        SET status = 'returned',
+            return_date = COALESCE(return_date, NOW())
+        WHERE id = %s
+        """,
+        (borrowed_id,),
+    )
+    execute(
+        """
+        UPDATE books
+        SET stock_quantity = stock_quantity + 1,
+            available_copies = stock_quantity + 1,
+            total_copies = GREATEST(total_copies, stock_quantity + 1),
+            available = 1,
+            availability_status = 'Available',
+            book_status = 'Available'
+        WHERE id = %s
+        """,
+        (borrow["book_id"],),
+    )
+    execute(
+        """
+        INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+        VALUES (%s, %s, %s, 'Force Returned', 'returned', 'Force returned by admin')
+        """,
+        (borrowed_id, borrow["user_id"], borrow["book_id"]),
+    )
+    log_event(admin_user_id, "borrow_force_returned", "borrowed_book", borrowed_id, "Borrow record force returned")
+    return True
+
+
+def delete_borrow_record(borrowed_id, admin_user_id):
+    borrow = get_borrow_record(borrowed_id)
+    if not borrow:
+        return False
+    execute(
+        """
+        INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+        VALUES (%s, %s, %s, 'Deleted', %s, 'Borrow record deleted by admin')
+        """,
+        (borrowed_id, borrow["user_id"], borrow["book_id"], borrow["status"]),
+    )
+    execute("DELETE FROM borrowed_books WHERE id = %s", (borrowed_id,))
+    log_event(admin_user_id, "borrow_deleted", "borrowed_book", borrowed_id, "Borrow record deleted")
+    return True
+
+
+def list_borrow_timeline(borrowed_id):
+    return fetch_all(
+        """
+        SELECT *
+        FROM borrow_history
+        WHERE borrowed_id = %s
+        ORDER BY created_at DESC
+        """,
+        (borrowed_id,),
+    )
+
+
+def list_admin_fine_records():
+    refresh_fine_records()
+    return fetch_all(
+        """
+        SELECT fine_records.*,
+               users.username,
+               users.email,
+               books.title,
+               books.author
+        FROM fine_records
+        INNER JOIN users ON fine_records.user_id = users.id
+        INNER JOIN borrowed_books ON fine_records.borrowed_id = borrowed_books.id
+        INNER JOIN books ON borrowed_books.book_id = books.id
+        ORDER BY fine_records.calculated_at DESC
+        """
+    )
+
+
+def update_fine_record(fine_id, amount, status, reason, admin_user_id):
+    execute(
+        """
+        UPDATE fine_records
+        SET total_fine = %s,
+            status = %s,
+            reason = %s
+        WHERE id = %s
+        """,
+        (amount, status, reason, fine_id),
+    )
+    log_event(admin_user_id, "fine_updated", "fine_record", fine_id, "Fine record updated")
+
+
+def update_fine_record_status(fine_id, status, admin_user_id):
+    execute("UPDATE fine_records SET status = %s WHERE id = %s", (status, fine_id))
+    log_event(admin_user_id, "fine_status_updated", "fine_record", fine_id, f"Fine status changed to {status}")
+
+
+def delete_fine_record(fine_id, admin_user_id):
+    execute("DELETE FROM fine_records WHERE id = %s", (fine_id,))
+    log_event(admin_user_id, "fine_deleted", "fine_record", fine_id, "Fine record deleted")
+
+
+def create_backup_record(backup_type, file_path, admin_user_id):
+    backup_id = execute(
+        """
+        INSERT INTO backup_history (backup_type, file_path, admin_user_id)
+        VALUES (%s, %s, %s)
+        """,
+        (backup_type, file_path, admin_user_id),
+    )
+    log_event(admin_user_id, "backup_created", "backup", backup_id, f"{backup_type} backup created")
+    return backup_id
+
+
+def list_backup_history():
+    return fetch_all(
+        """
+        SELECT backup_history.*, users.username AS admin_name
+        FROM backup_history
+        LEFT JOIN users ON backup_history.admin_user_id = users.id
+        ORDER BY backup_history.created_at DESC
+        """
     )
 
 
