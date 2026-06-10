@@ -10,6 +10,9 @@
     <article class="data-panel">
         <span class="eyebrow">{{ book.category }}</span>
         <h1>{{ book.title }}</h1>
+        {% if request.args.get('returned') %}
+            <div class="flash flash-success">Book returned successfully. Rate and Review This Book below.</div>
+        {% endif %}
         <p>{{ book.description or 'No description available.' }}</p>
         <div class="detail-grid">
             <div><span>Author</span><strong>{{ book.author }}</strong></div>
@@ -20,8 +23,8 @@
             <div><span>Language</span><strong>{{ book.language or 'English' }}</strong></div>
             <div><span>Total Copies</span><strong>{{ book.total_copies }}</strong></div>
             <div><span>Available Copies</span><strong>{{ book.available_copies }}</strong></div>
-            <div><span>Availability Status</span><strong>{{ book.availability_status }}</strong></div>
-            <div><span>Price</span><strong>Rs. {{ "%.2f"|format(book.price or 0) }}</strong></div>
+            <div><span>Availability</span><strong>{{ book.availability_status }}</strong></div>
+            <div><span>Price</span><strong>NPR {{ "%.2f"|format(book.price or 0) }}</strong></div>
             <div><span>Stock Quantity</span><strong>{{ book.stock_quantity }}</strong></div>
             <div><span>Average Rating</span><strong>{{ book.average_rating or 0 }}/5</strong></div>
             <div><span>Total Reviews</span><strong>{{ book.review_count or 0 }}</strong></div>
@@ -40,7 +43,7 @@
                 <button class="btn btn-disabled" type="button" disabled>Out of Stock</button>
             {% endif %}
         {% endif %}
-        {% if book.available and book.availability_status == 'Available' and book.available_copies > 0 %}
+        {% if book.stock_quantity > 0 %}
             {% if session.get('user_id') %}
                 <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
                     <button class="btn btn-primary" type="submit" data-ripple>Borrow Book</button>
@@ -49,7 +52,7 @@
                 <a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('auth.book_details', book_id=book.id)) }}">Sign In to Borrow</a>
             {% endif %}
         {% else %}
-            <span class="status-badge warning">Unavailable</span>
+            <span class="status-badge warning">Out of Stock</span>
         {% endif %}
         </div>
     </article>
