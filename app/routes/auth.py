@@ -56,6 +56,7 @@ class AuthRoutes:
         self.bp.route("/borrowed/<int:borrowed_id>/return", methods=["POST"])(
             self.controller.return_borrowed
         )
+        self.bp.route("/reviews-ratings", methods=["GET"])(self.controller.reviews_ratings)
         self.bp.route("/favourites", methods=["GET"])(self.controller.favourites)
         self.bp.route("/reservations", methods=["GET"])(self.controller.reservations)
         self.bp.route("/reservations/<int:reservation_id>/cancel", methods=["POST"])(
@@ -74,8 +75,12 @@ class AuthRoutes:
             self.controller.fine_payment_receipt
         )
         self.bp.route("/admin/users", methods=["GET"])(self.controller.admin_users)
+        self.bp.route("/admin/users/add", methods=["GET", "POST"])(self.controller.add_user)
         self.bp.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])(
             self.controller.edit_user
+        )
+        self.bp.route("/admin/users/<int:user_id>/status/<status>", methods=["POST"])(
+            self.controller.update_user_status
         )
         self.bp.route("/admin/users/<int:user_id>/delete", methods=["POST"])(
             self.controller.delete_user
