@@ -41,11 +41,11 @@
 
             <nav class="nav-menu" aria-label="Primary navigation" data-menu>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.home' else '' }}" href="{{ url_for('auth.home') }}">Home</a>
-                <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
-                <a class="nav-link {{ 'active' if current_endpoint == 'auth.services' else '' }}" href="{{ url_for('auth.services') }}">Services</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.dashboard' else '' }}" href="{{ url_for('auth.dashboard') }}">Dashboard</a>
-                <a class="nav-link {{ 'active' if current_endpoint == 'auth.borrowed' else '' }}" href="{{ url_for('auth.borrowed') }}">Borrowed</a>
-                <a class="nav-link {{ 'active' if current_endpoint == 'auth.contact' else '' }}" href="{{ url_for('auth.contact') }}">Contact</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.orders' else '' }}" href="{{ url_for('auth.orders') }}">Orders</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.reviews_ratings' else '' }}" href="{{ url_for('auth.reviews_ratings') }}">Reviews & Ratings</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.profile' else '' }}" href="{{ url_for('auth.profile') }}">Profile</a>
             </nav>
 
             <div class="nav-actions">
