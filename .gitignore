@@ -42,14 +42,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-
-# SQLite databases (if any)
-*.db
-*.sqlite3
-
-# Log files
-*.log
-
-# Uploaded files
-instance/
-uploads/

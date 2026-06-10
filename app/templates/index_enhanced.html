@@ -1,3 +1,56 @@
-{% extends "login.html" %}
+{% extends "base.html" %}
 
 {% block title %}Enhanced Login - BookVerse{% endblock %}
+
+{% block header_actions %}
+<a class="ghost-link" href="{{ url_for('auth.login') }}">Standard login</a>
+<a class="btn btn-primary" href="{{ url_for('auth.register') }}">Join BookVerse</a>
+{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="hero-grid">
+        <div class="stack">
+            <span class="eyebrow">Enhanced access page</span>
+            <h1 class="headline">A richer sign-in view for readers who want the full BookVerse welcome.</h1>
+            <p class="subheadline">
+                This route keeps its own identity, but it now lives inside the same reusable template system as the
+                rest of the project.
+            </p>
+            <div class="service-grid">
+                <article class="feature-card">
+                    <h3>Visual consistency</h3>
+                    <p>Shared base layout, shared navigation, and the same theme across every page.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Better flow</h3>
+                    <p>Readers can move from sign-in to dashboard, books, or registration without dead links.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Backend-ready structure</h3>
+                    <p>The form can later connect directly to MySQL-backed authentication logic.</p>
+                </article>
+            </div>
+        </div>
+
+        <aside class="auth-panel">
+            <h2>Continue to your library space</h2>
+            <p>Use the enhanced flow when you want a more polished first screen.</p>
+            <form class="auth-form" method="get" action="{{ url_for('auth.dashboard') }}">
+                <div class="input-group">
+                    <label for="enhanced-email">Email address</label>
+                    <input id="enhanced-email" name="email" type="email" placeholder="reader@bookverse.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="enhanced-password">Password</label>
+                    <input id="enhanced-password" name="password" type="password" placeholder="Enter your password" required>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">Enter BookVerse</button>
+                    <a class="btn btn-secondary" href="{{ url_for('auth.home') }}">See homepage</a>
+                </div>
+            </form>
+        </aside>
+    </div>
+</section>
+{% endblock %}

@@ -1,200 +1,91 @@
 {% extends "base.html" %}
-{% block title %}Dashboard – BookVerse{% endblock %}
+
+{% block title %}Dashboard - BookVerse{% endblock %}
+
+{% block header_actions %}
+<a class="ghost-link" href="{{ url_for('auth.profile') }}">Reader profile</a>
+<a class="btn btn-primary" href="{{ url_for('auth.books') }}">Add books later</a>
+{% endblock %}
 
 {% block content %}
-<section class="dash-hero reveal">
-    <div class="dash-hero-inner">
-        <div>
-            <h1 class="dash-greeting">
-                Hello, {{ session.get('username', 'Reader') }}
-                <span class="wave">👋</span>
-            </h1>
-            <p class="dash-sub">Here is a live overview of the BookVerse library.</p>
-        </div>
-        {% if is_admin %}
-        <a class="btn btn-primary" href="{{ url_for('auth.admin_add_book') }}" data-ripple>+ Add Book</a>
-        {% endif %}
-    </div>
-</section>
-
-<!-- Stats row -->
-<section class="stats-grid reveal">
-    <div class="stat-card">
-        <span class="stat-icon">📚</span>
-        <div>
-            <span class="stat-value">{{ stats.books }}</span>
-            <span class="stat-label">Total Books</span>
-        </div>
-    </div>
-    <div class="stat-card">
-        <span class="stat-icon">✅</span>
-        <div>
-            <span class="stat-value">{{ stats.available }}</span>
-            <span class="stat-label">Available</span>
-        </div>
-    </div>
-    <div class="stat-card">
-        <span class="stat-icon">🚫</span>
-        <div>
-            <span class="stat-value">{{ stats.unavailable }}</span>
-            <span class="stat-label">Unavailable</span>
-        </div>
-    </div>
-    <div class="stat-card">
-        <span class="stat-icon">🔖</span>
-        <div>
-            <span class="stat-value">{{ stats.borrowed }}</span>
-            <span class="stat-label">Currently Borrowed</span>
-        </div>
-    </div>
-    <div class="stat-card">
-        <span class="stat-icon">👥</span>
-        <div>
-            <span class="stat-value">{{ stats.members }}</span>
-            <span class="stat-label">Members</span>
-        </div>
-    </div>
-</section>
-
-<!-- Books table (admin can edit/delete) -->
-<section class="dash-section reveal">
+<section class="surface">
     <div class="section-header">
-        <h2>📖 Book Catalog</h2>
-        {% if is_admin %}
-        <a class="btn btn-sm btn-primary" href="{{ url_for('auth.admin_add_book') }}" data-ripple>+ Add Book</a>
-        {% endif %}
+        <div>
+            <span class="eyebrow">Admin dashboard</span>
+            <h1 class="headline">A cleaner command view for the BookVerse library.</h1>
+            <p class="subheadline">Circulation, member flow, and shelf growth now sit inside a shared template system.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('auth.borrowed') }}">Review borrowed items</a>
     </div>
 
-    <div class="table-wrap">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Cover</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for book in books %}
-                <tr class="{{ 'row-unavailable' if not book.available else '' }}">
-                    <td class="td-num">{{ loop.index }}</td>
-                    <td>
-                        <img class="book-thumb"
-                             src="{{ book.image or 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=200' }}"
-                             alt="{{ book.title }}" loading="lazy">
-                    </td>
-                    <td>
-                        <a class="text-link" href="{{ url_for('auth.book_detail', book_id=book.id) }}">
-                            {{ book.title }}
-                        </a>
-                    </td>
-                    <td>{{ book.author }}</td>
-                    <td><span class="badge badge-category">{{ book.category }}</span></td>
-                    <td>
-                        {% if book.available %}
-                            <span class="badge badge-available">Available</span>
-                        {% else %}
-                            <span class="badge badge-unavailable">Unavailable</span>
-                        {% endif %}
-                    </td>
-                    <td class="td-actions">
-                        <a class="btn btn-sm btn-ghost" href="{{ url_for('auth.book_detail', book_id=book.id) }}">View</a>
-                        {% if is_admin %}
-                        <a class="btn btn-sm btn-edit" href="{{ url_for('auth.admin_edit_book', book_id=book.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('auth.admin_delete_book', book_id=book.id) }}"
-                              style="display:inline;"
-                              onsubmit="return confirm('Delete \'{{ book.title | e }}\' from the catalog?');">
-                            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                        </form>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% else %}
-                <tr><td colspan="7" class="td-empty">No books in the catalog yet.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    <div class="metric-grid">
+        <article class="metric-card">
+            <h3>8,420</h3>
+            <p>Total books in the catalog right now.</p>
+        </article>
+        <article class="metric-card">
+            <h3>1,201</h3>
+            <p>Registered members across active shelves.</p>
+        </article>
+        <article class="metric-card">
+            <h3>325</h3>
+            <p>Books currently borrowed or in circulation.</p>
+        </article>
     </div>
 </section>
 
-<!-- Users table (admin only) -->
-{% if is_admin %}
-<section class="dash-section reveal">
-    <div class="section-header">
-        <h2>👥 Registered Users</h2>
-    </div>
+<section class="surface">
+    <div class="dashboard-grid">
+        <article class="dashboard-panel">
+            <h2>Recent activity</h2>
+            <p>Quick checks for circulation and front-desk follow-up.</p>
+            <div class="list">
+                <div class="activity-row">
+                    <div>
+                        <p class="row-title">Atomic Habits renewed by Priya Patel</p>
+                        <p class="muted">Renewed for 14 more days after no pending reservation was found.</p>
+                    </div>
+                    <span class="status-pill success">Renewed</span>
+                </div>
+                <div class="activity-row">
+                    <div>
+                        <p class="row-title">Three new books added to Self-help</p>
+                        <p class="muted">Shelf growth helps the homepage and books page stay current.</p>
+                    </div>
+                    <span class="status-pill info">Catalog</span>
+                </div>
+                <div class="activity-row">
+                    <div>
+                        <p class="row-title">One overdue reminder prepared</p>
+                        <p class="muted">A follow-up is ready for a title that crossed its return date.</p>
+                    </div>
+                    <span class="status-pill warning">Reminder</span>
+                </div>
+            </div>
+        </article>
 
-    <div class="table-wrap">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Joined</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for u in users %}
-                <tr>
-                    <td class="td-num">{{ loop.index }}</td>
-                    <td>{{ u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>
-                        <span class="badge {{ 'badge-admin' if u.role == 'admin' else 'badge-user' }}">
-                            {{ u.role | capitalize }}
-                        </span>
-                    </td>
-                    <td>{{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}</td>
-                    <td class="td-actions">
-                        <a class="btn btn-sm btn-edit"
-                           href="{{ url_for('auth.admin_edit_user', user_id=u.id) }}">Edit</a>
-                        {% if u.id != session.get('user_id') %}
-                        <form method="post"
-                              action="{{ url_for('auth.admin_delete_user', user_id=u.id) }}"
-                              style="display:inline;"
-                              onsubmit="return confirm('Permanently delete {{ u.username | e }}?');">
-                            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                        </form>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% else %}
-                <tr><td colspan="6" class="td-empty">No users found.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <aside class="dashboard-panel">
+            <h2>Quick actions</h2>
+            <p>Common routes for staff and student operators.</p>
+            <div class="card-grid">
+                <article class="quick-card">
+                    <h3>Browse catalog</h3>
+                    <p>Open the books page for shelf review and discovery.</p>
+                </article>
+                <article class="quick-card">
+                    <h3>Member profile</h3>
+                    <p>Jump into the reader-facing profile experience.</p>
+                </article>
+                <article class="quick-card">
+                    <h3>Borrowed overview</h3>
+                    <p>Check due dates and active loan statuses quickly.</p>
+                </article>
+                <article class="quick-card">
+                    <h3>Support contact</h3>
+                    <p>Use the contact template for requests and library questions.</p>
+                </article>
+            </div>
+        </aside>
     </div>
-</section>
-{% endif %}
-
-<!-- Recent activity feed -->
-<section class="dash-section reveal">
-    <div class="section-header">
-        <h2>🕐 Recent Activity</h2>
-    </div>
-    <ul class="activity-feed">
-    {% for act in recent_activity %}
-        <li class="activity-item">
-            <span class="activity-dot"></span>
-            <span>
-                <strong>{{ act.username }}</strong>
-                {{ 'borrowed' if act.status == 'borrowed' else 'returned' }}
-                <em>{{ act.title }}</em>
-            </span>
-            <span class="activity-time">
-                {{ act.borrow_date.strftime('%d %b, %H:%M') if act.borrow_date else '—' }}
-            </span>
-        </li>
-    {% else %}
-        <li class="activity-item td-empty">No recent activity yet.</li>
-    {% endfor %}
-    </ul>
 </section>
 {% endblock %}

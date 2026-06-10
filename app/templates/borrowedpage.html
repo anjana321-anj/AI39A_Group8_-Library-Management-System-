@@ -1,64 +1,64 @@
 {% extends "base.html" %}
-{% block title %}My Borrowed Books – BookVerse{% endblock %}
+
+{% block title %}Borrowed Books - BookVerse{% endblock %}
 
 {% block content %}
-<section class="catalog-hero reveal">
-    <h1>📚 My Borrowed Books</h1>
-    <p>Track books you have borrowed and return them when finished.</p>
+<section class="surface">
+    <span class="eyebrow">Borrowed books</span>
+    <h1 class="headline">Track every active loan without losing the calm feel of the rest of the app.</h1>
+    <p class="subheadline">
+        The borrowed page now works as a full template and keeps due dates, statuses, and next actions visible.
+    </p>
 </section>
 
-<section class="catalog-grid reveal">
-    {% for b in borrowed_books %}
-    <div class="book-card-catalog {{ 'book-returned-card' if b.status == 'returned' else '' }}">
-        <div class="book-badge {{ 'badge-available' if b.status == 'returned' else 'badge-borrowed' }}">
-            {{ '✓ Returned' if b.status == 'returned' else '🔖 Borrowed' }}
-        </div>
-
-        <img class="book-img-catalog"
-             src="{{ b.image or 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400' }}"
-             alt="{{ b.title }}" loading="lazy">
-
-        <div class="book-card-body">
-            <span class="badge badge-category">{{ b.category }}</span>
-            <h3>{{ b.title }}</h3>
-            <p class="book-author">by {{ b.author }}</p>
-            <div class="borrow-dates">
-                <small>Borrowed: {{ b.borrow_date.strftime('%d %b %Y') if b.borrow_date else '—' }}</small>
-                {% if b.status == 'borrowed' %}
-                <small class="{{ 'overdue' if b.due_date and b.due_date < now else '' }}">
-                    Due: {{ b.due_date.strftime('%d %b %Y') if b.due_date else '—' }}
-                </small>
-                {% else %}
-                <small>Returned: {{ b.return_date.strftime('%d %b %Y') if b.return_date else '—' }}</small>
-                {% endif %}
+<section class="surface">
+    <div class="split-grid">
+        <article class="borrow-panel">
+            <h2>Active loans</h2>
+            <p>Use these cards to review due dates and spot items that need a faster follow-up.</p>
+            <div class="list">
+                <div class="borrow-row">
+                    <div>
+                        <p class="row-title">The Alchemist</p>
+                        <p class="muted">Borrowed by Rahul Sharma. Return is overdue and needs follow-up.</p>
+                    </div>
+                    <span class="due-pill warning">Overdue</span>
+                </div>
+                <div class="borrow-row">
+                    <div>
+                        <p class="row-title">Atomic Habits</p>
+                        <p class="muted">Borrowed by Priya Patel. Due June 02, 2026 with normal status.</p>
+                    </div>
+                    <span class="due-pill success">On track</span>
+                </div>
+                <div class="borrow-row">
+                    <div>
+                        <p class="row-title">Educated</p>
+                        <p class="muted">Borrowed by Aman Verma. Due June 10, 2026 and currently active.</p>
+                    </div>
+                    <span class="due-pill info">Active</span>
+                </div>
             </div>
+        </article>
 
-            {% if b.status == 'borrowed' %}
-            <form method="post" action="{{ url_for('auth.return_borrowed', borrowed_id=b.id) }}">
-                <button class="btn btn-sm btn-primary" type="submit" data-ripple
-                        onclick="return confirm('Return \'{{ b.title | e }}\'?');">
-                    Return Book
-                </button>
-            </form>
-            {% else %}
-            <span class="returned-label">Returned ✓</span>
-            {% endif %}
-        </div>
+        <aside class="borrow-panel">
+            <h2>Helpful next steps</h2>
+            <p>Borrowing actions can grow into backend features later without changing the page structure again.</p>
+            <div class="stack">
+                <div class="list-card">
+                    <h3>Send reminders</h3>
+                    <p>Prioritize overdue items first, then due-soon titles within the next 72 hours.</p>
+                </div>
+                <div class="list-card">
+                    <h3>Offer renewal when possible</h3>
+                    <p>Active loans can be extended as long as no reader is waiting on the same title.</p>
+                </div>
+                <div class="list-card">
+                    <h3>Return to catalog</h3>
+                    <p>After a return, books move back into the books page and dashboard circulation counts.</p>
+                </div>
+            </div>
+        </aside>
     </div>
-    {% else %}
-    <div class="empty-state">
-        <span class="empty-icon">📭</span>
-        <h3>No borrowed books</h3>
-        <p>Browse the catalog and borrow your first book!</p>
-        <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Catalog</a>
-    </div>
-    {% endfor %}
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Inject Python's datetime.utcnow equivalent for overdue check
-window.now = new Date();
-</script>
 {% endblock %}

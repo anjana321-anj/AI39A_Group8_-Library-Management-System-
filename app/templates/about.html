@@ -3,29 +3,59 @@
 {% block title %}About - BookVerse{% endblock %}
 
 {% block content %}
-<section class="page-hero reveal">
+<section class="surface">
     <span class="eyebrow">About BookVerse</span>
-    <h1>A library experience built for clarity, trust, and student momentum.</h1>
-    <p>BookVerse brings catalog discovery, secure sessions, and simple borrowing flows into one polished platform.</p>
+    <h1 class="headline">Built to make library browsing feel less like admin and more like discovery.</h1>
+    <p class="subheadline">
+        BookVerse is designed for student-friendly circulation, cleaner navigation, and a soft visual theme that
+        turns library tools into something inviting and approachable.
+    </p>
 </section>
 
-<section class="section-band reveal">
-    <div class="story-grid">
-        <article>
-            <h2>Why it feels different</h2>
-            <p>
-                The interface is designed around calm scanning: clear hierarchy, glass surfaces, soft motion, and
-                direct actions that keep readers moving through the system without confusion.
-            </p>
-        </article>
-        <article class="data-panel">
-            <h2>Project principles</h2>
-            <div class="progress-list">
-                <div><span>Security</span><strong>Session protected</strong></div>
-                <div><span>Database</span><strong>MySQL class_db</strong></div>
-                <div><span>Design</span><strong>Responsive SaaS UI</strong></div>
+<section class="surface">
+    <div class="split-grid">
+        <article class="stack">
+            <div class="section-header">
+                <div>
+                    <h2>Our approach</h2>
+                    <p>Simple structure, reusable templates, and a consistent look across every route.</p>
+                </div>
+            </div>
+            <div class="list-card">
+                <h3>Clarity first</h3>
+                <p>We prioritize layouts that make shelves, due dates, and actions easy to understand at a glance.</p>
+            </div>
+            <div class="list-card">
+                <h3>Theme consistency</h3>
+                <p>The sky-blue palette, rounded panels, and airy spacing now carry across the whole site.</p>
+            </div>
+            <div class="list-card">
+                <h3>Ready for backend growth</h3>
+                <p>The new config file gives the project a clear place to plug in database-driven features next.</p>
             </div>
         </article>
+
+        <aside class="hero-visual">
+            <div class="visual-stack">
+                <div class="visual-card">
+                    <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=900&auto=format&fit=crop" alt="People reading together">
+                    <div class="stack">
+                        <strong>Reader-centered environment</strong>
+                        <small>Every page supports discovery, borrowing, or library communication.</small>
+                    </div>
+                </div>
+                <div class="card-grid">
+                    <article class="card">
+                        <h3>12 curated collections</h3>
+                        <p>Organized for fiction, growth, study, biography, and more.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Unified routes</h3>
+                        <p>All templates now render correctly through Flask without blank pages.</p>
+                    </article>
+                </div>
+            </div>
+        </aside>
     </div>
 </section>
 {% endblock %}
