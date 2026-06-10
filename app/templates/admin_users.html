@@ -6,7 +6,8 @@
 <section class="page-hero reveal">
     <span class="eyebrow">Admin Panel</span>
     <h1>User Management</h1>
-    <p>Manage BookVerse users, roles, and account status.</p>
+    <p>Manage only BookVerse user accounts, roles, phone numbers, and membership status.</p>
+    <a class="btn btn-primary" href="{{ url_for('auth.add_user') }}" data-ripple>Add User</a>
 </section>
 
 <section class="data-panel reveal">
@@ -18,28 +19,90 @@
         <table>
             <thead>
                 <tr>
-                    <th>User Name</th>
-                    <th>Email Address</th>
-                    <th>Role</th>
+                    <th>S.No</th>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
                     <th>Status</th>
+                    <th>Role</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
                     <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>#{{ user.id }}</td>
                         <td><strong>{{ user.username }}</strong></td>
                         <td>{{ user.email }}</td>
-                        <td>{{ user.role|title }}</td>
+                        <td>{{ user.phone_number or user.phone or 'N/A' }}</td>
                         <td><span class="status-badge {{ 'success' if user.status == 'active' else 'warning' }}">{{ user.status|title }}</span></td>
+                        <td>{{ user.role|title }}</td>
                         <td>
                             <div class="admin-actions">
-                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_user', user_id=user.id) }}">Edit User</a>
-                                <form method="post" action="{{ url_for('auth.delete_user', user_id=user.id) }}">
-                                    <button class="btn btn-small btn-disabled" type="submit">Delete User</button>
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_user', user_id=user.id) }}">Edit</a>
+                                {% if user.status != 'active' %}
+                                    <form method="post" action="{{ url_for('auth.update_user_status', user_id=user.id, status='active') }}" data-confirm="Activate this user?">
+                                        <button class="btn btn-small btn-primary" type="submit">Activate</button>
+                                    </form>
+                                {% endif %}
+                                {% if user.status != 'inactive' %}
+                                    <form method="post" action="{{ url_for('auth.update_user_status', user_id=user.id, status='inactive') }}" data-confirm="Deactivate this user?">
+                                        <button class="btn btn-small btn-secondary" type="submit">Deactivate</button>
+                                    </form>
+                                {% endif %}
+                                {% if user.status != 'suspended' %}
+                                    <form method="post" action="{{ url_for('auth.update_user_status', user_id=user.id, status='suspended') }}" data-confirm="Suspend this user?">
+                                        <button class="btn btn-small btn-secondary" type="submit">Suspend</button>
+                                    </form>
+                                {% endif %}
+                                <form method="post" action="{{ url_for('auth.delete_user', user_id=user.id) }}" data-confirm="Are you sure you want to delete this user?">
+                                    <button class="btn btn-small btn-disabled" type="submit">Delete</button>
                                 </form>
                             </div>
                         </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8">No users found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Profile Updates</h2>
+        <span>Stored for audit readiness, hidden from admin notifications.</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Field</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for update in updates %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ update.username }}</strong><span>{{ update.email }}</span></td>
+                        <td>{{ update.field_name|replace('_', ' ')|title }}</td>
+                        <td>{{ update.old_value or 'N/A' }}</td>
+                        <td>{{ update.new_value or 'N/A' }}</td>
+                        <td>{{ update.created_at.strftime('%b %d, %Y') if update.created_at else 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">No profile updates recorded yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>
