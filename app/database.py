@@ -618,6 +618,14 @@ def _ensure_feature_tables(cursor):
     )
     cursor.execute(
         """
+        INSERT IGNORE INTO phone_numbers (user_id, phone_number, is_primary)
+        SELECT id, phone_number, 1
+        FROM users
+        WHERE phone_number IS NOT NULL AND phone_number != ''
+        """
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS profile_updates (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
@@ -1427,6 +1435,18 @@ def list_profile_updates(limit=20):
     )
 
 
+def list_user_profile_updates(user_id):
+    return fetch_all(
+        """
+        SELECT *
+        FROM profile_updates
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        """,
+        (user_id,),
+    )
+
+
 def create_password_reset_token(user_id, token_hash, expires_at):
     return execute(
         """
@@ -1846,9 +1866,11 @@ def create_order(user_id, book_id, quantity=1):
 def list_user_orders(user_id):
     return fetch_all(
         """
-        SELECT orders.*, books.title, books.author, books.image, books.category
+        SELECT orders.*, books.title, books.author, books.image, books.category,
+               purchase_receipts.receipt_number
         FROM orders
         INNER JOIN books ON orders.book_id = books.id
+        LEFT JOIN purchase_receipts ON purchase_receipts.order_id = orders.id
         WHERE orders.user_id = %s
           AND orders.status != 'Cancelled'
         ORDER BY orders.order_date DESC
@@ -1958,20 +1980,25 @@ def update_order_status(order_id, status):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT book_id FROM orders WHERE id = %s", (order_id,))
+            cursor.execute("SELECT book_id, quantity, status FROM orders WHERE id = %s", (order_id,))
             order = cursor.fetchone()
             if not order:
                 return False
             cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (status, order_id))
             cursor.execute("UPDATE book_purchases SET status = %s WHERE order_id = %s", (status, order_id))
-            if status == "Cancelled":
+            if status == "Cancelled" and order["status"] != "Cancelled":
                 cursor.execute(
                     """
                     UPDATE books
-                    SET book_status = CASE WHEN stock_quantity > 0 THEN 'Available' ELSE 'Purchased' END
+                    SET stock_quantity = stock_quantity + %s,
+                        available_copies = stock_quantity + %s,
+                        total_copies = GREATEST(total_copies, stock_quantity + %s),
+                        available = 1,
+                        availability_status = 'Available',
+                        book_status = 'Available'
                     WHERE id = %s
                     """,
-                    (order["book_id"],),
+                    (order["quantity"], order["quantity"], order["quantity"], order["book_id"]),
                 )
             connection.commit()
             return True
@@ -2025,7 +2052,35 @@ def update_order_admin(order_id, quantity, status):
 
 
 def delete_order(order_id):
-    execute("DELETE FROM orders WHERE id = %s", (order_id,))
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT book_id, quantity, status FROM orders WHERE id = %s", (order_id,))
+            order = cursor.fetchone()
+            if not order:
+                return False
+            if order["status"] not in {"Cancelled", "Completed", "Paid"}:
+                cursor.execute(
+                    """
+                    UPDATE books
+                    SET stock_quantity = stock_quantity + %s,
+                        available_copies = stock_quantity + %s,
+                        total_copies = GREATEST(total_copies, stock_quantity + %s),
+                        available = 1,
+                        availability_status = 'Available',
+                        book_status = 'Available'
+                    WHERE id = %s
+                    """,
+                    (order["quantity"], order["quantity"], order["quantity"], order["book_id"]),
+                )
+            cursor.execute("DELETE FROM orders WHERE id = %s", (order_id,))
+            connection.commit()
+            return True
+    except pymysql.MySQLError:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def upsert_review(user_id, book_id, review_text):
@@ -2053,10 +2108,16 @@ def upsert_review(user_id, book_id, review_text):
 
 
 def delete_review(review_id, user_id=None, is_admin=False):
+    review = fetch_one("SELECT user_id, book_id FROM reviews WHERE id = %s", (review_id,))
     if is_admin:
         execute("DELETE FROM reviews WHERE id = %s", (review_id,))
     else:
         execute("DELETE FROM reviews WHERE id = %s AND user_id = %s", (review_id, user_id))
+    if review and (is_admin or review["user_id"] == user_id):
+        execute(
+            "UPDATE book_reviews SET review_text = NULL WHERE user_id = %s AND book_id = %s",
+            (review["user_id"], review["book_id"]),
+        )
 
 
 def list_book_reviews(book_id):
