@@ -984,6 +984,14 @@ button {
     overflow-x: auto;
 }
 
+.table-cover {
+    width: 54px;
+    height: 70px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: var(--shadow-sm);
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -1290,8 +1298,9 @@ td span {
 .icon-button {
     display: inline-grid;
     place-items: center;
-    width: 38px;
+    min-width: 54px;
     height: 38px;
+    padding: 0 10px;
     border-radius: 50%;
     color: var(--blue-800);
     background: rgba(255, 255, 255, 0.86);
