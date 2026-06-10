@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Dashboard</span>
+    <h1>Your order history.</h1>
+    <p>Review purchases, order details, and receipt records.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Book</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td><strong>#{{ order.id }}</strong><span>{{ order.order_date.strftime('%b %d, %Y') if order.order_date else 'N/A' }}</span></td>
+                        <td><strong>{{ order.title }}</strong><span>{{ order.quantity }} copy</span></td>
+                        <td>Rs. {{ "%.2f"|format(order.total_amount or 0) }}</td>
+                        <td><span class="status-badge warning">{{ order.status }}</span></td>
+                        <td><a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_details', order_id=order.id) }}">Details</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">No orders yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

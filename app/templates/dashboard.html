@@ -11,10 +11,16 @@
             <a class="active" href="{{ url_for('auth.dashboard') }}">Overview</a>
             <a href="{{ url_for('auth.books') }}">Catalog</a>
             <a href="{{ url_for('auth.borrowed') }}">Borrowed</a>
+            <a href="{{ url_for('auth.favourites') }}">Favourites</a>
+            <a href="{{ url_for('auth.reservations') }}">Reservations</a>
+            <a href="{{ url_for('auth.orders') }}">Orders</a>
+            <a href="{{ url_for('auth.fine_payments') }}">Fine Payments</a>
             <a href="{{ url_for('auth.profile') }}">Profile</a>
             {% if session.get('role') == 'admin' %}
                 <a href="{{ url_for('auth.admin_users') }}">User Management</a>
                 <a href="{{ url_for('auth.admin_books') }}">Book Management</a>
+                <a href="{{ url_for('auth.admin_reservations') }}">Manage Reservations</a>
+                <a href="{{ url_for('auth.admin_fine_payments') }}">Verify Payments</a>
             {% endif %}
         </nav>
     </aside>
@@ -101,6 +107,28 @@
                         {% endfor %}
                     {% else %}
                         <p class="empty-state">No borrowing activity yet. Borrow a book to see this panel come alive.</p>
+                    {% endif %}
+                </div>
+            </article>
+
+            <article class="data-panel">
+                <div class="panel-heading">
+                    <h2>Notifications</h2>
+                    <a href="{{ url_for('auth.fine_payments') }}">Fine payments</a>
+                </div>
+                <div class="activity-list">
+                    {% if notifications %}
+                        {% for notification in notifications %}
+                            <div class="activity-item">
+                                <span class="activity-dot"></span>
+                                <div>
+                                    <strong>{{ notification.title }}</strong>
+                                    <small>{{ notification.message }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">No notifications yet.</p>
                     {% endif %}
                 </div>
             </article>

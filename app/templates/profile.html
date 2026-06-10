@@ -13,6 +13,9 @@
             <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
         </div>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Reset Password</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.favourites') }}" data-ripple>Favourites</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reservations') }}" data-ripple>Reservations</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.orders') }}" data-ripple>Orders</a>
         <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
     </aside>
 
@@ -53,6 +56,28 @@
                     {% endfor %}
                 {% else %}
                     <p class="empty-state">No reading activity yet. Your first borrowed book will appear here.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Notifications</h2>
+                <a href="{{ url_for('auth.fine_payments') }}">Fine payments</a>
+            </div>
+            <div class="activity-list">
+                {% if notifications %}
+                    {% for notification in notifications %}
+                        <div class="activity-item">
+                            <span class="activity-dot"></span>
+                            <div>
+                                <strong>{{ notification.title }}</strong>
+                                <small>{{ notification.message }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No notifications yet.</p>
                 {% endif %}
             </div>
         </section>

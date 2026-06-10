@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}BookVerse{% endblock %}</title>
+    <title>BookVerse | Digital Library Management System</title>
+    <link rel="icon" type="image/png" href="{{ url_for('serve_image', filename='Logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('serve_image', filename='Logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
@@ -70,6 +72,17 @@
                 </section>
             {% endif %}
         {% endwith %}
+        {% if breadcrumbs %}
+            <nav class="breadcrumb-trail reveal" aria-label="Breadcrumb">
+                {% for crumb in breadcrumbs %}
+                    {% if crumb.url and not loop.last %}
+                        <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+                    {% else %}
+                        <span aria-current="{{ 'page' if loop.last else 'false' }}">{{ crumb.label }}</span>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 
@@ -106,6 +119,17 @@
             </div>
         </div>
     </footer>
+
+    <div class="confirm-modal" data-confirm-modal hidden>
+        <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+            <h2 id="confirm-title">Please confirm</h2>
+            <p data-confirm-message>Are you sure you want to continue?</p>
+            <div class="form-row">
+                <button class="btn btn-secondary" type="button" data-confirm-cancel>Cancel</button>
+                <button class="btn btn-primary" type="button" data-confirm-accept>Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     {% block scripts %}{% endblock %}

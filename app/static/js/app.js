@@ -88,6 +88,57 @@ document.querySelectorAll("[data-password-toggle]").forEach((toggle) => {
     });
 });
 
+const confirmModal = document.querySelector("[data-confirm-modal]");
+const confirmMessage = document.querySelector("[data-confirm-message]");
+const confirmAccept = document.querySelector("[data-confirm-accept]");
+const confirmCancel = document.querySelector("[data-confirm-cancel]");
+let pendingConfirmation = null;
+
+const closeConfirmModal = () => {
+    if (!confirmModal) return;
+    confirmModal.hidden = true;
+    document.body.classList.remove("modal-open");
+    pendingConfirmation = null;
+};
+
+const openConfirmModal = (message, onConfirm) => {
+    if (!confirmModal || !confirmMessage) {
+        if (window.confirm(message)) onConfirm();
+        return;
+    }
+    confirmMessage.textContent = message;
+    pendingConfirmation = onConfirm;
+    confirmModal.hidden = false;
+    document.body.classList.add("modal-open");
+};
+
+document.addEventListener(
+    "submit",
+    (event) => {
+        const form = event.target.closest("form[data-confirm]");
+        if (!form || form.dataset.confirmed === "true") return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openConfirmModal(form.dataset.confirm || "Are you sure you want to continue?", () => {
+            form.dataset.confirmed = "true";
+            form.submit();
+        });
+    },
+    true
+);
+
+if (confirmAccept) {
+    confirmAccept.addEventListener("click", () => {
+        const action = pendingConfirmation;
+        closeConfirmModal();
+        if (action) action();
+    });
+}
+
+if (confirmCancel) {
+    confirmCancel.addEventListener("click", closeConfirmModal);
+}
+
 document.querySelectorAll("[data-loading-form]").forEach((form) => {
     form.addEventListener("submit", () => {
         const button = form.querySelector("button[type='submit']");
@@ -98,16 +149,95 @@ document.querySelectorAll("[data-loading-form]").forEach((form) => {
     });
 });
 
+const catalogGrid = document.querySelector("[data-catalog-grid]");
+const catalogCards = catalogGrid ? Array.from(catalogGrid.querySelectorAll("[data-book-card]")) : [];
+const catalogSearch = document.querySelector("[data-catalog-search]");
+const catalogSort = document.querySelector("[data-catalog-sort]");
+const catalogFilters = Array.from(document.querySelectorAll("[data-filter-field]"));
+const catalogEmpty = document.querySelector("[data-catalog-empty]");
 const filterButtons = document.querySelectorAll("[data-filter]");
-const filterCards = document.querySelectorAll("[data-category]");
+let shortcutCategory = "all";
+
+const normalize = (value) => String(value || "").toLowerCase().trim();
+
+const getFilterValue = (name) => {
+    const field = catalogFilters.find((filter) => filter.dataset.filterField === name);
+    return field ? normalize(field.value) : "";
+};
+
+const sortCards = (cards) => {
+    const sort = catalogSort ? catalogSort.value : "az";
+    return [...cards].sort((first, second) => {
+        const firstTitle = first.dataset.title || "";
+        const secondTitle = second.dataset.title || "";
+        const firstYear = Number(first.dataset.year || 0);
+        const secondYear = Number(second.dataset.year || 0);
+        const firstRating = Number(first.dataset.rating || 0);
+        const secondRating = Number(second.dataset.rating || 0);
+        const firstReviews = Number(first.dataset.reviews || 0);
+        const secondReviews = Number(second.dataset.reviews || 0);
+
+        if (sort === "za") return secondTitle.localeCompare(firstTitle);
+        if (sort === "newest") return secondYear - firstYear;
+        if (sort === "oldest") return firstYear - secondYear;
+        if (sort === "rated") return secondRating - firstRating;
+        if (sort === "reviewed") return secondReviews - firstReviews;
+        return firstTitle.localeCompare(secondTitle);
+    });
+};
+
+const updateCatalog = () => {
+    if (!catalogGrid) return;
+
+    const query = normalize(catalogSearch ? catalogSearch.value : "");
+    const selectedCategory = getFilterValue("category");
+    const activeCategory = selectedCategory || (shortcutCategory === "all" ? "" : shortcutCategory);
+    const selectedAuthor = getFilterValue("author");
+    const selectedAvailability = getFilterValue("availability");
+    const selectedYear = getFilterValue("year");
+    const selectedLanguage = getFilterValue("language");
+    let visibleCount = 0;
+
+    sortCards(catalogCards).forEach((card) => {
+        catalogGrid.appendChild(card);
+        const searchable = [
+            card.dataset.title,
+            card.dataset.author,
+            card.dataset.category,
+            card.dataset.isbn,
+            card.dataset.publisher,
+        ].join(" ");
+
+        const visible =
+            (!query || searchable.includes(query)) &&
+            (!activeCategory || normalize(card.dataset.category) === activeCategory || card.dataset.categorySlug === activeCategory) &&
+            (!selectedAuthor || normalize(card.dataset.author) === selectedAuthor) &&
+            (!selectedAvailability || normalize(card.dataset.availability) === selectedAvailability) &&
+            (!selectedYear || normalize(card.dataset.year) === selectedYear) &&
+            (!selectedLanguage || normalize(card.dataset.language) === selectedLanguage);
+
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+    });
+
+    if (catalogEmpty) {
+        catalogGrid.appendChild(catalogEmpty);
+        catalogEmpty.hidden = visibleCount > 0;
+    }
+};
 
 filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
-        const filter = button.dataset.filter;
+        shortcutCategory = button.dataset.filter;
         filterButtons.forEach((item) => item.classList.toggle("active", item === button));
-        filterCards.forEach((card) => {
-            const visible = filter === "all" || card.dataset.category === filter;
-            card.hidden = !visible;
-        });
+        updateCatalog();
     });
 });
+
+[catalogSearch, catalogSort, ...catalogFilters].forEach((control) => {
+    if (!control) return;
+    control.addEventListener("input", updateCatalog);
+    control.addEventListener("change", updateCatalog);
+});
+
+updateCatalog();

@@ -21,7 +21,25 @@
             <div><span>Total Copies</span><strong>{{ book.total_copies }}</strong></div>
             <div><span>Available Copies</span><strong>{{ book.available_copies }}</strong></div>
             <div><span>Availability Status</span><strong>{{ book.availability_status }}</strong></div>
+            <div><span>Price</span><strong>Rs. {{ "%.2f"|format(book.price or 0) }}</strong></div>
+            <div><span>Stock Quantity</span><strong>{{ book.stock_quantity }}</strong></div>
+            <div><span>Average Rating</span><strong>{{ book.average_rating or 0 }}/5</strong></div>
+            <div><span>Total Reviews</span><strong>{{ book.review_count or 0 }}</strong></div>
         </div>
+        <div class="action-stack">
+        {% if session.get('user_id') %}
+            <form method="post" action="{{ url_for('auth.remove_from_favourites' if is_favourite else 'auth.add_to_favourites', book_id=book.id) }}">
+                <button class="btn btn-secondary" type="submit" data-ripple>{{ 'Remove Favourite' if is_favourite else 'Add to Favourites' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('auth.reserve_book', book_id=book.id) }}">
+                <button class="btn btn-secondary" type="submit" data-ripple>Reserve Book</button>
+            </form>
+            {% if book.stock_quantity > 0 %}
+                <a class="btn btn-secondary" href="{{ url_for('auth.buy_book', book_id=book.id) }}" data-ripple>Buy Now</a>
+            {% else %}
+                <button class="btn btn-disabled" type="button" disabled>Out of Stock</button>
+            {% endif %}
+        {% endif %}
         {% if book.available and book.availability_status == 'Available' and book.available_copies > 0 %}
             {% if session.get('user_id') %}
                 <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
@@ -33,6 +51,76 @@
         {% else %}
             <span class="status-badge warning">Unavailable</span>
         {% endif %}
+        </div>
+    </article>
+</section>
+
+<section class="dashboard-grid reveal">
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Reviews</h2>
+            <span class="status-badge success">{{ book.average_rating or 0 }}/5 average</span>
+        </div>
+        {% if session.get('user_id') %}
+            <form class="review-form" method="post" action="{{ url_for('auth.add_review', book_id=book.id) }}">
+                <label class="field">
+                    <span>Your review</span>
+                    <textarea name="review_text" placeholder="Share a helpful, student-friendly review..." required></textarea>
+                </label>
+                <button class="btn btn-primary" type="submit" data-ripple>Save Review</button>
+            </form>
+        {% else %}
+            <p class="empty-state">Sign in to review this book.</p>
+        {% endif %}
+        <div class="activity-list review-list">
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="activity-item review-item">
+                        <span class="activity-dot"></span>
+                        <div>
+                            <strong>{{ review.username }}</strong>
+                            <small>{{ review.review_date.strftime('%b %d, %Y') if review.review_date else 'recently' }}</small>
+                            <p>{{ review.review_text }}</p>
+                        </div>
+                        {% if session.get('user_id') == review.user_id or session.get('role') == 'admin' %}
+                            <form method="post" action="{{ url_for('auth.remove_review', review_id=review.id) }}">
+                                <button class="btn btn-small btn-disabled" type="submit">Delete</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">No reviews yet.</p>
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Rating</h2>
+            <span class="status-badge success">{{ library_rating.average_rating }}/5 library avg</span>
+        </div>
+        {% if session.get('user_id') %}
+            <form class="rating-picker" method="post" action="{{ url_for('auth.rate_book', book_id=book.id) }}">
+                {% for value in range(5, 0, -1) %}
+                    <label>
+                        <input type="radio" name="rating" value="{{ value }}" {{ 'checked' if user_rating == value else '' }}>
+                        <span>{{ value }} Star{{ '' if value == 1 else 's' }}</span>
+                    </label>
+                {% endfor %}
+                <button class="btn btn-primary" type="submit" data-ripple>Save Rating</button>
+            </form>
+        {% else %}
+            <p class="empty-state">Sign in to rate this book.</p>
+        {% endif %}
+        <div class="progress-list">
+            {% for value in range(5, 0, -1) %}
+                <div>
+                    <span>{{ value }} star</span>
+                    <strong>{{ library_rating.distribution.get(value, 0) }}</strong>
+                </div>
+            {% endfor %}
+        </div>
     </article>
 </section>
 {% endblock %}

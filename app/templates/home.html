@@ -13,7 +13,7 @@
         </p>
         <div class="hero-actions">
             <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Catalog</a>
-            <a class="btn btn-secondary" href="{{ url_for('auth.register') }}" data-ripple>Start Reading</a>
+            <a class="btn btn-secondary" href="{{ url_for('auth.books') }}" data-ripple>Start Reading</a>
             <a class="btn btn-glass" href="{{ url_for('auth.dashboard') }}" data-ripple>Explore Dashboard</a>
         </div>
         <div class="hero-metrics">
@@ -63,17 +63,23 @@
     </div>
     <div class="shelf-grid">
         {% for book in books %}
-            <article class="book-card tilt-card">
+            <a class="book-card tilt-card" href="{{ url_for('auth.book_details', book_id=book.id) }}">
                 <div class="book-cover">
                     <img src="{{ book.image }}" alt="{{ book.title }}">
-                    <span class="availability-badge">Available</span>
+                    <span class="availability-badge {{ 'muted-badge' if book.stock_quantity < 1 else '' }}">
+                        {{ 'Available' if book.stock_quantity > 0 else 'Out of Stock' }}
+                    </span>
                 </div>
                 <div class="book-body">
                     <span class="book-category">{{ book.category }}</span>
                     <h3>{{ book.title }}</h3>
+                    <div class="mini-meta">
+                        <span>{{ book.author }}</span>
+                        <span>NPR {{ "%.0f"|format(book.price or 0) }}</span>
+                    </div>
                     <p>{{ book.description }}</p>
                 </div>
-            </article>
+            </a>
         {% endfor %}
     </div>
 </section>
@@ -82,18 +88,18 @@
     <div class="feature-strip">
         <article>
             <span class="feature-icon">01</span>
-            <h3>Secure sessions</h3>
-            <p>Dashboard, borrowed books, and profile routes now require login.</p>
+            <h3>Thousands of books available</h3>
+            <p>Explore curated titles, genres, availability, prices, and detailed book information from one clean catalog.</p>
         </article>
         <article>
             <span class="feature-icon">02</span>
-            <h3>MySQL ready</h3>
-            <p>`class_db` is initialized with users, books, borrowed books, and skills.</p>
+            <h3>Easy borrow and reserve system</h3>
+            <p>Borrow available books, reserve popular titles, and manage reading activity from your account dashboard.</p>
         </article>
         <article>
             <span class="feature-icon">03</span>
-            <h3>Smooth interactions</h3>
-            <p>Reveal animations, counters, ripple buttons, and polished hover states add life without heavy libraries.</p>
+            <h3>Trusted digital library experience</h3>
+            <p>BookVerse keeps catalogue browsing, payments, favourites, and account tools organized for students and library teams.</p>
         </article>
     </div>
 </section>

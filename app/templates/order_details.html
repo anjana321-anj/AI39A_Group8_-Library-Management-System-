@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Order Details - BookVerse{% endblock %}
+
+{% block content %}
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h1>Order #{{ order.id }}</h1>
+        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_receipt', order_id=order.id) }}">Generate Receipt</a>
+    </div>
+    <div class="detail-grid">
+        <div><span>Book Title</span><strong>{{ order.title }}</strong></div>
+        <div><span>Author</span><strong>{{ order.author }}</strong></div>
+        <div><span>ISBN</span><strong>{{ order.isbn or 'N/A' }}</strong></div>
+        <div><span>Publisher</span><strong>{{ order.publisher or 'N/A' }}</strong></div>
+        <div><span>Quantity</span><strong>{{ order.quantity }}</strong></div>
+        <div><span>Unit Price</span><strong>Rs. {{ "%.2f"|format(order.unit_price or 0) }}</strong></div>
+        <div><span>Total Amount</span><strong>Rs. {{ "%.2f"|format(order.total_amount or 0) }}</strong></div>
+        <div><span>Status</span><strong>{{ order.status }}</strong></div>
+        <div><span>Order Date</span><strong>{{ order.order_date.strftime('%b %d, %Y') if order.order_date else 'N/A' }}</strong></div>
+    </div>
+</section>
+{% endblock %}

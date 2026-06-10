@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt - BookVerse{% endblock %}
+
+{% block content %}
+<section class="data-panel reveal receipt-panel">
+    <div class="panel-heading">
+        <h1>BookVerse Receipt</h1>
+        <span class="status-badge warning">{{ order.status }}</span>
+    </div>
+    <div class="detail-grid">
+        <div><span>Receipt No.</span><strong>BV-{{ order.id }}</strong></div>
+        <div><span>Reader</span><strong>{{ order.username }}</strong></div>
+        <div><span>Email</span><strong>{{ order.email }}</strong></div>
+        <div><span>Book</span><strong>{{ order.title }}</strong></div>
+        <div><span>Quantity</span><strong>{{ order.quantity }}</strong></div>
+        <div><span>Total Paid</span><strong>Rs. {{ "%.2f"|format(order.total_amount or 0) }}</strong></div>
+        <div><span>Order Date</span><strong>{{ order.order_date.strftime('%b %d, %Y') if order.order_date else 'N/A' }}</strong></div>
+    </div>
+</section>
+{% endblock %}

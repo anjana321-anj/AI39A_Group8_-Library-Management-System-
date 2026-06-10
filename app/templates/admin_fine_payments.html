@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Fine Payments - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Fine payments.</h1>
+    <p>Set fine rates and verify QR or bank transfer payment submissions.</p>
+</section>
+
+<form class="data-panel reveal compact-form" method="post">
+    <label class="field">
+        <span>Fine Per Day</span>
+        <input type="number" step="0.01" name="fine_per_day" value="{{ fine_per_day }}" min="1" required>
+    </label>
+    <button class="btn btn-primary" type="submit" data-ripple>Save Fine Setting</button>
+</form>
+
+<section class="data-panel reveal">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Book</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                    <tr>
+                        <td><strong>{{ payment.username }}</strong><span>{{ payment.email }}</span></td>
+                        <td><strong>{{ payment.title }}</strong><span>{{ payment.overdue_days }} overdue days</span></td>
+                        <td>Rs. {{ "%.2f"|format(payment.amount or 0) }}</td>
+                        <td><strong>{{ payment.payment_method }}</strong><span>{{ payment.transaction_id }}</span></td>
+                        <td><span class="status-badge {{ 'success' if payment.status == 'Approved' else 'warning' }}">{{ payment.status }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                {% if payment.status == 'Pending Verification' %}
+                                    <form method="post" action="{{ url_for('auth.approve_fine_payment', payment_id=payment.id) }}">
+                                        <button class="btn btn-small btn-primary" type="submit">Approve</button>
+                                    </form>
+                                    <form method="post" action="{{ url_for('auth.reject_fine_payment', payment_id=payment.id) }}">
+                                        <button class="btn btn-small btn-disabled" type="submit">Reject</button>
+                                    </form>
+                                {% else %}
+                                    <span>{{ payment.verified_at.strftime('%b %d, %Y') if payment.verified_at else 'Reviewed' }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">No fine payment submissions yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Reservations - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Dashboard</span>
+    <h1>Your reservation history.</h1>
+    <p>Track pending, approved, collected, cancelled, and expired reservation records.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Reservations</h2>
+        <a href="{{ url_for('auth.books') }}">Reserve another book</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Reservation Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                    <tr>
+                        <td><strong>{{ reservation.title }}</strong><span>{{ reservation.author }}</span></td>
+                        <td>{{ reservation.reservation_date.strftime('%b %d, %Y') if reservation.reservation_date else 'N/A' }}</td>
+                        <td>{{ reservation.expiry_date.strftime('%b %d, %Y') if reservation.expiry_date else 'N/A' }}</td>
+                        <td><span class="status-badge {{ 'success' if reservation.status in ['Approved', 'Collected'] else 'warning' }}">{{ reservation.status }}</span></td>
+                        <td>
+                            {% if reservation.status in ['Pending', 'Approved'] %}
+                                <form method="post" action="{{ url_for('auth.cancel_user_reservation', reservation_id=reservation.id) }}">
+                                    <button class="btn btn-small btn-disabled" type="submit">Cancel</button>
+                                </form>
+                            {% else %}
+                                <span>{{ reservation.admin_note or 'No action' }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">No reservations yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

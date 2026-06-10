@@ -13,7 +13,10 @@
 <section class="data-panel reveal">
     <div class="panel-heading">
         <h2>Books</h2>
-        <a href="{{ url_for('auth.admin_users') }}">User Management</a>
+        <div class="inline-links">
+            <a href="{{ url_for('auth.admin_users') }}">User Management</a>
+            <a href="{{ url_for('auth.admin_reservations') }}">Reservations</a>
+        </div>
     </div>
     <div class="table-wrap">
         <table>
@@ -23,6 +26,7 @@
                     <th>Author</th>
                     <th>Genre</th>
                     <th>Copies</th>
+                    <th>Sales</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -34,6 +38,7 @@
                         <td>{{ book.author }}</td>
                         <td>{{ book.category }}</td>
                         <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
+                        <td>Rs. {{ "%.2f"|format(book.price or 0) }}<span>{{ book.stock_quantity }} in stock</span></td>
                         <td><span class="status-badge {{ 'success' if book.availability_status == 'Available' else 'warning' }}">{{ book.availability_status }}</span></td>
                         <td>
                             <div class="admin-actions">
