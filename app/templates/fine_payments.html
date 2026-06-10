@@ -6,7 +6,7 @@
 <section class="page-hero reveal">
     <span class="eyebrow">Dashboard</span>
     <h1>Fine payments.</h1>
-    <p>Overdue fines are calculated automatically using the current rate of Rs. {{ "%.2f"|format(fine_per_day or 0) }} per day.</p>
+    <p>Overdue fines are calculated automatically using the current rate of NPR {{ "%.2f"|format(fine_per_day or 0) }} per day.</p>
 </section>
 
 <section class="data-panel reveal">
@@ -14,6 +14,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>S.No</th>
                     <th>Book</th>
                     <th>Borrow / Due / Return</th>
                     <th>Fine</th>
@@ -24,6 +25,7 @@
             <tbody>
                 {% for fine in fines %}
                     <tr>
+                        <td>{{ loop.index }}</td>
                         <td><strong>{{ fine.title }}</strong><span>{{ fine.author }}</span></td>
                         <td>
                             <span>Borrowed: {{ fine.borrow_date.strftime('%b %d, %Y') if fine.borrow_date else 'N/A' }}</span>
@@ -31,31 +33,34 @@
                             <span>Returned: {{ fine.return_date.strftime('%b %d, %Y') if fine.return_date else 'Not returned' }}</span>
                         </td>
                         <td>
-                            <strong>Rs. {{ "%.2f"|format(fine.total_fine or 0) }}</strong>
-                            <span>{{ fine.overdue_days }} days x Rs. {{ "%.2f"|format(fine.fine_per_day or 0) }}</span>
+                            <strong>NPR {{ "%.2f"|format(fine.total_fine or 0) }}</strong>
+                            <span>{{ fine.overdue_days }} days x NPR {{ "%.2f"|format(fine.fine_per_day or 0) }}</span>
                         </td>
                         <td><span class="status-badge {{ 'success' if fine.status == 'Paid' else 'warning' }}">{{ fine.status }}</span></td>
                         <td>
+                            {% if fine.payment_id %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.fine_payment_receipt', payment_id=fine.payment_id) }}">View Receipt</a>
+                                <span>{{ fine.payment_status or 'Pending Verification' }}</span>
+                            {% endif %}
                             {% if fine.status != 'Paid' %}
                                 <form class="inline-payment-form" method="post">
                                     <input type="hidden" name="fine_record_id" value="{{ fine.id }}">
                                     <select name="payment_method" required>
                                         <option value="QR Payment">QR Payment</option>
                                         <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Cash Payment">Cash Payment</option>
                                     </select>
                                     <input type="text" name="transaction_id" placeholder="Transaction ID" required>
                                     <input type="number" step="0.01" name="amount" value="{{ fine.total_fine }}" min="1" required>
-                                    <input type="text" name="proof_of_payment" placeholder="Proof URL or note">
-                                    <button class="btn btn-small btn-primary" type="submit">Submit</button>
+                                    <input type="text" name="proof_of_payment" placeholder="Upload proof URL or note">
+                                    <button class="btn btn-small btn-primary" type="submit">Submit Proof</button>
                                 </form>
-                            {% else %}
-                                <span>Approved</span>
                             {% endif %}
                         </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="5">No overdue fines at the moment.</td>
+                        <td colspan="6">No overdue fines at the moment.</td>
                     </tr>
                 {% endfor %}
             </tbody>
