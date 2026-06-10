@@ -6,7 +6,7 @@
 <section class="page-hero reveal">
     <span class="eyebrow">Admin Panel</span>
     <h1>Book Management</h1>
-    <p>Add, edit, delete, and update availability for catalog books.</p>
+    <p>Add, edit, delete, and update catalog books. Availability is synced automatically from stock.</p>
     <a class="btn btn-primary" href="{{ url_for('auth.add_book') }}" data-ripple>Add Book</a>
 </section>
 
@@ -15,6 +15,7 @@
         <h2>Books</h2>
         <div class="inline-links">
             <a href="{{ url_for('auth.admin_users') }}">User Management</a>
+            <a href="{{ url_for('auth.admin_orders') }}">Orders</a>
             <a href="{{ url_for('auth.admin_reservations') }}">Reservations</a>
         </div>
     </div>
@@ -22,32 +23,47 @@
         <table>
             <thead>
                 <tr>
-                    <th>Book Title</th>
+                    <th>S.No</th>
+                    <th>Book ID</th>
+                    <th>Cover</th>
+                    <th>Title</th>
                     <th>Author</th>
                     <th>Genre</th>
-                    <th>Copies</th>
-                    <th>Sales</th>
                     <th>Status</th>
+                    <th>Stock</th>
+                    <th>Reserved By</th>
+                    <th>Borrowed By</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for book in books %}
                     <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>#{{ book.id }}</td>
+                        <td><img class="table-cover" src="{{ book.image }}" alt="{{ book.title }}"></td>
                         <td><strong>{{ book.title }}</strong><span>{{ book.isbn or 'No ISBN' }}</span></td>
                         <td>{{ book.author }}</td>
                         <td>{{ book.category }}</td>
-                        <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
-                        <td>Rs. {{ "%.2f"|format(book.price or 0) }}<span>{{ book.stock_quantity }} in stock</span></td>
-                        <td><span class="status-badge {{ 'success' if book.availability_status == 'Available' else 'warning' }}">{{ book.availability_status }}</span></td>
+                        <td>
+                            <span class="status-badge {{ 'success' if book.stock_quantity > 0 else 'warning' }}">{{ book.availability_status }}</span>
+                            <span>{{ book.book_status or 'Available' }}</span>
+                        </td>
+                        <td>{{ book.stock_quantity }}</td>
+                        <td>{{ book.reserved_by or 'N/A' }}</td>
+                        <td>{{ book.borrowed_by or 'N/A' }}</td>
                         <td>
                             <div class="admin-actions">
-                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_book', book_id=book.id) }}">Edit Book</a>
-                                <form method="post" action="{{ url_for('auth.delete_book', book_id=book.id) }}">
-                                    <button class="btn btn-small btn-disabled" type="submit">Delete Book</button>
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_book', book_id=book.id) }}">Edit</a>
+                                <form method="post" action="{{ url_for('auth.delete_book', book_id=book.id) }}" data-confirm="Are you sure you want to delete this book?">
+                                    <button class="btn btn-small btn-disabled" type="submit">Delete</button>
                                 </form>
                             </div>
                         </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="11">No books found.</td>
                     </tr>
                 {% endfor %}
             </tbody>
