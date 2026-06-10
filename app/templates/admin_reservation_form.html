@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Reservation - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Edit Reservation</h1>
+    <p>Modify reservation details, expiry, and status.</p>
+</section>
+
+<form class="data-panel reveal admin-form-grid" method="post" data-loading-form>
+    <label class="field">
+        <span>User</span>
+        <input type="text" value="{{ reservation.username }} ({{ reservation.email }})" readonly>
+    </label>
+    <label class="field">
+        <span>Book</span>
+        <input type="text" value="{{ reservation.title }} by {{ reservation.author }}" readonly>
+    </label>
+    <label class="field">
+        <span>Expiry Date</span>
+        <input type="datetime-local" name="expiry_date" value="{{ reservation.expiry_date.strftime('%Y-%m-%dT%H:%M') if reservation.expiry_date else '' }}" required>
+    </label>
+    <label class="field">
+        <span>Status</span>
+        <select name="status">
+            {% for status in ['Pending', 'Approved', 'Collected', 'Cancelled', 'Expired'] %}
+                <option value="{{ status }}" {{ 'selected' if reservation.status == status else '' }}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label class="field full-field">
+        <span>Admin Note</span>
+        <input type="text" name="admin_note" value="{{ reservation.admin_note or '' }}">
+    </label>
+    <div class="form-row full-field">
+        <button class="btn btn-primary" type="submit" data-ripple>Save Reservation</button>
+        <a class="btn btn-secondary" href="{{ url_for('auth.admin_reservations') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}
