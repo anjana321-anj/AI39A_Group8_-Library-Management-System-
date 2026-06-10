@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Reviews & Ratings - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Reviews & Ratings</span>
+    <h1>Your reading feedback.</h1>
+    <p>View your submitted reviews, book ratings, average rating, and review statistics.</p>
+</section>
+
+<section class="stats-grid reveal">
+    <article class="stat-widget">
+        <span>Average Rating</span>
+        <strong>{{ average_rating }}/5</strong>
+        <small>Your rated books</small>
+    </article>
+    <article class="stat-widget">
+        <span>Total Ratings</span>
+        <strong>{{ total_ratings }}</strong>
+        <small>Ratings submitted</small>
+    </article>
+    <article class="stat-widget">
+        <span>Total Reviews</span>
+        <strong>{{ total_reviews }}</strong>
+        <small>Text reviews submitted</small>
+    </article>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>User Reviews</h2>
+        <a href="{{ url_for('auth.books') }}">Review another book</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Book</th>
+                    <th>Rating</th>
+                    <th>Average Rating</th>
+                    <th>Review</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in reviews %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ review.title }}</strong><span>{{ review.author }}</span></td>
+                        <td>{{ review.rating or 'N/A' }}</td>
+                        <td>{{ review.average_rating or 0 }}/5<span>{{ review.total_ratings or 0 }} ratings</span></td>
+                        <td>{{ review.review_text or 'No text review submitted.' }}</td>
+                        <td>{{ review.review_date.strftime('%b %d, %Y') if review.review_date else 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">No reviews or ratings yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
