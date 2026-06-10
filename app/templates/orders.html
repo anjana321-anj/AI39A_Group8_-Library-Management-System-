@@ -5,8 +5,8 @@
 {% block content %}
 <section class="page-hero reveal">
     <span class="eyebrow">Dashboard</span>
-    <h1>Your order history.</h1>
-    <p>Review purchases, order details, and receipt records.</p>
+    <h1>Active orders.</h1>
+    <p>Track current purchases, payment status, and receipts. Historical activity will move to Activity Logs later.</p>
 </section>
 
 <section class="data-panel reveal">
@@ -14,9 +14,11 @@
         <table>
             <thead>
                 <tr>
+                    <th>S.No</th>
                     <th>Order</th>
                     <th>Book</th>
                     <th>Amount</th>
+                    <th>Payment</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -24,15 +26,27 @@
             <tbody>
                 {% for order in orders %}
                     <tr>
+                        <td>{{ loop.index }}</td>
                         <td><strong>#{{ order.id }}</strong><span>{{ order.order_date.strftime('%b %d, %Y') if order.order_date else 'N/A' }}</span></td>
                         <td><strong>{{ order.title }}</strong><span>{{ order.quantity }} copy</span></td>
-                        <td>Rs. {{ "%.2f"|format(order.total_amount or 0) }}</td>
-                        <td><span class="status-badge warning">{{ order.status }}</span></td>
-                        <td><a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_details', order_id=order.id) }}">Details</a></td>
+                        <td>NPR {{ "%.2f"|format(order.total_amount or 0) }}</td>
+                        <td>{{ order.payment_method or 'Pending' }}</td>
+                        <td><span class="status-badge {{ 'success' if order.status in ['Paid', 'Completed'] else 'warning' }}">{{ order.status }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_details', order_id=order.id) }}">Details</a>
+                                {% if order.status not in ['Paid', 'Completed'] %}
+                                    <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_order', order_id=order.id) }}">Proceed To Pay</a>
+                                {% endif %}
+                                {% if order.receipt_number %}
+                                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_receipt', order_id=order.id) }}">Receipt</a>
+                                {% endif %}
+                            </div>
+                        </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="5">No orders yet.</td>
+                        <td colspan="7">No active orders.</td>
                     </tr>
                 {% endfor %}
             </tbody>
