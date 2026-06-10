@@ -43,27 +43,28 @@
         <input type="url" name="image" value="{{ book.image if book and book.image else '' }}" placeholder="https://...">
     </label>
     <label class="field">
+        <span>Price (NPR)</span>
+        <input type="number" step="0.01" name="price" value="{{ book.price if book else 0 }}" min="0">
+    </label>
+    <label class="field">
+        <span>Stock</span>
+        <input type="number" name="stock_quantity" value="{{ book.stock_quantity if book else 0 }}" min="0">
+    </label>
+    <label class="field">
         <span>Total Copies</span>
         <input type="number" name="total_copies" value="{{ book.total_copies if book else 1 }}" min="1" required>
     </label>
     <label class="field">
-        <span>Available Copies</span>
-        <input type="number" name="available_copies" value="{{ book.available_copies if book else 1 }}" min="0" required>
-    </label>
-    <label class="field">
-        <span>Price</span>
-        <input type="number" step="0.01" name="price" value="{{ book.price if book else 0 }}" min="0">
-    </label>
-    <label class="field">
-        <span>Stock Quantity</span>
-        <input type="number" name="stock_quantity" value="{{ book.stock_quantity if book else 0 }}" min="0">
-    </label>
-    <label class="field">
-        <span>Availability Status</span>
-        <select name="availability_status">
-            <option value="Available" {{ 'selected' if not book or book.availability_status == 'Available' else '' }}>Available</option>
-            <option value="Unavailable" {{ 'selected' if book and book.availability_status == 'Unavailable' else '' }}>Unavailable</option>
+        <span>Book Status</span>
+        <select name="book_status">
+            {% for status in ['Available', 'Borrowed', 'Reserved', 'Purchased', 'In Buy List'] %}
+                <option value="{{ status }}" {{ 'selected' if book and book.book_status == status else '' }}>{{ status }}</option>
+            {% endfor %}
         </select>
+    </label>
+    <label class="field">
+        <span>Availability</span>
+        <input type="text" value="{{ book.availability_status if book else 'Auto: Available when stock is above 0' }}" readonly>
     </label>
     <label class="field full-field">
         <span>Description</span>
