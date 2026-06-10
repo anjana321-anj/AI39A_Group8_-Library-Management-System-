@@ -12,18 +12,18 @@
 <section class="catalog-grid reveal">
     {% if books %}
         {% for book in books %}
-            {% set is_available = book.available and book.availability_status == 'Available' and book.available_copies > 0 %}
+            {% set is_available = book.stock_quantity > 0 %}
             <article class="book-card tilt-card">
                 <div class="book-cover">
                     <img src="{{ book.image }}" alt="{{ book.title }}">
-                    <span class="availability-badge {{ 'muted-badge' if not is_available else '' }}">{{ 'Available' if is_available else 'Unavailable' }}</span>
+                    <span class="availability-badge {{ 'muted-badge' if not is_available else '' }}">{{ 'Available' if is_available else 'Out of Stock' }}</span>
                 </div>
                 <div class="book-body">
                     <span class="book-category">{{ book.category }}</span>
                     <h3>{{ book.title }}</h3>
                     <p>{{ book.description }}</p>
                     <div class="rating-line">
-                        <span aria-hidden="true">★★★★★</span>
+                        <span aria-hidden="true">Rating</span>
                         <strong>{{ book.average_rating or 0 }}/5</strong>
                         <small>{{ book.review_count or 0 }} reviews</small>
                     </div>
