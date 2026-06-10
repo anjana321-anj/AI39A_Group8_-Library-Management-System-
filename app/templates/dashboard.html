@@ -14,11 +14,13 @@
             <a href="{{ url_for('auth.favourites') }}">Favourites</a>
             <a href="{{ url_for('auth.reservations') }}">Reservations</a>
             <a href="{{ url_for('auth.orders') }}">Orders</a>
+            <a href="{{ url_for('auth.reviews_ratings') }}">Reviews & Ratings</a>
             <a href="{{ url_for('auth.fine_payments') }}">Fine Payments</a>
             <a href="{{ url_for('auth.profile') }}">Profile</a>
             {% if session.get('role') == 'admin' %}
                 <a href="{{ url_for('auth.admin_users') }}">User Management</a>
                 <a href="{{ url_for('auth.admin_books') }}">Book Management</a>
+                <a href="{{ url_for('auth.admin_orders') }}">Manage Orders</a>
                 <a href="{{ url_for('auth.admin_reservations') }}">Manage Reservations</a>
                 <a href="{{ url_for('auth.admin_fine_payments') }}">Verify Payments</a>
             {% endif %}
@@ -32,7 +34,15 @@
                 <h1>Welcome back, {{ session.get('username', 'Reader') }}.</h1>
                 <p>Monitor the catalog, active loans, and recent reading movement from one clean dashboard.</p>
             </div>
-            <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Borrow a Book</a>
+            <article class="profile-summary">
+                <div class="avatar">{{ user.username[:1]|upper if user else 'B' }}</div>
+                <div>
+                    <strong>{{ user.username if user else session.get('username', 'Reader') }}</strong>
+                    <span>{{ (user.role if user else session.get('role', 'user'))|title }} account</span>
+                    <span>Membership: {{ (user.status if user else 'active')|title }}</span>
+                    <span>{{ active_borrow_count }} active borrows | {{ active_reservation_count }} reservations | NPR {{ "%.2f"|format(outstanding_fine_total) }} fines</span>
+                </div>
+            </article>
         </section>
 
         <section class="stats-grid reveal">
@@ -81,7 +91,7 @@
                                         <span>{{ book.author }}</span>
                                     </td>
                                     <td>{{ book.category }}</td>
-                                    <td><span class="status-badge {{ 'warning' if not book.available else 'success' }}">{{ 'Available' if book.available else 'Borrowed' }}</span></td>
+                                    <td><span class="status-badge {{ 'warning' if book.stock_quantity < 1 else 'success' }}">{{ book.availability_status }}</span></td>
                                 </tr>
                             {% endfor %}
                         </tbody>
