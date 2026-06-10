@@ -39,10 +39,12 @@ def create_app():
             "auth.favourites": "Favourites",
             "auth.reservations": "Reservations",
             "auth.orders": "Orders",
+            "auth.reviews_ratings": "Reviews & Ratings",
             "auth.fine_payments": "Fine Payments",
             "auth.dashboard": "Dashboard",
             "auth.admin_users": "User Management",
             "auth.admin_books": "Book Management",
+            "auth.admin_orders": "Order Management",
             "auth.admin_reservations": "Reservations",
             "auth.admin_fine_payments": "Fine Payments",
         }
@@ -53,9 +55,11 @@ def create_app():
             "auth.favourites",
             "auth.reservations",
             "auth.orders",
+            "auth.reviews_ratings",
             "auth.fine_payments",
             "auth.admin_users",
             "auth.admin_books",
+            "auth.admin_orders",
             "auth.admin_reservations",
             "auth.admin_fine_payments",
         }
@@ -76,14 +80,34 @@ def create_app():
             crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
             crumbs.append({"label": "Orders", "url": url_for("auth.orders")})
             crumbs.append({"label": "Receipt", "url": None})
+        elif endpoint == "auth.pay_order":
+            crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
+            crumbs.append({"label": "Orders", "url": url_for("auth.orders")})
+            crumbs.append({"label": "Proceed To Pay", "url": None})
         elif endpoint in {"auth.add_book", "auth.edit_book"}:
             crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
             crumbs.append({"label": "Book Management", "url": url_for("auth.admin_books")})
             crumbs.append({"label": "Book Form", "url": None})
-        elif endpoint == "auth.edit_user":
+        elif endpoint in {"auth.add_user", "auth.edit_user"}:
             crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
             crumbs.append({"label": "User Management", "url": url_for("auth.admin_users")})
-            crumbs.append({"label": "Edit User", "url": None})
+            crumbs.append({"label": "User Form", "url": None})
+        elif endpoint in {"auth.edit_order_admin"}:
+            crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
+            crumbs.append({"label": "Order Management", "url": url_for("auth.admin_orders")})
+            crumbs.append({"label": "Edit Order", "url": None})
+        elif endpoint in {"auth.edit_reservation_admin"}:
+            crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
+            crumbs.append({"label": "Reservations", "url": url_for("auth.admin_reservations")})
+            crumbs.append({"label": "Edit Reservation", "url": None})
+        elif endpoint in {"auth.edit_fine_payment"}:
+            crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
+            crumbs.append({"label": "Fine Payments", "url": url_for("auth.admin_fine_payments")})
+            crumbs.append({"label": "Edit Payment", "url": None})
+        elif endpoint == "auth.edit_profile":
+            crumbs.append({"label": "Dashboard", "url": url_for("auth.dashboard")})
+            crumbs.append({"label": "Profile", "url": url_for("auth.profile")})
+            crumbs.append({"label": "Edit Profile", "url": None})
         elif endpoint in simple_pages:
             crumbs.append({"label": simple_pages[endpoint], "url": None})
         elif endpoint == "auth.reset_logged_in_password":
