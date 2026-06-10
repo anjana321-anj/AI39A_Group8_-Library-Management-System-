@@ -56,6 +56,7 @@ from app.database import (
     list_user_fines,
     list_user_notifications,
     list_user_orders,
+    list_user_profile_updates,
     list_user_reservations,
     list_users,
     mark_password_reset_token_used,
@@ -366,12 +367,14 @@ class AuthController:
         borrowed_books = get_user_borrowed_books(session["user_id"])
         skills = get_user_skills(session["user_id"])
         notifications = list_user_notifications(session["user_id"], limit=5)
+        profile_updates = list_user_profile_updates(session["user_id"])
         return render_template(
             "profile.html",
             user=user,
             borrowed_books=borrowed_books,
             skills=skills,
             notifications=notifications,
+            profile_updates=profile_updates,
         )
 
     @login_required
@@ -477,12 +480,23 @@ class AuthController:
         books = list_books()
         recent_activity = get_recent_activity()
         notifications = list_user_notifications(session["user_id"], limit=5)
+        user = get_user_by_id(session["user_id"])
+        active_borrows = get_user_active_borrowed_books(session["user_id"])
+        active_reservations = list_user_reservations(session["user_id"])
+        outstanding_fines = [
+            fine for fine in list_user_fines(session["user_id"])
+            if fine.get("status") not in {"Paid", "Approved"}
+        ]
         return render_template(
             "dashboard.html",
             stats=stats,
             books=books,
             recent_activity=recent_activity,
             notifications=notifications,
+            user=user,
+            active_borrow_count=len(active_borrows),
+            active_reservation_count=len(active_reservations),
+            outstanding_fine_total=sum(float(fine.get("total_fine") or 0) for fine in outstanding_fines),
         )
 
     @login_required
@@ -506,11 +520,26 @@ class AuthController:
 
     @login_required
     def return_borrowed(self, borrowed_id):
-        if return_book(session["user_id"], borrowed_id):
+        returned_book_id = return_book(session["user_id"], borrowed_id)
+        if returned_book_id:
             flash("Book returned successfully.", "success")
+            return redirect(url_for("auth.book_details", book_id=returned_book_id, returned=1))
         else:
             flash("That borrowed book could not be returned.", "warning")
         return redirect(url_for("auth.borrowed"))
+
+    @login_required
+    def reviews_ratings(self):
+        reviews = list_user_reviews_and_ratings(session["user_id"])
+        rated = [review for review in reviews if review.get("rating")]
+        average = round(sum(review["rating"] for review in rated) / len(rated), 1) if rated else 0
+        return render_template(
+            "reviews_ratings.html",
+            reviews=reviews,
+            average_rating=average,
+            total_reviews=len([review for review in reviews if review.get("review_text")]),
+            total_ratings=len(rated),
+        )
 
     @login_required
     def favourites(self):
@@ -602,10 +631,11 @@ class AuthController:
             else:
                 payment_reference = request.form.get("payment_reference", "").strip()
                 if payment_method == "Cash Payment":
-                    payment_note = "Please visit the library counter to complete payment."
-                    status = "Pending"
+                    payment_note = "Cash Payment Received Successfully. Please collect your book from the library counter."
+                    payment_reference = payment_reference or f"CASH-{order_id}-{datetime.now().strftime('%H%M%S')}"
+                    status = "Paid"
                 elif payment_method == "QR Payment":
-                    payment_note = "QR payment confirmation submitted."
+                    payment_note = "Payment Successful through QR Payment."
                     status = "Paid"
                     payment_reference = payment_reference or f"QR-{order_id}-{datetime.now().strftime('%H%M%S')}"
                 else:
@@ -646,7 +676,7 @@ class AuthController:
             amount = self._safe_float(request.form.get("amount"), 0)
             proof = request.form.get("proof_of_payment", "").strip() or None
 
-            if payment_method not in {"QR Payment", "Bank Transfer"}:
+            if payment_method not in {"QR Payment", "Bank Transfer", "Cash Payment"}:
                 flash("Choose a valid payment method.", "warning")
             elif not transaction_id:
                 flash("Transaction ID is required.", "warning")
@@ -711,6 +741,38 @@ class AuthController:
         return render_template("admin_users.html", users=list_users(), updates=list_profile_updates())
 
     @admin_required
+    def add_user(self):
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            phone = request.form.get("phone", "").strip()
+            address = request.form.get("address", "").strip()
+            role = request.form.get("role", "user")
+            status = request.form.get("status", "active")
+            password = request.form.get("password", "BookVerse@123")
+
+            if not username or not email:
+                flash("User name and email are required.", "warning")
+            elif role not in {"user", "admin"} or status not in {"active", "inactive", "suspended"}:
+                flash("Invalid role or status selected.", "warning")
+            elif get_user_by_email(email):
+                flash("That email address is already in use.", "danger")
+            else:
+                user_id = create_user(
+                    username,
+                    email,
+                    generate_password_hash(password),
+                    phone_number=phone,
+                    address=address,
+                )
+                update_user(user_id, username, email, role, status, phone, address)
+                log_event(session.get("user_id"), "user_created", "user", user_id, "User created by admin")
+                flash("User created successfully.", "success")
+                return redirect(url_for("auth.admin_users"))
+
+        return render_template("admin_user_form.html", user=None)
+
+    @admin_required
     def edit_user(self, user_id):
         user = get_user_by_id(user_id)
         if not user:
@@ -742,6 +804,27 @@ class AuthController:
                     flash("That email address is already in use.", "danger")
 
         return render_template("admin_user_form.html", user=user)
+
+    @admin_required
+    def update_user_status(self, user_id, status):
+        user = get_user_by_id(user_id)
+        if not user:
+            flash("User not found.", "warning")
+        elif status not in {"active", "inactive", "suspended"}:
+            flash("Invalid user status.", "warning")
+        else:
+            update_user(
+                user_id,
+                user["username"],
+                user["email"],
+                user.get("role", "user"),
+                status,
+                user.get("phone_number") or user.get("phone"),
+                user.get("address"),
+            )
+            log_event(session.get("user_id"), "user_updated", "user", user_id, f"User status changed to {status}")
+            flash("User updated successfully.", "success")
+        return redirect(url_for("auth.admin_users"))
 
     @admin_required
     def delete_user(self, user_id):
@@ -944,6 +1027,9 @@ class AuthController:
         total_copies = max(self._safe_int(request.form.get("total_copies"), stock_quantity or 1), stock_quantity, 1)
         available_copies = stock_quantity
         status = "Available" if stock_quantity > 0 else "Out of Stock"
+        book_status = request.form.get("book_status", "Available" if stock_quantity > 0 else "Purchased")
+        if book_status not in {"Available", "Borrowed", "Reserved", "Purchased", "In Buy List"}:
+            book_status = "Available" if stock_quantity > 0 else "Purchased"
 
         publication_year = request.form.get("publication_year", "").strip()
         return {
@@ -959,6 +1045,7 @@ class AuthController:
             "total_copies": total_copies,
             "available_copies": available_copies,
             "availability_status": status,
+            "book_status": book_status,
             "price": max(self._safe_float(request.form.get("price"), 0), 0),
             "stock_quantity": stock_quantity,
         }
