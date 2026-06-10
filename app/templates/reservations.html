@@ -5,46 +5,49 @@
 {% block content %}
 <section class="page-hero reveal">
     <span class="eyebrow">Dashboard</span>
-    <h1>Your reservation history.</h1>
-    <p>Track pending, approved, collected, cancelled, and expired reservation records.</p>
+    <h1>Active reservations.</h1>
+    <p>Only current reservations are shown. Expired reservations are cleared automatically.</p>
 </section>
 
 <section class="data-panel reveal">
     <div class="panel-heading">
-        <h2>Reservations</h2>
+        <h2>Active Reservations</h2>
         <a href="{{ url_for('auth.books') }}">Reserve another book</a>
     </div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
+                    <th>S.No</th>
                     <th>Book</th>
                     <th>Reservation Date</th>
                     <th>Expiry Date</th>
+                    <th>Remaining Time</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for reservation in reservations %}
                     <tr>
+                        <td>{{ loop.index }}</td>
                         <td><strong>{{ reservation.title }}</strong><span>{{ reservation.author }}</span></td>
                         <td>{{ reservation.reservation_date.strftime('%b %d, %Y') if reservation.reservation_date else 'N/A' }}</td>
                         <td>{{ reservation.expiry_date.strftime('%b %d, %Y') if reservation.expiry_date else 'N/A' }}</td>
-                        <td><span class="status-badge {{ 'success' if reservation.status in ['Approved', 'Collected'] else 'warning' }}">{{ reservation.status }}</span></td>
+                        <td>{{ reservation.expiry_date.strftime('%b %d, %Y %I:%M %p') if reservation.expiry_date else 'N/A' }}</td>
+                        <td><span class="status-badge {{ 'success' if reservation.status == 'Approved' else 'warning' }}">{{ reservation.status }}</span></td>
                         <td>
-                            {% if reservation.status in ['Pending', 'Approved'] %}
-                                <form method="post" action="{{ url_for('auth.cancel_user_reservation', reservation_id=reservation.id) }}">
+                            <div class="admin-actions">
+                                <form method="post" action="{{ url_for('auth.cancel_user_reservation', reservation_id=reservation.id) }}" data-confirm="Cancel this reservation?">
                                     <button class="btn btn-small btn-disabled" type="submit">Cancel</button>
                                 </form>
-                            {% else %}
-                                <span>{{ reservation.admin_note or 'No action' }}</span>
-                            {% endif %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.buy_book', book_id=reservation.book_id) }}">Buy Book</a>
+                            </div>
                         </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="5">No reservations yet.</td>
+                        <td colspan="7">No active reservations.</td>
                     </tr>
                 {% endfor %}
             </tbody>
