@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Notification Center</span>
+    <h1>Your BookVerse updates.</h1>
+    <p>Reservation updates, waitlist alerts, fine reminders, and return reminders appear here.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Notifications</h2>
+        <span class="status-badge success">{{ notifications|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Title</th>
+                    <th>Message</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notification in notifications %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ notification.title }}</strong></td>
+                        <td>{{ notification.message }}</td>
+                        <td>{{ notification.notification_type|replace('_', ' ')|title }}</td>
+                        <td><span class="status-badge {{ 'success' if notification.is_read else 'warning' }}">{{ 'Read' if notification.is_read else 'Unread' }}</span></td>
+                        <td>{{ notification.created_at.strftime('%b %d, %Y') if notification.created_at else 'N/A' }}</td>
+                        <td class="admin-actions">
+                            {% if not notification.is_read %}
+                                <form method="post" action="{{ url_for('auth.mark_notification_read_route', notification_id=notification.id) }}">
+                                    <button class="btn btn-small btn-secondary" type="submit">Mark Read</button>
+                                </form>
+                            {% endif %}
+                            <form method="post" action="{{ url_for('auth.delete_notification_route', notification_id=notification.id) }}">
+                                <button class="btn btn-small btn-disabled" type="submit" data-confirm="Delete this notification?">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">No notifications yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
