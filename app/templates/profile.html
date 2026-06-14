@@ -5,11 +5,30 @@
 {% block content %}
 <section class="profile-layout">
     <aside class="profile-card reveal">
-        <div class="avatar">{{ user.username[:1]|upper if user else 'B' }}</div>
+        <div class="avatar">
+            {% if profile_picture %}
+                <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture">
+            {% else %}
+                {{ user.username[:1]|upper if user else 'B' }}
+            {% endif %}
+        </div>
         <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
         <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
         <p>{{ user.phone_number or user.phone or 'Phone not added' }}</p>
         <p>{{ user.address or 'Address not added' }}</p>
+        <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
+            <label class="field">
+                <span>Profile picture</span>
+                <input type="file" name="profile_picture" accept=".png,.jpg,.jpeg,.webp,.gif">
+            </label>
+            <button class="btn btn-secondary btn-wide" type="submit">Upload Picture</button>
+        </form>
+        {% if profile_picture %}
+            <form method="post" action="{{ url_for('auth.update_profile_picture') }}">
+                <input type="hidden" name="action" value="remove">
+                <button class="btn btn-disabled btn-wide" type="submit" data-confirm="Remove your profile picture?">Remove Picture</button>
+            </form>
+        {% endif %}
         <div class="profile-meta">
             <span>Member since</span>
             <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
@@ -18,6 +37,8 @@
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Reset Password</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.favourites') }}" data-ripple>Favourites</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reservations') }}" data-ripple>Reservations</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.waitlists') }}" data-ripple>Waitlist</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.notifications') }}" data-ripple>Notifications</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.orders') }}" data-ripple>Orders</a>
         <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
     </aside>
@@ -113,6 +134,41 @@
                         {% else %}
                             <tr>
                                 <td colspan="5">No profile updates recorded yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Profile Picture History</h2>
+                <span class="status-badge success">{{ picture_history|length }} records</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Action</th>
+                            <th>Image</th>
+                            <th>Handled By</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in picture_history %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ item.action }}</td>
+                                <td>{{ item.image_path or 'N/A' }}</td>
+                                <td>{{ item.admin_name or 'Self' }}</td>
+                                <td>{{ item.created_at.strftime('%b %d, %Y') if item.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No profile picture history yet.</td>
                             </tr>
                         {% endfor %}
                     </tbody>

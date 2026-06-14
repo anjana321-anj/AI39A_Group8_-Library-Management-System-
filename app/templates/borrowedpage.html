@@ -4,14 +4,32 @@
 
 {% block content %}
 <section class="page-hero reveal">
-    <span class="eyebrow">Borrowed shelf</span>
-    <h1>Your active and returned books.</h1>
-    <p>Return borrowed titles from this protected page. Returned books become available in the catalog again.</p>
+    <span class="eyebrow">Borrow history</span>
+    <h1>Your current and past borrowed books.</h1>
+    <p>Track active loans, returned books, overdue records, and full borrowing history from one protected page.</p>
+</section>
+
+<section class="stats-grid reveal">
+    <article class="stat-widget">
+        <span>Current Borrows</span>
+        <strong>{{ current_borrows|length }}</strong>
+        <small>Borrowed or overdue</small>
+    </article>
+    <article class="stat-widget">
+        <span>Returned Books</span>
+        <strong>{{ returned_books|length }}</strong>
+        <small>Completed returns</small>
+    </article>
+    <article class="stat-widget">
+        <span>Complete History</span>
+        <strong>{{ borrowed_books|length }}</strong>
+        <small>All borrow records</small>
+    </article>
 </section>
 
 <section class="borrow-layout reveal">
-    {% if borrowed_books %}
-        {% for loan in borrowed_books %}
+    {% if current_borrows %}
+        {% for loan in current_borrows %}
             <article class="loan-card tilt-card">
                 <img src="{{ loan.image }}" alt="{{ loan.title }}">
                 <div class="loan-body">
@@ -25,22 +43,57 @@
                         <span>Due {{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'soon' }}</span>
                     </div>
                     <div class="loan-actions">
-                        <span class="status-badge {{ 'success' if loan.status == 'returned' else 'warning' }}">{{ loan.status|title }}</span>
-                        {% if loan.status == 'borrowed' %}
-                            <form method="post" action="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">
-                                <button class="btn btn-small btn-primary" type="submit" data-ripple>Return</button>
-                            </form>
-                        {% endif %}
+                        <span class="status-badge {{ 'warning' if loan.status == 'overdue' else 'success' }}">{{ loan.status|title }}</span>
+                        <form method="post" action="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">
+                            <button class="btn btn-small btn-primary" type="submit" data-ripple>Return</button>
+                        </form>
                     </div>
                 </div>
             </article>
         {% endfor %}
     {% else %}
         <div class="empty-panel">
-            <h2>No borrowed books yet.</h2>
-            <p>Your borrowed shelf will fill up after you borrow a title from the catalog.</p>
+            <h2>No current borrowed books.</h2>
+            <p>Your active borrowed shelf will fill up after you borrow a title from the catalog.</p>
             <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Books</a>
         </div>
     {% endif %}
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Complete Borrowing History</h2>
+        <a href="{{ url_for('auth.books') }}">Browse catalog</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Book</th>
+                    <th>Borrow Date</th>
+                    <th>Due Date</th>
+                    <th>Return Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in borrowed_books %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ loan.title }}</strong><span>{{ loan.author }}</span></td>
+                        <td>{{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'N/A' }}</td>
+                        <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                        <td>{{ loan.return_date.strftime('%b %d, %Y') if loan.return_date else 'Pending' }}</td>
+                        <td><span class="status-badge {{ 'warning' if loan.status in ['overdue', 'borrowed'] else 'success' }}">{{ loan.status|title }}</span></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">No borrowing history yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endblock %}

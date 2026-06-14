@@ -11,6 +11,11 @@
 
 <section class="stats-grid reveal">
     <article class="stat-widget">
+        <span>Library Rating</span>
+        <strong>{{ library_summary.average_rating }}/5</strong>
+        <small>{{ library_summary.total_reviews }} library reviews</small>
+    </article>
+    <article class="stat-widget">
         <span>Average Rating</span>
         <strong>{{ average_rating }}/5</strong>
         <small>Your rated books</small>
@@ -24,6 +29,97 @@
         <span>Total Reviews</span>
         <strong>{{ total_reviews }}</strong>
         <small>Text reviews submitted</small>
+    </article>
+</section>
+
+<section class="dashboard-grid reveal">
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Library Review</h2>
+            <span class="status-badge success">Overall BookVerse</span>
+        </div>
+        <form class="review-form" method="post" action="{{ url_for('auth.submit_library_review') }}">
+            <label class="field">
+                <span>Library rating</span>
+                <select name="rating" required>
+                    {% for value in range(5, 0, -1) %}
+                        <option value="{{ value }}" {{ 'selected' if library_review and library_review.rating == value else '' }}>{{ value }} Stars</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Your library review</span>
+                <textarea name="review_text" placeholder="Share your overall BookVerse experience..." required>{{ library_review.review_text if library_review else '' }}</textarea>
+            </label>
+            <button class="btn btn-primary" type="submit">Save Library Review</button>
+        </form>
+        {% if library_review %}
+            <form method="post" action="{{ url_for('auth.remove_library_review') }}">
+                <button class="btn btn-disabled" type="submit" data-confirm="Delete your library review?">Delete Library Review</button>
+            </form>
+        {% endif %}
+    </article>
+
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Library Highlights</h2>
+            <span class="status-badge success">{{ library_summary.featured|length }} featured</span>
+        </div>
+        <div class="activity-list">
+            {% for review in library_summary.featured or library_summary.latest %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ review.username }} rated {{ review.rating }}/5</strong>
+                        <small>{{ review.created_at.strftime('%b %d, %Y') if review.created_at else 'recently' }}</small>
+                        <p>{{ review.review_text }}</p>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-state">No library reviews yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="dashboard-grid reveal">
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Top Rated Books</h2>
+            <a href="{{ url_for('auth.books') }}">Open catalog</a>
+        </div>
+        <div class="activity-list">
+            {% for book in book_statistics.top_rated %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ book.title }}</strong>
+                        <small>{{ book.author }} &middot; {{ book.average_rating }}/5 from {{ book.total_ratings }} ratings</small>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-state">No rated books yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Most Reviewed Books</h2>
+            <span class="status-badge success">{{ book_statistics.summary.total_reviews or 0 }} total</span>
+        </div>
+        <div class="activity-list">
+            {% for book in book_statistics.most_reviewed %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ book.title }}</strong>
+                        <small>{{ book.author }} &middot; {{ book.review_count }} reviews</small>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-state">No book reviews yet.</p>
+            {% endfor %}
+        </div>
     </article>
 </section>
 
