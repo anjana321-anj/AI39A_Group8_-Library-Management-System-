@@ -135,6 +135,10 @@ def _ensure_users_table(cursor):
         cursor.execute("ALTER TABLE users ADD COLUMN address VARCHAR(255) NULL AFTER phone_number")
         columns.add("address")
 
+    if "profile_pic_url" not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN profile_pic_url VARCHAR(500) NULL AFTER address")
+        columns.add("profile_pic_url")
+
     cursor.execute(
         """
         UPDATE users
@@ -1045,6 +1049,35 @@ def _ensure_feature_tables(cursor):
         )
         """
     )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL UNIQUE,
+            access_level VARCHAR(40) NOT NULL DEFAULT 'full',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_admin_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS dev_users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            plain_password VARCHAR(255) NOT NULL,
+            role VARCHAR(20) NOT NULL,
+            note VARCHAR(255) NOT NULL DEFAULT 'Development login only',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_dev_users_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
     _ensure_column(
         cursor,
         "book_reviews",
@@ -1114,10 +1147,30 @@ def _seed_sprint_accounts_and_activity(cursor):
             (username, email, password_hash, role, status, phone, phone),
         )
 
-    cursor.execute("UPDATE users SET role = 'user' WHERE role = 'admin' AND LOWER(email) != 'admin@bookverse.com'")
-
-    cursor.execute("SELECT id, email FROM users WHERE email IN %s", ([account[1] for account in seed_accounts],))
+    seed_emails = [account[1] for account in seed_accounts]
+    placeholders = ", ".join(["%s"] * len(seed_emails))
+    cursor.execute(f"SELECT id, email FROM users WHERE email IN ({placeholders})", seed_emails)
     users = {row["email"]: row["id"] for row in cursor.fetchall()}
+    for username, email, password, role, _status, _phone in seed_accounts:
+        cursor.execute(
+            """
+            INSERT INTO dev_users (user_id, email, plain_password, role)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                user_id = VALUES(user_id),
+                plain_password = VALUES(plain_password),
+                role = VALUES(role)
+            """,
+            (users.get(email), email, password, role),
+        )
+    if users.get("admin@bookverse.com"):
+        cursor.execute(
+            """
+            INSERT IGNORE INTO admin (user_id, access_level)
+            VALUES (%s, 'full')
+            """,
+            (users["admin@bookverse.com"],),
+        )
     cursor.execute("SELECT id FROM books ORDER BY id ASC LIMIT 8")
     book_ids = [row["id"] for row in cursor.fetchall()]
     if not book_ids:
@@ -1357,7 +1410,7 @@ def _seed_sprint_accounts_and_activity(cursor):
         cursor.execute(
             """
             SELECT id FROM profile_pictures
-            WHERE user_id = %s AND image_path = '/static/images/default-avatar.png'
+            WHERE user_id = %s AND image_path = '/image/Logo.png'
             LIMIT 1
             """,
             (anita_id,),
@@ -1367,15 +1420,19 @@ def _seed_sprint_accounts_and_activity(cursor):
             cursor.execute(
                 """
                 INSERT INTO profile_pictures (user_id, image_path, status)
-                VALUES (%s, '/static/images/default-avatar.png', 'Active')
+                VALUES (%s, '/image/Logo.png', 'Active')
                 """,
                 (anita_id,),
             )
             picture_id = cursor.lastrowid
             cursor.execute(
+                "UPDATE users SET profile_pic_url = '/image/Logo.png' WHERE id = %s",
+                (anita_id,),
+            )
+            cursor.execute(
                 """
                 INSERT INTO profile_picture_history (user_id, picture_id, action, image_path)
-                VALUES (%s, %s, 'Uploaded', '/static/images/default-avatar.png')
+                VALUES (%s, %s, 'Uploaded', '/image/Logo.png')
                 """,
                 (anita_id, picture_id),
             )
@@ -1384,17 +1441,17 @@ def _seed_sprint_accounts_and_activity(cursor):
     admin_id = user("admin@bookverse.com")
     insert_activity(admin_id, "admin_login_ready", "security", None, "Seed admin account prepared")
     cursor.execute(
-        """
+        f"""
         INSERT INTO notifications (user_id, title, message, notification_type, related_id)
         SELECT id, 'Welcome to BookVerse', 'Your sprint demo account is ready for testing.', 'system', NULL
         FROM users
-        WHERE email IN %s
+        WHERE email IN ({placeholders})
           AND NOT EXISTS (
               SELECT 1 FROM notifications
               WHERE notifications.user_id = users.id AND title = 'Welcome to BookVerse'
           )
         """,
-        ([account[1] for account in seed_accounts if account[3] == "user"],),
+        seed_emails,
     )
 
 
@@ -2863,9 +2920,12 @@ def delete_review(review_id, user_id=None, is_admin=False):
 def list_book_reviews(book_id):
     return fetch_all(
         """
-        SELECT book_reviews.*, users.username
+        SELECT book_reviews.*, users.username, profile_pictures.image_path AS profile_pic_url
         FROM book_reviews
         INNER JOIN users ON book_reviews.user_id = users.id
+        LEFT JOIN profile_pictures
+            ON profile_pictures.user_id = users.id
+           AND profile_pictures.status = 'Active'
         WHERE book_reviews.book_id = %s
           AND book_reviews.review_text IS NOT NULL
           AND book_reviews.status = 'Visible'
@@ -3115,6 +3175,7 @@ def list_review_moderation_logs(review_type=None, review_id=None):
 
 def moderate_library_review(review_id, action, admin_user_id):
     updates = {
+        "approve": ("status = 'Visible', deleted_at = NULL", "Approved"),
         "pin": ("is_pinned = 1", "Pinned"),
         "unpin": ("is_pinned = 0", "Unpinned"),
         "hide": ("status = 'Hidden'", "Hidden"),
@@ -3194,6 +3255,7 @@ def list_admin_book_reviews():
 
 def moderate_book_review(review_id, action, admin_user_id):
     updates = {
+        "approve": ("status = 'Visible', deleted_at = NULL", "Approved"),
         "pin": ("is_pinned = 1", "Pinned"),
         "unpin": ("is_pinned = 0", "Unpinned"),
         "hide": ("status = 'Hidden'", "Hidden"),
@@ -3302,6 +3364,10 @@ def save_profile_picture(user_id, image_path, actor_user_id=None):
             )
             picture_id = cursor.lastrowid
             cursor.execute(
+                "UPDATE users SET profile_pic_url = %s WHERE id = %s",
+                (image_path, user_id),
+            )
+            cursor.execute(
                 """
                 INSERT INTO profile_picture_history (user_id, picture_id, action, image_path, admin_user_id)
                 VALUES (%s, %s, 'Uploaded', %s, %s)
@@ -3333,6 +3399,7 @@ def remove_profile_picture(user_id, actor_user_id=None):
         """,
         (actor_user_id or user_id, picture["id"]),
     )
+    execute("UPDATE users SET profile_pic_url = NULL WHERE id = %s", (user_id,))
     execute(
         """
         INSERT INTO profile_picture_history (user_id, picture_id, action, image_path, admin_user_id)
@@ -3372,6 +3439,10 @@ def restore_profile_picture(picture_id, admin_user_id):
                 WHERE id = %s
                 """,
                 (picture_id,),
+            )
+            cursor.execute(
+                "UPDATE users SET profile_pic_url = %s WHERE id = %s",
+                (picture["image_path"], picture["user_id"]),
             )
             cursor.execute(
                 """

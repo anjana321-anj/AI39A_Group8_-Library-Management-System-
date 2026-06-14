@@ -47,6 +47,9 @@ class AuthRoutes:
         self.bp.route("/contact", methods=["GET", "POST"])(self.controller.contact)
         self.bp.route("/profile", methods=["GET"])(self.controller.profile)
         self.bp.route("/profile/edit", methods=["GET", "POST"])(self.controller.edit_profile)
+        self.bp.route("/profile/picture", methods=["POST"])(
+            self.controller.update_profile_picture
+        )
         self.bp.route("/profile/reset-password", methods=["GET", "POST"])(
             self.controller.reset_logged_in_password
         )
@@ -57,10 +60,30 @@ class AuthRoutes:
             self.controller.return_borrowed
         )
         self.bp.route("/reviews-ratings", methods=["GET"])(self.controller.reviews_ratings)
+        self.bp.route("/library-review", methods=["POST"])(
+            self.controller.submit_library_review
+        )
+        self.bp.route("/library-review/delete", methods=["POST"])(
+            self.controller.remove_library_review
+        )
         self.bp.route("/favourites", methods=["GET"])(self.controller.favourites)
         self.bp.route("/reservations", methods=["GET"])(self.controller.reservations)
         self.bp.route("/reservations/<int:reservation_id>/cancel", methods=["POST"])(
             self.controller.cancel_user_reservation
+        )
+        self.bp.route("/waitlists", methods=["GET"])(self.controller.waitlists)
+        self.bp.route("/books/<int:book_id>/waitlist", methods=["POST"])(
+            self.controller.join_book_waitlist
+        )
+        self.bp.route("/waitlists/<int:waitlist_id>/leave", methods=["POST"])(
+            self.controller.leave_user_waitlist
+        )
+        self.bp.route("/notifications", methods=["GET"])(self.controller.notifications)
+        self.bp.route("/notifications/<int:notification_id>/read", methods=["POST"])(
+            self.controller.mark_notification_read_route
+        )
+        self.bp.route("/notifications/<int:notification_id>/delete", methods=["POST"])(
+            self.controller.delete_notification_route
         )
         self.bp.route("/orders", methods=["GET"])(self.controller.orders)
         self.bp.route("/orders/<int:order_id>", methods=["GET"])(self.controller.order_details)
@@ -135,5 +158,65 @@ class AuthRoutes:
         )
         self.bp.route("/admin/fine-payments/<int:payment_id>/delete", methods=["POST"])(
             self.controller.delete_fine_payment_admin
+        )
+        self.bp.route("/admin/reviews", methods=["GET"])(self.controller.admin_reviews)
+        self.bp.route("/admin/reviews/library/<int:review_id>/<action>", methods=["POST"])(
+            self.controller.moderate_library_review_route
+        )
+        self.bp.route("/admin/reviews/book/<int:review_id>/<action>", methods=["POST"])(
+            self.controller.moderate_book_review_route
+        )
+        self.bp.route("/admin/profile-pictures", methods=["GET"])(
+            self.controller.admin_profile_pictures
+        )
+        self.bp.route("/admin/profile-pictures/user/<int:user_id>/remove", methods=["POST"])(
+            self.controller.admin_remove_profile_picture
+        )
+        self.bp.route("/admin/profile-pictures/<int:picture_id>/restore", methods=["POST"])(
+            self.controller.admin_restore_profile_picture
+        )
+        self.bp.route("/admin/activity-logs", methods=["GET"])(
+            self.controller.admin_activity_logs
+        )
+        self.bp.route("/admin/security", methods=["GET"])(self.controller.admin_security)
+        self.bp.route("/admin/waitlists", methods=["GET"])(self.controller.admin_waitlists)
+        self.bp.route("/admin/waitlists/<int:waitlist_id>/edit", methods=["GET", "POST"])(
+            self.controller.edit_waitlist_admin
+        )
+        self.bp.route("/admin/waitlists/<int:waitlist_id>/delete", methods=["POST"])(
+            self.controller.delete_waitlist_admin_route
+        )
+        self.bp.route("/admin/borrows", methods=["GET"])(self.controller.admin_borrows)
+        self.bp.route("/admin/borrows/<int:borrowed_id>/edit", methods=["GET", "POST"])(
+            self.controller.edit_borrow_admin
+        )
+        self.bp.route("/admin/borrows/<int:borrowed_id>/force-return", methods=["POST"])(
+            self.controller.force_return_borrow_admin
+        )
+        self.bp.route("/admin/borrows/<int:borrowed_id>/lost", methods=["POST"])(
+            self.controller.mark_borrow_lost_admin
+        )
+        self.bp.route("/admin/borrows/<int:borrowed_id>/delete", methods=["POST"])(
+            self.controller.delete_borrow_admin
+        )
+        self.bp.route("/admin/fines", methods=["GET"])(self.controller.admin_fines)
+        self.bp.route("/admin/fines/<int:fine_id>/edit", methods=["GET", "POST"])(
+            self.controller.edit_fine_admin
+        )
+        self.bp.route("/admin/fines/<int:fine_id>/status/<status>", methods=["POST"])(
+            self.controller.update_fine_status_admin
+        )
+        self.bp.route("/admin/fines/<int:fine_id>/delete", methods=["POST"])(
+            self.controller.delete_fine_admin
+        )
+        self.bp.route("/admin/notifications", methods=["GET", "POST"])(
+            self.controller.admin_notifications
+        )
+        self.bp.route("/admin/notifications/<int:notification_id>/delete", methods=["POST"])(
+            self.controller.delete_notification_admin_route
+        )
+        self.bp.route("/admin/backups", methods=["GET", "POST"])(self.controller.admin_backups)
+        self.bp.route("/admin/backups/<int:backup_id>/download", methods=["GET"])(
+            self.controller.download_backup
         )
         return self.bp

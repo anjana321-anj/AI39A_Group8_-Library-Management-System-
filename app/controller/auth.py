@@ -4,6 +4,7 @@ from email.message import EmailMessage
 import csv
 import hashlib
 import io
+import json
 import os
 import secrets
 import smtplib
@@ -39,6 +40,7 @@ from app.database import (
     delete_waitlist_admin,
     delete_user,
     expire_reservations,
+    fetch_all,
     force_return_borrow_record,
     generate_return_reminders,
     get_active_profile_picture,
@@ -1147,6 +1149,350 @@ class AuthController:
         log_event(session.get("user_id"), "payment_deleted", "fine_payment", payment_id, "Fine payment deleted")
         flash("Fine payment deleted successfully.", "success")
         return redirect(url_for("auth.admin_fine_payments"))
+
+    @login_required
+    def waitlists(self):
+        return render_template("waitlists.html", waitlists=list_user_waitlists(session["user_id"]))
+
+    @login_required
+    def join_book_waitlist(self, book_id):
+        book = get_book(book_id)
+        if not book:
+            flash("Book not found.", "warning")
+        elif book.get("stock_quantity", 0) > 0:
+            flash("This book is available now, so you do not need to join the waitlist.", "info")
+        elif join_waitlist(session["user_id"], book_id):
+            flash("You joined the waitlist.", "success")
+        else:
+            flash("We could not add you to the waitlist right now.", "warning")
+        return redirect(request.referrer or url_for("auth.book_details", book_id=book_id))
+
+    @login_required
+    def leave_user_waitlist(self, waitlist_id):
+        if leave_waitlist(session["user_id"], waitlist_id):
+            flash("You left the waitlist.", "success")
+        else:
+            flash("Waitlist record not found.", "warning")
+        return redirect(url_for("auth.waitlists"))
+
+    @login_required
+    def notifications(self):
+        return render_template(
+            "notifications.html",
+            notifications=list_user_notifications(session["user_id"], limit=100),
+        )
+
+    @login_required
+    def mark_notification_read_route(self, notification_id):
+        mark_notification_read(session["user_id"], notification_id)
+        flash("Notification marked as read.", "success")
+        return redirect(url_for("auth.notifications"))
+
+    @login_required
+    def delete_notification_route(self, notification_id):
+        delete_notification(session["user_id"], notification_id)
+        flash("Notification deleted.", "success")
+        return redirect(url_for("auth.notifications"))
+
+    @admin_required
+    def admin_reviews(self):
+        return render_template(
+            "admin_reviews.html",
+            library_reviews=list_admin_library_reviews(),
+            book_reviews=list_admin_book_reviews(),
+            moderation_logs=list_review_moderation_logs(),
+        )
+
+    @admin_required
+    def moderate_library_review_route(self, review_id, action):
+        if moderate_library_review(review_id, action, session["user_id"]):
+            flash("Library review updated successfully.", "success")
+        else:
+            flash("Invalid review action.", "warning")
+        return redirect(url_for("auth.admin_reviews"))
+
+    @admin_required
+    def moderate_book_review_route(self, review_id, action):
+        if moderate_book_review(review_id, action, session["user_id"]):
+            flash("Book review updated successfully.", "success")
+        else:
+            flash("Invalid review action.", "warning")
+        return redirect(url_for("auth.admin_reviews"))
+
+    @admin_required
+    def admin_profile_pictures(self):
+        return render_template(
+            "admin_profile_pictures.html",
+            pictures=list_admin_profile_pictures(),
+        )
+
+    @admin_required
+    def admin_remove_profile_picture(self, user_id):
+        if remove_profile_picture(user_id, session["user_id"]):
+            flash("Profile picture removed successfully.", "success")
+        else:
+            flash("No active profile picture was found.", "warning")
+        return redirect(url_for("auth.admin_profile_pictures"))
+
+    @admin_required
+    def admin_restore_profile_picture(self, picture_id):
+        if restore_profile_picture(picture_id, session["user_id"]):
+            flash("Profile picture restored successfully.", "success")
+        else:
+            flash("Profile picture not found.", "warning")
+        return redirect(url_for("auth.admin_profile_pictures"))
+
+    @admin_required
+    def admin_activity_logs(self):
+        search = request.args.get("search", "").strip()
+        event_type = request.args.get("event_type", "").strip()
+        logs = list_activity_logs(search=search or None, event_type=event_type or None)
+        if request.args.get("export") == "csv":
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["S.No", "User", "Email", "Action", "Entity", "Record", "Description", "Timestamp"])
+            for index, log in enumerate(logs, start=1):
+                writer.writerow([
+                    index,
+                    log.get("username") or "System",
+                    log.get("email") or "",
+                    log.get("event_type"),
+                    log.get("entity_type"),
+                    log.get("entity_id") or "",
+                    log.get("summary"),
+                    log.get("created_at"),
+                ])
+            return Response(
+                output.getvalue(),
+                mimetype="text/csv",
+                headers={"Content-Disposition": "attachment; filename=bookverse_activity_logs.csv"},
+            )
+        return render_template("admin_activity_logs.html", logs=logs, search=search, event_type=event_type)
+
+    @admin_required
+    def admin_security(self):
+        search = request.args.get("search", "").strip()
+        return render_template(
+            "admin_security.html",
+            logs=list_security_logs(search=search or None),
+            search=search,
+        )
+
+    @admin_required
+    def admin_waitlists(self):
+        return render_template("admin_waitlists.html", waitlists=list_admin_waitlists())
+
+    @admin_required
+    def edit_waitlist_admin(self, waitlist_id):
+        if request.method == "POST":
+            status = request.form.get("status", "Active")
+            note = request.form.get("admin_note", "").strip() or None
+            if status not in {"Active", "Notified", "Left", "Removed"}:
+                flash("Invalid waitlist status.", "warning")
+            elif update_waitlist_admin(waitlist_id, status, note, session["user_id"]):
+                flash("Waitlist record updated successfully.", "success")
+                return redirect(url_for("auth.admin_waitlists"))
+            else:
+                flash("Waitlist record not found.", "warning")
+        waitlist = next((item for item in list_admin_waitlists() if item["id"] == waitlist_id), None)
+        if not waitlist:
+            flash("Waitlist record not found.", "warning")
+            return redirect(url_for("auth.admin_waitlists"))
+        return render_template("admin_waitlist_form.html", waitlist=waitlist)
+
+    @admin_required
+    def delete_waitlist_admin_route(self, waitlist_id):
+        if delete_waitlist_admin(waitlist_id, session["user_id"]):
+            flash("Waitlist record removed successfully.", "success")
+        else:
+            flash("Waitlist record not found.", "warning")
+        return redirect(url_for("auth.admin_waitlists"))
+
+    @admin_required
+    def admin_borrows(self):
+        search = request.args.get("search", "").strip()
+        return render_template(
+            "admin_borrows.html",
+            borrows=list_admin_borrows(search=search or None),
+            search=search,
+        )
+
+    @admin_required
+    def edit_borrow_admin(self, borrowed_id):
+        borrow = get_borrow_record(borrowed_id)
+        if not borrow:
+            flash("Borrow record not found.", "warning")
+            return redirect(url_for("auth.admin_borrows"))
+        if request.method == "POST":
+            due_date = request.form.get("due_date", "").strip() or None
+            status = request.form.get("status", "borrowed")
+            fine_amount = self._safe_float(request.form.get("fine_amount"), 0)
+            if status not in {"borrowed", "returned", "overdue", "lost", "cancelled"}:
+                flash("Invalid borrow status.", "warning")
+            else:
+                update_borrow_record(borrowed_id, due_date, status, fine_amount, session["user_id"])
+                flash("Borrow record updated successfully.", "success")
+                return redirect(url_for("auth.admin_borrows"))
+        return render_template(
+            "admin_borrow_form.html",
+            borrow=borrow,
+            timeline=list_borrow_timeline(borrowed_id),
+        )
+
+    @admin_required
+    def force_return_borrow_admin(self, borrowed_id):
+        if force_return_borrow_record(borrowed_id, session["user_id"]):
+            flash("Borrow record force-returned successfully.", "success")
+        else:
+            flash("Borrow record not found.", "warning")
+        return redirect(url_for("auth.admin_borrows"))
+
+    @admin_required
+    def mark_borrow_lost_admin(self, borrowed_id):
+        borrow = get_borrow_record(borrowed_id)
+        if borrow and update_borrow_record(
+            borrowed_id,
+            borrow.get("due_date"),
+            "lost",
+            borrow.get("fine_amount") or 0,
+            session["user_id"],
+        ):
+            flash("Borrow record marked as lost.", "success")
+        else:
+            flash("Borrow record not found.", "warning")
+        return redirect(url_for("auth.admin_borrows"))
+
+    @admin_required
+    def delete_borrow_admin(self, borrowed_id):
+        if delete_borrow_record(borrowed_id, session["user_id"]):
+            flash("Borrow record deleted successfully.", "success")
+        else:
+            flash("Borrow record not found.", "warning")
+        return redirect(url_for("auth.admin_borrows"))
+
+    @admin_required
+    def admin_fines(self):
+        if request.args.get("export") == "csv":
+            fines = list_admin_fine_records()
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["S.No", "User", "Email", "Book", "Reason", "Overdue Days", "Amount", "Status", "Date"])
+            for index, fine in enumerate(fines, start=1):
+                writer.writerow([
+                    index,
+                    fine.get("username"),
+                    fine.get("email"),
+                    fine.get("title"),
+                    fine.get("reason"),
+                    fine.get("overdue_days"),
+                    fine.get("total_fine"),
+                    fine.get("status"),
+                    fine.get("calculated_at"),
+                ])
+            return Response(
+                output.getvalue(),
+                mimetype="text/csv",
+                headers={"Content-Disposition": "attachment; filename=bookverse_fine_report.csv"},
+            )
+        return render_template("admin_fines.html", fines=list_admin_fine_records())
+
+    @admin_required
+    def edit_fine_admin(self, fine_id):
+        fine = next((item for item in list_admin_fine_records() if item["id"] == fine_id), None)
+        if not fine:
+            flash("Fine record not found.", "warning")
+            return redirect(url_for("auth.admin_fines"))
+        if request.method == "POST":
+            amount = self._safe_float(request.form.get("total_fine"), 0)
+            status = request.form.get("status", "Pending")
+            reason = request.form.get("reason", "").strip() or "Overdue return"
+            if status not in {"Pending", "Pending Verification", "Paid", "Unpaid", "Waived"}:
+                flash("Invalid fine status.", "warning")
+            else:
+                update_fine_record(fine_id, amount, status, reason, session["user_id"])
+                flash("Fine record updated successfully.", "success")
+                return redirect(url_for("auth.admin_fines"))
+        return render_template("admin_fine_form.html", fine=fine)
+
+    @admin_required
+    def update_fine_status_admin(self, fine_id, status):
+        if status not in {"Paid", "Unpaid", "Waived"}:
+            flash("Invalid fine status.", "warning")
+        else:
+            update_fine_record_status(fine_id, status, session["user_id"])
+            flash("Fine status updated successfully.", "success")
+        return redirect(url_for("auth.admin_fines"))
+
+    @admin_required
+    def delete_fine_admin(self, fine_id):
+        delete_fine_record(fine_id, session["user_id"])
+        flash("Fine record deleted successfully.", "success")
+        return redirect(url_for("auth.admin_fines"))
+
+    @admin_required
+    def admin_notifications(self):
+        if request.method == "POST":
+            user_id = self._safe_int(request.form.get("user_id"), 0)
+            title = request.form.get("title", "").strip()
+            message = request.form.get("message", "").strip()
+            if not user_id or not title or not message:
+                flash("User, title, and message are required.", "warning")
+            elif not get_user_by_id(user_id):
+                flash("User not found.", "warning")
+            else:
+                create_notification(user_id, title, message, "manual")
+                log_event(session["user_id"], "notification_manual", "notification", user_id, "Manual notification sent")
+                flash("Notification sent successfully.", "success")
+                return redirect(url_for("auth.admin_notifications"))
+        return render_template(
+            "admin_notifications.html",
+            notifications=list_admin_notifications(),
+            users=list_users(),
+        )
+
+    @admin_required
+    def delete_notification_admin_route(self, notification_id):
+        delete_notification_admin(notification_id, session["user_id"])
+        flash("Notification deleted successfully.", "success")
+        return redirect(url_for("auth.admin_notifications"))
+
+    @admin_required
+    def admin_backups(self):
+        if request.method == "POST":
+            action = request.form.get("action", "create")
+            if action == "restore":
+                backup_id = self._safe_int(request.form.get("backup_id"), 0)
+                log_event(session["user_id"], "backup_restore_requested", "backup", backup_id, "Backup restore requested")
+                flash("Restore request recorded. Automatic overwrite is disabled to protect existing data.", "info")
+                return redirect(url_for("auth.admin_backups"))
+
+            backup_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "backups")
+            backup_dir = os.path.abspath(backup_dir)
+            os.makedirs(backup_dir, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            file_path = os.path.join(backup_dir, f"bookverse_backup_{timestamp}.json")
+            tables = ["users", "books", "book_reviews", "library_reviews", "activity_logs", "orders", "fine_records"]
+            payload = {
+                "created_at": datetime.now().isoformat(),
+                "database": "class_db",
+                "tables": {},
+            }
+            for table in tables:
+                payload["tables"][table] = fetch_all(f"SELECT * FROM {table}")
+            with open(file_path, "w", encoding="utf-8") as backup_file:
+                json.dump(payload, backup_file, default=str, indent=2)
+            create_backup_record("JSON", file_path, session["user_id"])
+            flash("Database backup created successfully.", "success")
+            return redirect(url_for("auth.admin_backups"))
+        return render_template("admin_backups.html", backups=list_backup_history())
+
+    @admin_required
+    def download_backup(self, backup_id):
+        backup = next((item for item in list_backup_history() if item["id"] == backup_id), None)
+        if not backup or not backup.get("file_path") or not os.path.exists(backup["file_path"]):
+            flash("Backup file not found.", "warning")
+            return redirect(url_for("auth.admin_backups"))
+        return send_file(backup["file_path"], as_attachment=True)
 
     def _safe_int(self, value, default=0):
         try:
