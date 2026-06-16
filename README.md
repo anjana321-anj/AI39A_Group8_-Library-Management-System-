@@ -18,8 +18,6 @@ git clone https://github.com/anjana321-anj/AI39A_Group8_-Library-Management-Syst
 
 ## Links
 
-### Youtube link:
-
 ### Trello link: https://trello.com/invite/b/69e476250cc6d330b0850dae/ATTI0427ba4fffd3907746c3f83bb94aa5bfD8C72A88/ai39agroup8library-management-system
 
 ### Excel Sheet link: https://1drv.ms/x/c/2427a37976d2bda9/IQAA6Fl-WJOFSJn68NBWuy6FAfcEX9n5zaYcq5CwA0at-DQ?e=hVN2fo
