@@ -228,6 +228,7 @@ def _ensure_books_table(cursor):
         "price": "ALTER TABLE books ADD COLUMN price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER availability_status",
         "stock_quantity": "ALTER TABLE books ADD COLUMN stock_quantity INT NOT NULL DEFAULT 0 AFTER price",
         "book_status": "ALTER TABLE books ADD COLUMN book_status VARCHAR(30) NOT NULL DEFAULT 'Available' AFTER stock_quantity",
+        "book_type": "ALTER TABLE books ADD COLUMN book_type VARCHAR(20) NOT NULL DEFAULT 'Physical' AFTER book_status",
     }
     for column, sql in additions.items():
         if column not in columns:
@@ -338,6 +339,7 @@ def _refresh_sample_books(cursor):
             "image": "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=900&auto=format&fit=crop",
             "price": 650,
             "stock_quantity": 8,
+            "book_type": "Physical",
         },
         {
             "title": "Atomic Habits",
@@ -350,6 +352,7 @@ def _refresh_sample_books(cursor):
             "image": "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=900&auto=format&fit=crop",
             "price": 1200,
             "stock_quantity": 10,
+            "book_type": "Digital",
         },
         {
             "title": "Educated",
@@ -362,6 +365,7 @@ def _refresh_sample_books(cursor):
             "image": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=900&auto=format&fit=crop",
             "price": 980,
             "stock_quantity": 6,
+            "book_type": "Physical",
         },
         {
             "title": "Deep Work",
@@ -374,6 +378,7 @@ def _refresh_sample_books(cursor):
             "image": "https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=900&auto=format&fit=crop",
             "price": 1050,
             "stock_quantity": 7,
+            "book_type": "Digital",
         },
         {
             "title": "The Psychology of Money",
@@ -386,6 +391,7 @@ def _refresh_sample_books(cursor):
             "image": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=900&auto=format&fit=crop",
             "price": 1450,
             "stock_quantity": 5,
+            "book_type": "Physical",
         },
         {
             "title": "The Midnight Library",
@@ -398,6 +404,7 @@ def _refresh_sample_books(cursor):
             "image": "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=900&auto=format&fit=crop",
             "price": 850,
             "stock_quantity": 9,
+            "book_type": "Digital",
         },
     ]
 
@@ -414,6 +421,7 @@ def _refresh_sample_books(cursor):
             price = 850.00,
             stock_quantity = CASE WHEN stock_quantity <= 0 THEN 9 ELSE stock_quantity END
             , book_status = 'Available'
+            , book_type = 'Digital'
         WHERE title = 'The Silent Library'
         """
     )
@@ -438,6 +446,7 @@ def _refresh_sample_books(cursor):
             sample["price"],
             sample["stock_quantity"],
             "Available",
+            sample.get("book_type", "Physical"),
         )
         if existing:
             cursor.execute(
@@ -458,7 +467,8 @@ def _refresh_sample_books(cursor):
                     available = %s,
                     price = %s,
                     stock_quantity = %s,
-                    book_status = %s
+                    book_status = %s,
+                    book_type = %s
                 WHERE id = %s
                 """,
                 (*params, existing["id"]),
@@ -470,9 +480,9 @@ def _refresh_sample_books(cursor):
                     title, author, category, isbn, publication_year, publisher, language,
                     description, image, total_copies, available_copies, availability_status,
                     available, price, stock_quantity
-                    , book_status
+                    , book_status, book_type
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 params,
             )
@@ -1507,6 +1517,18 @@ def initialize_mysql_database():
             "fine_amount",
             "ALTER TABLE borrowed_books ADD COLUMN fine_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER return_date",
         )
+        _ensure_column(
+            cursor,
+            "borrowed_books",
+            "payment_status",
+            "ALTER TABLE borrowed_books ADD COLUMN payment_status VARCHAR(20) NOT NULL DEFAULT 'Unpaid' AFTER fine_amount",
+        )
+        _ensure_column(
+            cursor,
+            "borrowed_books",
+            "payment_amount",
+            "ALTER TABLE borrowed_books ADD COLUMN payment_amount DECIMAL(10,2) NOT NULL DEFAULT 50.00 AFTER payment_status",
+        )
         cursor.execute(
             """
             UPDATE borrowed_books
@@ -1858,12 +1880,18 @@ def borrow_book(user_id, book_id):
                 (book_id,),
             )
             book = cursor.fetchone()
-            if (
-                not book
-                or not book["available"]
-                or book["availability_status"] != "Available"
-                or book["stock_quantity"] < 1
-            ):
+            if not book or not book["available"] or book["availability_status"] != "Available" or book["stock_quantity"] < 1:
+                return False
+
+            cursor.execute(
+                """
+                SELECT id FROM borrowed_books
+                WHERE user_id = %s AND book_id = %s AND status IN ('borrowed', 'overdue')
+                LIMIT 1
+                """,
+                (user_id, book_id),
+            )
+            if cursor.fetchone():
                 return False
             new_stock = max(book["stock_quantity"] - 1, 0)
             new_available = 1 if new_stock > 0 else 0
@@ -2000,6 +2028,8 @@ def get_user_borrowed_books(user_id):
             borrowed_books.return_date,
             borrowed_books.fine_amount,
             borrowed_books.status,
+            borrowed_books.payment_status,
+            borrowed_books.payment_amount,
             books.title,
             books.author,
             books.category,
@@ -2033,6 +2063,8 @@ def get_user_active_borrowed_books(user_id):
                 borrowed_books.return_date,
                 borrowed_books.fine_amount,
                 borrowed_books.status,
+                borrowed_books.payment_status,
+                borrowed_books.payment_amount,
                 books.title,
                 books.author,
                 books.category,
@@ -2053,6 +2085,42 @@ def get_user_active_borrowed_books(user_id):
         ORDER BY borrow_date DESC
         """,
         (user_id,),
+    )
+
+
+def get_borrow_record(borrowed_id, user_id):
+    return fetch_one(
+        """
+        SELECT 
+            borrowed_books.id,
+            borrowed_books.book_id,
+            borrowed_books.borrow_date,
+            borrowed_books.return_date,
+            borrowed_books.fine_amount,
+            borrowed_books.status,
+            borrowed_books.payment_status,
+            borrowed_books.payment_amount,
+            books.title,
+            books.author,
+            books.image,
+            books.category,
+            COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS due_date
+        FROM borrowed_books
+        INNER JOIN books ON borrowed_books.book_id = books.id
+        WHERE borrowed_books.id = %s AND borrowed_books.user_id = %s
+        """,
+        (borrowed_id, user_id),
+    )
+
+
+def update_borrow_payment_status(borrowed_id, user_id, payment_status):
+    execute(
+        """
+        UPDATE borrowed_books
+        SET payment_status = %s
+        WHERE id = %s AND user_id = %s
+        """,
+        (payment_status, borrowed_id, user_id),
     )
 
 

@@ -43,6 +43,7 @@
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.home' else '' }}" href="{{ url_for('auth.home') }}">Home</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.dashboard' else '' }}" href="{{ url_for('auth.dashboard') }}">Dashboard</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.my_library' else '' }}" href="{{ url_for('auth.my_library') }}">My Library</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.orders' else '' }}" href="{{ url_for('auth.orders') }}">Orders</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.reviews_ratings' else '' }}" href="{{ url_for('auth.reviews_ratings') }}">Reviews & Ratings</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.profile' else '' }}" href="{{ url_for('auth.profile') }}">Profile</a>

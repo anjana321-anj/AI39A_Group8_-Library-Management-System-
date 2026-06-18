@@ -42,7 +42,17 @@
         <section class="dashboard-hero reveal">
             <div>
                 <span class="eyebrow">Library analytics</span>
-                <h1>Welcome back, {{ session.get('username', 'Reader') }}.</h1>
+                <h1 style="display: flex; align-items: center; gap: 15px;">
+                    Welcome back, {{ session.get('username', 'Reader') }}.
+                    <span class="notification-bell-container" style="position: relative; display: inline-block;">
+                        <a href="{{ url_for('auth.notifications') }}" aria-label="Notifications" style="text-decoration: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">
+                            🔔
+                            {% if unread_notifications_count and unread_notifications_count > 0 %}
+                                <span class="badge">{{ unread_notifications_count }}</span>
+                            {% endif %}
+                        </a>
+                    </span>
+                </h1>
                 <p>Monitor the catalog, active loans, and recent reading movement from one clean dashboard.</p>
             </div>
             <article class="profile-summary">
@@ -60,6 +70,98 @@
                     <span>{{ active_borrow_count }} active borrows | {{ active_reservation_count }} reservations | NPR {{ "%.2f"|format(outstanding_fine_total) }} fines</span>
                 </div>
             </article>
+        </section>
+
+        <section class="data-panel reveal" style="margin-bottom: 22px;">
+            <div class="panel-heading">
+                <h2>My Borrowed Books</h2>
+                <a href="{{ url_for('auth.my_library') }}">Go to My Library</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in borrow_history %}
+                            <tr>
+                                <td>
+                                    <strong>{{ loan.title }}</strong>
+                                    <span>{{ loan.author }}</span>
+                                </td>
+                                <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                                <td>
+                                    {% if loan.status == 'borrowed' %}
+                                        <span class="status-badge success">Borrowed</span>
+                                    {% elif loan.status == 'returned' %}
+                                        <span class="status-badge muted-badge">Returned</span>
+                                    {% elif loan.status == 'overdue' %}
+                                        <span class="status-badge danger">Overdue</span>
+                                    {% else %}
+                                        <span class="status-badge info">{{ loan.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if loan.status in ['borrowed', 'overdue'] %}
+                                        {% if loan.payment_status == 'Paid' %}
+                                            <span class="status-badge success">Paid</span>
+                                        {% else %}
+                                            <span class="status-badge warning">Unpaid (NPR {{ "%.0f"|format(loan.payment_amount or 50) }})</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if loan.status in ['borrowed', 'overdue'] %}
+                                        <div style="display: flex; gap: 8px;">
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
+                                            {% if loan.payment_status != 'Paid' %}
+                                                <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
+                                            {% endif %}
+                                        </div>
+                                    {% elif loan.status == 'returned' %}
+                                        <span class="text-muted">Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        
+                        {% for res in active_reservations %}
+                            <tr>
+                                <td>
+                                    <strong>{{ res.title }}</strong>
+                                    <span>{{ res.author }}</span>
+                                </td>
+                                <td>Expires: {{ res.expiry_date.strftime('%b %d, %Y') if res.expiry_date else 'N/A' }}</td>
+                                <td>
+                                    <span class="status-badge info">Reserved ({{ res.status }})</span>
+                                </td>
+                                <td>-</td>
+                                <td>
+                                    <form method="post" action="{{ url_for('auth.cancel_user_reservation', reservation_id=res.id) }}">
+                                        <button class="btn btn-small btn-secondary" type="submit" data-confirm="Are you sure you want to cancel this reservation?">Cancel</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        
+                        {% if not borrow_history and not active_reservations %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px;">
+                                    <p class="empty-state">No borrowed books or active reservations. <a href="{{ url_for('auth.books') }}">Browse the catalog</a> to borrow one!</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <section class="stats-grid reveal">

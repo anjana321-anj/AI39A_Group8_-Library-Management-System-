@@ -29,7 +29,7 @@ class AuthRoutes:
         self.bp.route("/books/<int:book_id>/unfavourite", methods=["POST"])(
             self.controller.remove_from_favourites
         )
-        self.bp.route("/books/<int:book_id>/reserve", methods=["POST"])(
+        self.bp.route("/books/<int:book_id>/reserve", methods=["GET", "POST"])(
             self.controller.reserve_book
         )
         self.bp.route("/books/<int:book_id>/buy", methods=["GET", "POST"])(
@@ -56,8 +56,12 @@ class AuthRoutes:
         self.bp.route("/services", methods=["GET"])(self.controller.services)
         self.bp.route("/dashboard", methods=["GET"])(self.controller.dashboard)
         self.bp.route("/borrowed", methods=["GET"])(self.controller.borrowed)
-        self.bp.route("/borrowed/<int:borrowed_id>/return", methods=["POST"])(
+        self.bp.route("/borrowed/<int:borrowed_id>/return", methods=["GET", "POST"])(
             self.controller.return_borrowed
+        )
+        self.bp.route("/my-library", methods=["GET"])(self.controller.my_library)
+        self.bp.route("/borrowed/<int:borrowed_id>/pay", methods=["GET", "POST"])(
+            self.controller.pay_borrow
         )
         self.bp.route("/reviews-ratings", methods=["GET"])(self.controller.reviews_ratings)
         self.bp.route("/library-review", methods=["POST"])(

@@ -397,12 +397,26 @@ class AuthController:
         return render_template("about.html")
 
     def books(self):
-        books = list_books()
+        all_books = list_books()
+        # Filter duplicates (unique by title/author)
+        seen = set()
+        books = []
+        for book in all_books:
+            key = (book["title"].strip().lower(), book["author"].strip().lower())
+            if key not in seen:
+                seen.add(key)
+                books.append(book)
         categories = sorted({book["category"] for book in books})
         authors = sorted({book["author"] for book in books})
         languages = sorted({book["language"] or "English" for book in books})
         years = sorted({book["publication_year"] for book in books if book.get("publication_year")}, reverse=True)
         favourite_ids = get_favourite_book_ids(session["user_id"]) if session.get("user_id") else set()
+        
+        borrowed_book_ids = set()
+        if session.get("user_id"):
+            active_loans = get_user_active_borrowed_books(session["user_id"])
+            borrowed_book_ids = {loan["book_id"] for loan in active_loans}
+
         return render_template(
             "books.html",
             books=books,
@@ -411,6 +425,7 @@ class AuthController:
             languages=languages,
             years=years,
             favourite_ids=favourite_ids,
+            borrowed_book_ids=borrowed_book_ids,
         )
 
     def contact(self):
@@ -448,6 +463,25 @@ class AuthController:
             else:
                 flash("No active profile picture was found.", "warning")
             return redirect(url_for("auth.profile"))
+
+        # Check if cropped image data is provided
+        cropped_data = request.form.get("cropped_image_data")
+        if cropped_data:
+            try:
+                header, encoded = cropped_data.split(",", 1)
+                import base64
+                data = base64.b64decode(encoded)
+                os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
+                filename = f"user_{session['user_id']}_{datetime.now().strftime('%Y%m%d%H%M%S')}_cropped.png"
+                absolute_path = os.path.join(PROFILE_UPLOAD_FOLDER, filename)
+                with open(absolute_path, "wb") as f:
+                    f.write(data)
+                save_profile_picture(session["user_id"], f"/static/uploads/profile_pictures/{filename}", session["user_id"])
+                flash("Profile picture updated successfully.", "success")
+                return redirect(url_for("auth.profile"))
+            except Exception as e:
+                flash("Failed to process cropped image data.", "danger")
+                return redirect(url_for("auth.profile"))
 
         uploaded_file = request.files.get("profile_picture")
         if not uploaded_file or not uploaded_file.filename:
@@ -576,6 +610,11 @@ class AuthController:
         profile_picture = get_active_profile_picture(session["user_id"])
         active_borrows = get_user_active_borrowed_books(session["user_id"])
         active_reservations = list_user_reservations(session["user_id"])
+        borrow_history = get_user_borrowed_books(session["user_id"])
+        unread_notifications_count = fetch_one(
+            "SELECT COUNT(*) AS count FROM notifications WHERE user_id = %s AND is_read = 0",
+            (session["user_id"],)
+        )["count"]
         outstanding_fines = [
             fine for fine in list_user_fines(session["user_id"])
             if fine.get("status") not in {"Paid", "Approved"}
@@ -591,6 +630,9 @@ class AuthController:
             active_borrow_count=len(active_borrows),
             active_reservation_count=len(active_reservations),
             outstanding_fine_total=sum(float(fine.get("total_fine") or 0) for fine in outstanding_fines),
+            borrow_history=borrow_history,
+            unread_notifications_count=unread_notifications_count,
+            active_reservations=active_reservations,
         )
 
     @login_required
@@ -617,8 +659,23 @@ class AuthController:
         book = get_book(book_id)
         if not book:
             flash("That book could not be found.", "warning")
-        elif borrow_book(session["user_id"], book_id):
+            return redirect(url_for("auth.books"))
+        
+        # Validate that the book is not already active borrowed
+        active_loans = get_user_active_borrowed_books(session["user_id"])
+        if any(loan["book_id"] == book_id for loan in active_loans):
+            flash("You have already borrowed this book.", "warning")
+            return redirect(url_for("auth.books"))
+
+        if borrow_book(session["user_id"], book_id):
             log_event(session["user_id"], "borrow_book", "book", book_id, "Book borrowed")
+            create_notification(
+                session["user_id"],
+                "Book Borrowed",
+                f"You have successfully borrowed '{book['title']}'.",
+                "borrow",
+                book_id
+            )
             flash(f"You borrowed {book['title']}.", "success")
         else:
             flash(f"{book['title']} is not available right now.", "warning")
@@ -626,13 +683,80 @@ class AuthController:
 
     @login_required
     def return_borrowed(self, borrowed_id):
+        borrow_record = get_borrow_record(borrowed_id, session["user_id"])
+        if not borrow_record:
+            flash("That borrowed book record could not be found.", "warning")
+            return redirect(url_for("auth.borrowed"))
+
+        if request.method == "GET":
+            return render_template("return_confirm.html", borrow=borrow_record)
+
+        # POST flow:
+        rating = request.form.get("rating")
+        review_text = request.form.get("review_text", "").strip()
+        book_id = borrow_record["book_id"]
+
+        # Optionally save the rating and review
+        if rating:
+            try:
+                rate_val = int(rating)
+                if 1 <= rate_val <= 5:
+                    set_book_rating(session["user_id"], book_id, rate_val, "Borrowed")
+                    log_event(session["user_id"], "rating_submission", "book", book_id, "Book rating submitted")
+            except ValueError:
+                pass
+
+        if review_text:
+            if 5 <= len(review_text) <= 1200:
+                upsert_review(session["user_id"], book_id, review_text, "Borrowed")
+                log_event(session["user_id"], "review_submission", "book", book_id, "Book review submitted")
+
         returned_book_id = return_book(session["user_id"], borrowed_id)
         if returned_book_id:
+            create_notification(
+                session["user_id"],
+                "Book Returned",
+                f"You have successfully returned '{borrow_record['title']}'.",
+                "return",
+                returned_book_id
+            )
             flash("Book returned successfully.", "success")
             return redirect(url_for("auth.book_details", book_id=returned_book_id, returned=1))
         else:
             flash("That borrowed book could not be returned.", "warning")
         return redirect(url_for("auth.borrowed"))
+
+    @login_required
+    def my_library(self):
+        active_borrows = get_user_active_borrowed_books(session["user_id"])
+        return render_template("my_library.html", active_borrows=active_borrows)
+
+    @login_required
+    def pay_borrow(self, borrowed_id):
+        borrow = get_borrow_record(borrowed_id, session["user_id"])
+        if not borrow:
+            flash("That borrowed book record could not be found.", "warning")
+            return redirect(url_for("auth.borrowed"))
+
+        if request.method == "POST":
+            payment_method = request.form.get("payment_method", "").strip()
+            allowed_methods = {"Cash Payment", "QR Payment", "Card Payment"}
+            if payment_method not in allowed_methods:
+                flash("Choose a valid payment method.", "warning")
+            else:
+                update_borrow_payment_status(borrowed_id, session["user_id"], "Paid")
+                log_event(session["user_id"], "borrow_payment", "borrow", borrowed_id, "Paid borrow fee")
+                create_notification(
+                    session["user_id"],
+                    "Payment Received",
+                    f"Payment of NPR {borrow['payment_amount']} for '{borrow['title']}' was received.",
+                    "payment",
+                    borrowed_id
+                )
+                flash("Payment successful!", "success")
+                return redirect(url_for("auth.my_library"))
+
+        return render_template("pay_borrow.html", borrow=borrow)
 
     @login_required
     def reviews_ratings(self):
@@ -702,14 +826,25 @@ class AuthController:
         book = get_book(book_id)
         if not book:
             flash("Book not found.", "warning")
+            return redirect(url_for("auth.books"))
+
+        if request.method == "GET":
+            return render_template("reserve_confirm.html", book=book)
+
+        # POST flow:
+        # Check for duplicates
+        active_res = list_user_reservations(session["user_id"])
+        if any(res["book_id"] == book_id for res in active_res):
+            flash("You have already reserved this book.", "warning")
+            return redirect(url_for("auth.book_details", book_id=book_id))
+
+        reservation_id = create_reservation(session["user_id"], book_id)
+        if reservation_id:
+            log_event(session["user_id"], "reserve_book", "reservation", reservation_id, "Book reserved")
+            flash("Reservation request submitted.", "success")
         else:
-            reservation_id = create_reservation(session["user_id"], book_id)
-            if reservation_id:
-                log_event(session["user_id"], "reserve_book", "reservation", reservation_id, "Book reserved")
-                flash("Reservation request submitted.", "success")
-            else:
-                flash("We could not reserve that book right now.", "warning")
-        return redirect(request.referrer or url_for("auth.book_details", book_id=book_id))
+            flash("We could not reserve that book right now.", "warning")
+        return redirect(url_for("auth.book_details", book_id=book_id))
 
     @login_required
     def cancel_user_reservation(self, reservation_id):
@@ -1583,6 +1718,10 @@ class AuthController:
             flash("Book not found.", "warning")
             return redirect(url_for("auth.books"))
         user_id = session.get("user_id")
+        is_borrowed = False
+        if user_id:
+            active_loans = get_user_active_borrowed_books(user_id)
+            is_borrowed = any(loan["book_id"] == book_id for loan in active_loans)
         return render_template(
             "book_details.html",
             book=book,
@@ -1591,4 +1730,5 @@ class AuthController:
             review_eligibility=get_book_review_eligibility(user_id, book_id) if user_id else None,
             reviews=list_book_reviews(book_id),
             library_rating=get_library_rating_summary(),
+            is_borrowed=is_borrowed,
         )

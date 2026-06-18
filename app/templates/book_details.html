@@ -8,7 +8,10 @@
         <img src="{{ book.image or 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=900&auto=format&fit=crop' }}" alt="{{ book.title }}">
     </div>
     <article class="data-panel">
-        <span class="eyebrow">{{ book.category }}</span>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span class="eyebrow" style="margin-bottom: 0;">{{ book.category }}</span>
+            <span class="book-type-badge status-badge info">{{ book.book_type or 'Physical' }} Book</span>
+        </div>
         <h1>{{ book.title }}</h1>
         {% if request.args.get('returned') %}
             <div class="flash flash-success">Book returned successfully. Rate and Review This Book below.</div>
@@ -34,9 +37,7 @@
             <form method="post" action="{{ url_for('auth.remove_from_favourites' if is_favourite else 'auth.add_to_favourites', book_id=book.id) }}">
                 <button class="btn btn-secondary" type="submit" data-ripple>{{ 'Remove Favourite' if is_favourite else 'Add to Favourites' }}</button>
             </form>
-            <form method="post" action="{{ url_for('auth.reserve_book', book_id=book.id) }}">
-                <button class="btn btn-secondary" type="submit" data-ripple>Reserve Book</button>
-            </form>
+            <a class="btn btn-secondary" href="{{ url_for('auth.reserve_book', book_id=book.id) }}" data-ripple>Reserve Book</a>
             {% if book.stock_quantity > 0 %}
                 <a class="btn btn-secondary" href="{{ url_for('auth.buy_book', book_id=book.id) }}" data-ripple>Buy Now</a>
             {% else %}
@@ -47,9 +48,13 @@
         {% endif %}
         {% if book.stock_quantity > 0 %}
             {% if session.get('user_id') %}
-                <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
-                    <button class="btn btn-primary" type="submit" data-ripple>Borrow Book</button>
-                </form>
+                {% if is_borrowed %}
+                    <button class="btn btn-disabled" type="button" disabled>Already Borrowed</button>
+                {% else %}
+                    <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}" data-confirm="Are you sure you want to borrow this book?">
+                        <button class="btn btn-primary" type="submit" data-ripple>Borrow Book</button>
+                    </form>
+                {% endif %}
             {% else %}
                 <a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('auth.book_details', book_id=book.id)) }}">Sign In to Borrow</a>
             {% endif %}

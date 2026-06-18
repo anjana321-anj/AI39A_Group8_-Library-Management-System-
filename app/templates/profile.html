@@ -16,12 +16,25 @@
         <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
         <p>{{ user.phone_number or user.phone or 'Phone not added' }}</p>
         <p>{{ user.address or 'Address not added' }}</p>
-        <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
+        <form class="profile-picture-form" id="profile-pic-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
             <label class="field">
                 <span>Profile picture</span>
-                <input type="file" name="profile_picture" accept=".png,.jpg,.jpeg,.webp,.gif">
+                <input type="file" id="profile-file-input" name="profile_picture" accept=".png,.jpg,.jpeg,.webp,.gif">
             </label>
-            <button class="btn btn-secondary btn-wide" type="submit">Upload Picture</button>
+            
+            <input type="hidden" name="cropped_image_data" id="cropped-image-data">
+            
+            <div id="crop-container" style="display: none; margin: 15px 0; text-align: center;">
+                <span style="font-size: 0.85rem; color: var(--ink-soft, #666); display: block; margin-bottom: 8px;">Drag to reposition, slider to zoom</span>
+                <canvas id="crop-canvas" width="200" height="200" style="border: 2px solid var(--border); border-radius: 50%; cursor: move; background: #eee; box-shadow: var(--shadow-sm); display: inline-block;"></canvas>
+                <div style="margin: 12px 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span>🔍-</span>
+                    <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" style="width: 150px; accent-color: var(--blue-800);">
+                    <span>🔍+</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary btn-wide" type="submit" id="profile-upload-btn">Upload Picture</button>
         </form>
         {% if profile_picture %}
             <form method="post" action="{{ url_for('auth.update_profile_picture') }}">
