@@ -900,6 +900,7 @@ def _ensure_feature_tables(cursor):
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             image_path VARCHAR(500) NOT NULL,
+            object_position VARCHAR(40) NOT NULL DEFAULT 'center center',
             status VARCHAR(30) NOT NULL DEFAULT 'Active',
             upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             modified_date TIMESTAMP NULL,
@@ -913,6 +914,12 @@ def _ensure_feature_tables(cursor):
                 ON DELETE SET NULL
         )
         """
+    )
+    _ensure_column(
+        cursor,
+        "profile_pictures",
+        "object_position",
+        "ALTER TABLE profile_pictures ADD COLUMN object_position VARCHAR(40) NOT NULL DEFAULT 'center center' AFTER image_path",
     )
     cursor.execute(
         """
@@ -1529,6 +1536,12 @@ def initialize_mysql_database():
             "payment_amount",
             "ALTER TABLE borrowed_books ADD COLUMN payment_amount DECIMAL(10,2) NOT NULL DEFAULT 50.00 AFTER payment_status",
         )
+        _ensure_column(
+            cursor,
+            "borrowed_books",
+            "payment_date",
+            "ALTER TABLE borrowed_books ADD COLUMN payment_date DATETIME NULL AFTER payment_amount",
+        )
         cursor.execute(
             """
             UPDATE borrowed_books
@@ -1702,6 +1715,11 @@ def list_books():
     return fetch_all(
         BOOK_SELECT_WITH_METRICS
         + """
+        WHERE books.id IN (
+            SELECT MIN(unique_books.id)
+            FROM books AS unique_books
+            GROUP BY COALESCE(NULLIF(unique_books.isbn, ''), CONCAT(LOWER(TRIM(unique_books.title)), '|', LOWER(TRIM(unique_books.author))))
+        )
         ORDER BY books.available DESC, books.title ASC
         """
     )
@@ -1730,6 +1748,7 @@ def _normalized_book_inventory(data):
         "available": 1 if stock_quantity > 0 else 0,
         "stock_quantity": stock_quantity,
         "book_status": book_status,
+        "book_type": data.get("book_type") if data.get("book_type") in {"Physical", "Digital"} else "Physical",
     }
 
 
@@ -1740,9 +1759,9 @@ def create_book(data):
         INSERT INTO books (
             title, author, category, isbn, publication_year, publisher, language,
             description, image, total_copies, available_copies, availability_status,
-            available, price, stock_quantity, book_status
+            available, price, stock_quantity, book_status, book_type
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             data["title"],
@@ -1761,6 +1780,7 @@ def create_book(data):
             data.get("price", 0),
             inventory["stock_quantity"],
             inventory["book_status"],
+            inventory["book_type"],
         ),
     )
 
@@ -1834,7 +1854,8 @@ def update_book(book_id, data):
             available = %s,
             price = %s,
             stock_quantity = %s,
-            book_status = %s
+            book_status = %s,
+            book_type = %s
         WHERE id = %s
         """,
         (
@@ -1854,6 +1875,7 @@ def update_book(book_id, data):
             data.get("price", 0),
             inventory["stock_quantity"],
             inventory["book_status"],
+            inventory["book_type"],
             book_id,
         ),
     )
@@ -1939,7 +1961,7 @@ def return_book(user_id, borrowed_id):
             cursor.execute(
                 """
                 SELECT book_id FROM borrowed_books
-                WHERE id = %s AND user_id = %s AND status = 'borrowed'
+                WHERE id = %s AND user_id = %s AND status IN ('borrowed', 'overdue')
                 """,
                 (borrowed_id, user_id),
             )
@@ -2030,9 +2052,11 @@ def get_user_borrowed_books(user_id):
             borrowed_books.status,
             borrowed_books.payment_status,
             borrowed_books.payment_amount,
+            borrowed_books.payment_date,
             books.title,
             books.author,
             books.category,
+            books.book_type,
             books.isbn,
             books.publisher,
             books.publication_year,
@@ -2065,9 +2089,11 @@ def get_user_active_borrowed_books(user_id):
                 borrowed_books.status,
                 borrowed_books.payment_status,
                 borrowed_books.payment_amount,
+                borrowed_books.payment_date,
                 books.title,
                 books.author,
                 books.category,
+                books.book_type,
                 books.isbn,
                 books.publisher,
                 books.publication_year,
@@ -2088,11 +2114,17 @@ def get_user_active_borrowed_books(user_id):
     )
 
 
-def get_borrow_record(borrowed_id, user_id):
+def get_borrow_record(borrowed_id, user_id=None):
+    params = [borrowed_id]
+    user_filter = ""
+    if user_id is not None:
+        user_filter = "AND borrowed_books.user_id = %s"
+        params.append(user_id)
     return fetch_one(
-        """
+        f"""
         SELECT 
             borrowed_books.id,
+            borrowed_books.user_id,
             borrowed_books.book_id,
             borrowed_books.borrow_date,
             borrowed_books.return_date,
@@ -2100,16 +2132,18 @@ def get_borrow_record(borrowed_id, user_id):
             borrowed_books.status,
             borrowed_books.payment_status,
             borrowed_books.payment_amount,
+            borrowed_books.payment_date,
             books.title,
             books.author,
             books.image,
             books.category,
+            books.book_type,
             COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS due_date
         FROM borrowed_books
         INNER JOIN books ON borrowed_books.book_id = books.id
-        WHERE borrowed_books.id = %s AND borrowed_books.user_id = %s
+        WHERE borrowed_books.id = %s {user_filter}
         """,
-        (borrowed_id, user_id),
+        tuple(params),
     )
 
 
@@ -2117,10 +2151,11 @@ def update_borrow_payment_status(borrowed_id, user_id, payment_status):
     execute(
         """
         UPDATE borrowed_books
-        SET payment_status = %s
+        SET payment_status = %s,
+            payment_date = CASE WHEN %s = 'Paid' THEN NOW() ELSE payment_date END
         WHERE id = %s AND user_id = %s
         """,
-        (payment_status, borrowed_id, user_id),
+        (payment_status, payment_status, borrowed_id, user_id),
     )
 
 
@@ -3479,6 +3514,43 @@ def remove_profile_picture(user_id, actor_user_id=None):
     return True
 
 
+def update_profile_picture_position(user_id, object_position):
+    allowed_positions = {
+        "center center",
+        "top center",
+        "bottom center",
+        "center left",
+        "center right",
+        "top left",
+        "top right",
+        "bottom left",
+        "bottom right",
+    }
+    if object_position not in allowed_positions:
+        object_position = "center center"
+    picture = get_active_profile_picture(user_id)
+    if not picture:
+        return False
+    execute(
+        """
+        UPDATE profile_pictures
+        SET object_position = %s,
+            modified_date = NOW()
+        WHERE id = %s
+        """,
+        (object_position, picture["id"]),
+    )
+    execute(
+        """
+        INSERT INTO profile_picture_history (user_id, picture_id, action, image_path)
+        VALUES (%s, %s, 'Adjusted', %s)
+        """,
+        (user_id, picture["id"], picture["image_path"]),
+    )
+    log_event(user_id, "profile_picture_adjusted", "profile_picture", picture["id"], "Profile picture crop position adjusted")
+    return True
+
+
 def restore_profile_picture(picture_id, admin_user_id):
     picture = fetch_one("SELECT * FROM profile_pictures WHERE id = %s", (picture_id,))
     if not picture:
@@ -3787,20 +3859,29 @@ def list_admin_borrows(search=None):
     )
 
 
-def get_borrow_record(borrowed_id):
+def get_borrow_record(borrowed_id, user_id=None):
+    params = [borrowed_id]
+    user_filter = ""
+    if user_id is not None:
+        user_filter = "AND borrowed_books.user_id = %s"
+        params.append(user_id)
     return fetch_one(
-        """
+        f"""
         SELECT borrowed_books.*,
                users.username,
                users.email,
                books.title,
-               books.author
+               books.author,
+               books.image,
+               books.category,
+               books.book_type,
+               COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS display_due_date
         FROM borrowed_books
         INNER JOIN users ON borrowed_books.user_id = users.id
         INNER JOIN books ON borrowed_books.book_id = books.id
-        WHERE borrowed_books.id = %s
+        WHERE borrowed_books.id = %s {user_filter}
         """,
-        (borrowed_id,),
+        tuple(params),
     )
 
 
