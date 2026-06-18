@@ -22,7 +22,7 @@ class AuthRoutes:
         self.bp.route("/about", methods=["GET"])(self.controller.about)
         self.bp.route("/books", methods=["GET"])(self.controller.books)
         self.bp.route("/books/<int:book_id>", methods=["GET"])(self.controller.book_details)
-        self.bp.route("/books/<int:book_id>/borrow", methods=["POST"])(self.controller.borrow)
+        self.bp.route("/books/<int:book_id>/borrow", methods=["GET", "POST"])(self.controller.borrow)
         self.bp.route("/books/<int:book_id>/favourite", methods=["POST"])(
             self.controller.add_to_favourites
         )
