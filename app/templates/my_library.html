@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}My Library - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Start Reading</span>
+    <h1>My Borrowed Books.</h1>
+    <p>Only your active borrowed books appear here. Digital books can be opened online, while physical books show return and payment actions.</p>
+</section>
+
+<section class="borrow-layout reveal">
+    {% for loan in active_borrows %}
+        <article class="loan-card tilt-card">
+            <img src="{{ loan.image }}" alt="{{ loan.title }}">
+            <div class="loan-body">
+                <div>
+                    <span class="book-category">{{ loan.category }}</span>
+                    <h2>{{ loan.title }}</h2>
+                    <p>{{ loan.author }}</p>
+                </div>
+                <div class="loan-meta">
+                    <span>{{ loan.book_type or 'Physical' }} Book</span>
+                    <span>Borrowed {{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'recently' }}</span>
+                    <span>Due {{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'soon' }}</span>
+                    <span>Payment: {{ loan.payment_status or 'Unpaid' }}</span>
+                </div>
+                <div class="loan-actions">
+                    <span class="status-badge {{ 'warning' if loan.status == 'overdue' else 'success' }}">{{ loan.status|title }}</span>
+                    {% if loan.book_type == 'Digital' %}
+                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">Read Online</a>
+                    {% else %}
+                        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">View Details</a>
+                    {% endif %}
+                    {% if loan.payment_status != 'Paid' %}
+                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
+                    {% endif %}
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
+                </div>
+            </div>
+        </article>
+    {% else %}
+        <div class="empty-panel">
+            <h2>No active borrowed books.</h2>
+            <p>Borrow a book from the catalog to start reading here.</p>
+            <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse Catalog</a>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}
