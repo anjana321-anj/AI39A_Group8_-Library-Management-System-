@@ -51,9 +51,7 @@
                 {% if is_borrowed %}
                     <button class="btn btn-disabled" type="button" disabled>Already Borrowed</button>
                 {% else %}
-                    <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}" data-confirm="Are you sure you want to borrow this book?">
-                        <button class="btn btn-primary" type="submit" data-ripple>Borrow Book</button>
-                    </form>
+                    <a class="btn btn-primary" href="{{ url_for('auth.borrow', book_id=book.id) }}" data-ripple>Borrow Book</a>
                 {% endif %}
             {% else %}
                 <a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('auth.book_details', book_id=book.id)) }}">Sign In to Borrow</a>
