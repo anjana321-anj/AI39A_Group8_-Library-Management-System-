@@ -3,10 +3,13 @@
 {% block title %}Favourites - BookVerse{% endblock %}
 
 {% block content %}
-<section class="page-hero reveal">
-    <span class="eyebrow">Dashboard</span>
-    <h1>Your favourite books.</h1>
-    <p>Saved books are stored per user and remain available after logout and login.</p>
+<section class="compact-page-heading reveal">
+    <div>
+        <span class="eyebrow">Favorites</span>
+        <h1>Your favorite books.</h1>
+        <p>Saved books are private to your account and stay available after login.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse Books</a>
 </section>
 
 <section class="catalog-grid reveal">
@@ -19,7 +22,12 @@
                     <span class="availability-badge {{ 'muted-badge' if not is_available else '' }}">{{ 'Available' if is_available else 'Out of Stock' }}</span>
                 </div>
                 <div class="book-body">
-                    <span class="book-category">{{ book.category }}</span>
+                    <div class="card-title-row">
+                        <span class="book-category">{{ book.category }}</span>
+                        <form method="post" action="{{ url_for('auth.remove_from_favourites', book_id=book.id) }}">
+                            <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">★</button>
+                        </form>
+                    </div>
                     <h3>{{ book.title }}</h3>
                     <p>{{ book.description }}</p>
                     <div class="rating-line">
@@ -29,9 +37,13 @@
                     </div>
                     <div class="book-meta">
                         <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Details</a>
-                        <form method="post" action="{{ url_for('auth.remove_from_favourites', book_id=book.id) }}">
-                            <button class="btn btn-small btn-disabled" type="submit">Remove</button>
-                        </form>
+                        {% if is_available %}
+                            <a class="btn btn-small btn-primary" href="{{ url_for('auth.borrow', book_id=book.id) }}">Borrow</a>
+                        {% else %}
+                            <form method="post" action="{{ url_for('auth.join_book_waitlist', book_id=book.id) }}">
+                                <button class="btn btn-small btn-secondary" type="submit">Waitlist</button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
             </article>

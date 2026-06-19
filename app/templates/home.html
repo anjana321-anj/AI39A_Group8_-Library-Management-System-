@@ -13,7 +13,7 @@
         </p>
         <div class="hero-actions">
             <a class="btn btn-primary" href="{{ url_for('auth.books') }}" data-ripple>Browse Catalog</a>
-            <a class="btn btn-secondary" href="{{ url_for('auth.books') }}" data-ripple>Start Reading</a>
+            <a class="btn btn-secondary" href="{{ url_for('auth.my_library') if session.get('user_id') else url_for('auth.login', next=url_for('auth.my_library')) }}" data-ripple>Start Reading</a>
             <a class="btn btn-glass" href="{{ url_for('auth.dashboard') }}" data-ripple>Explore Dashboard</a>
         </div>
         <div class="hero-metrics">

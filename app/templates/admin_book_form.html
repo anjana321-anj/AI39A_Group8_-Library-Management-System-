@@ -63,6 +63,14 @@
         </select>
     </label>
     <label class="field">
+        <span>Book Type</span>
+        <select name="book_type">
+            {% for type in ['Physical', 'Digital'] %}
+                <option value="{{ type }}" {{ 'selected' if book and book.book_type == type else '' }}>{{ type }} Book</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label class="field">
         <span>Availability</span>
         <input type="text" value="{{ book.availability_status if book else 'Auto: Available when stock is above 0' }}" readonly>
     </label>

@@ -7,7 +7,7 @@
     <aside class="profile-card reveal">
         <div class="avatar">
             {% if profile_picture %}
-                <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture">
+                <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture" style="object-position: {{ profile_picture.object_position or 'center center' }};">
             {% else %}
                 {{ user.username[:1]|upper if user else 'B' }}
             {% endif %}
@@ -37,6 +37,18 @@
             <button class="btn btn-secondary btn-wide" type="submit" id="profile-upload-btn">Upload Picture</button>
         </form>
         {% if profile_picture %}
+            <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}">
+                <input type="hidden" name="action" value="adjust">
+                <label class="field">
+                    <span>Adjust picture position</span>
+                    <select name="object_position">
+                        {% for position in ['center center', 'top center', 'bottom center', 'center left', 'center right', 'top left', 'top right', 'bottom left', 'bottom right'] %}
+                            <option value="{{ position }}" {{ 'selected' if profile_picture.object_position == position else '' }}>{{ position|title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button class="btn btn-secondary btn-wide" type="submit">Save Position</button>
+            </form>
             <form method="post" action="{{ url_for('auth.update_profile_picture') }}">
                 <input type="hidden" name="action" value="remove">
                 <button class="btn btn-disabled btn-wide" type="submit" data-confirm="Remove your profile picture?">Remove Picture</button>

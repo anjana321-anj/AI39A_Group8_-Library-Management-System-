@@ -58,7 +58,7 @@
             <article class="profile-summary">
                 <div class="avatar">
                     {% if profile_picture %}
-                        <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture">
+                        <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture" style="object-position: {{ profile_picture.object_position or 'center center' }};">
                     {% else %}
                         {{ user.username[:1]|upper if user else 'B' }}
                     {% endif %}
@@ -82,6 +82,7 @@
                     <thead>
                         <tr>
                             <th>Book</th>
+                            <th>Borrow Date</th>
                             <th>Due Date</th>
                             <th>Status</th>
                             <th>Payment</th>
@@ -89,12 +90,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for loan in borrow_history %}
+                        {% for loan in current_borrows %}
                             <tr>
                                 <td>
-                                    <strong>{{ loan.title }}</strong>
-                                    <span>{{ loan.author }}</span>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img class="table-cover" src="{{ loan.image }}" alt="{{ loan.title }}">
+                                        <div>
+                                            <strong>{{ loan.title }}</strong>
+                                            <span>{{ loan.author }} · {{ loan.book_type or 'Physical' }} Book</span>
+                                        </div>
+                                    </div>
                                 </td>
+                                <td>{{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'N/A' }}</td>
                                 <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
                                 <td>
                                     {% if loan.status == 'borrowed' %}
@@ -127,7 +134,7 @@
                                             {% endif %}
                                         </div>
                                     {% elif loan.status == 'returned' %}
-                                        <span class="text-muted">Completed</span>
+                                    <span class="text-muted">Completed</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -139,6 +146,7 @@
                                     <strong>{{ res.title }}</strong>
                                     <span>{{ res.author }}</span>
                                 </td>
+                                <td>Reserved</td>
                                 <td>Expires: {{ res.expiry_date.strftime('%b %d, %Y') if res.expiry_date else 'N/A' }}</td>
                                 <td>
                                     <span class="status-badge info">Reserved ({{ res.status }})</span>
@@ -152,9 +160,9 @@
                             </tr>
                         {% endfor %}
                         
-                        {% if not borrow_history and not active_reservations %}
+                        {% if not current_borrows and not active_reservations %}
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 20px;">
+                                <td colspan="6" style="text-align: center; padding: 20px;">
                                     <p class="empty-state">No borrowed books or active reservations. <a href="{{ url_for('auth.books') }}">Browse the catalog</a> to borrow one!</p>
                                 </td>
                             </tr>
@@ -165,27 +173,27 @@
         </section>
 
         <section class="stats-grid reveal">
-            <article class="stat-widget">
-                <span>Total Books</span>
-                <strong data-counter="{{ stats.books }}">0</strong>
-                <small>{{ stats.available }} currently available</small>
-            </article>
-            <article class="stat-widget">
-                <span>Members</span>
-                <strong data-counter="{{ stats.members }}">0</strong>
-                <small>Registered readers</small>
-            </article>
-            <article class="stat-widget">
-                <span>Active Loans</span>
-                <strong data-counter="{{ stats.borrowed }}">0</strong>
-                <small>Books in circulation</small>
-            </article>
-            <article class="stat-widget accent-widget">
-                <span>Availability</span>
-                <strong>{{ ((stats.available / stats.books) * 100)|round|int if stats.books else 0 }}%</strong>
-                <small>Catalog ready to borrow</small>
-            </article>
             {% if session.get('role') == 'admin' %}
+                <article class="stat-widget">
+                    <span>Total Books</span>
+                    <strong data-counter="{{ stats.books }}">0</strong>
+                    <small>{{ stats.available }} currently available</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Total Users</span>
+                    <strong data-counter="{{ stats.members }}">0</strong>
+                    <small>Registered readers</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Active Loans</span>
+                    <strong data-counter="{{ stats.borrowed }}">0</strong>
+                    <small>Books in circulation</small>
+                </article>
+                <article class="stat-widget accent-widget">
+                    <span>Reservations</span>
+                    <strong>{{ stats.reserved }}</strong>
+                    <small>Active reservation queue</small>
+                </article>
                 <article class="stat-widget">
                     <span>Active Users</span>
                     <strong>{{ stats.active_users }}</strong>
@@ -226,15 +234,37 @@
                     <strong>{{ stats.security_alerts }}</strong>
                     <small>Failed or flagged events</small>
                 </article>
+            {% else %}
+                <article class="stat-widget">
+                    <span>Borrowed Books</span>
+                    <strong>{{ active_borrow_count }}</strong>
+                    <small>Currently on your shelf</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Favorites</span>
+                    <strong>{{ favourite_count }}</strong>
+                    <small>Saved for later</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Reservations</span>
+                    <strong>{{ active_reservation_count }}</strong>
+                    <small>Waiting or pending</small>
+                </article>
+                <article class="stat-widget accent-widget">
+                    <span>Notifications</span>
+                    <strong>{{ unread_notifications_count }}</strong>
+                    <small>Unread updates</small>
+                </article>
             {% endif %}
         </section>
 
         <section class="dashboard-grid reveal">
             <article class="data-panel">
                 <div class="panel-heading">
-                    <h2>Catalog health</h2>
+                    <h2>{{ 'Catalog health' if session.get('role') == 'admin' else 'Recommended books' }}</h2>
                     <a href="{{ url_for('auth.books') }}">View all</a>
                 </div>
+                {% if session.get('role') == 'admin' %}
                 <div class="table-wrap">
                     <table>
                         <thead>
@@ -258,6 +288,22 @@
                         </tbody>
                     </table>
                 </div>
+                {% else %}
+                    <div class="activity-list">
+                        {% for book in recommended_books %}
+                            <div class="activity-item">
+                                <span class="activity-dot"></span>
+                                <div>
+                                    <strong>{{ book.title }}</strong>
+                                    <small>{{ book.author }} &middot; {{ book.category }} &middot; {{ book.average_rating or 0 }}/5</small>
+                                </div>
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
+                            </div>
+                        {% else %}
+                            <p class="empty-state">No recommendations yet. Borrow or favorite books to personalize this list.</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </article>
 
             <article class="data-panel">
@@ -266,12 +312,12 @@
                     <a href="{{ url_for('auth.borrowed') }}">Open borrowed</a>
                 </div>
                 <div class="activity-list">
-                    {% if recent_activity %}
-                        {% for item in recent_activity %}
+                    {% if borrow_history %}
+                        {% for item in borrow_history[:6] %}
                             <div class="activity-item">
                                 <span class="activity-dot"></span>
                                 <div>
-                                    <strong>{{ item.username }} borrowed {{ item.title }}</strong>
+                                    <strong>{{ item.title }}</strong>
                                     <small>{{ item.status|title }} on {{ item.borrow_date.strftime('%b %d, %Y') if item.borrow_date else 'recently' }}</small>
                                 </div>
                             </div>

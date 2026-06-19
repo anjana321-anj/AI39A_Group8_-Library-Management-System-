@@ -3,81 +3,84 @@
 {% block title %}Catalog - BookVerse{% endblock %}
 
 {% block content %}
-<section class="page-hero reveal">
-    <span class="eyebrow">Catalog</span>
-    <h1>Find the next book worth borrowing.</h1>
-    <p>Browse, search, filter, and open book details without creating an account. Sign in only when you want to borrow, reserve, buy, review, rate, or save favourites.</p>
-    <div class="filter-row" data-category-shortcuts>
+<section class="catalog-header reveal" data-catalog-controls>
+    <div>
+        <span class="eyebrow">Books</span>
+        <h1>Browse books</h1>
+    </div>
+    <label class="catalog-search">
+        <span>Search</span>
+        <input type="search" data-catalog-search placeholder="Title, author, genre, ISBN, or publisher">
+    </label>
+    <div class="filter-row catalog-chip-row" data-category-shortcuts>
         <button class="filter-chip active" type="button" data-filter="all">All</button>
         {% for category in categories %}
             <button class="filter-chip" type="button" data-filter="{{ category|lower|replace(' ', '-') }}">{{ category }}</button>
         {% endfor %}
     </div>
+    <details class="catalog-filter-details">
+        <summary>More filters</summary>
+        <div class="catalog-tools">
+            <label class="field">
+                <span>Genre</span>
+                <select data-filter-field="category">
+                    <option value="">All genres</option>
+                    {% for category in categories %}
+                        <option value="{{ category|lower }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Author</span>
+                <select data-filter-field="author">
+                    <option value="">All authors</option>
+                    {% for author in authors %}
+                        <option value="{{ author|lower }}">{{ author }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Availability</span>
+                <select data-filter-field="availability">
+                    <option value="">All statuses</option>
+                    <option value="available">Available</option>
+                    <option value="out of stock">Out of Stock</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Publication Year</span>
+                <select data-filter-field="year">
+                    <option value="">All years</option>
+                    {% for year in years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Language</span>
+                <select data-filter-field="language">
+                    <option value="">All languages</option>
+                    {% for language in languages %}
+                        <option value="{{ language|lower }}">{{ language }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Sort</span>
+                <select data-catalog-sort>
+                    <option value="az">A-Z</option>
+                    <option value="za">Z-A</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="rated">Highest Rated</option>
+                    <option value="reviewed">Most Reviewed</option>
+                </select>
+            </label>
+        </div>
+    </details>
 </section>
 
-<section class="data-panel reveal catalog-tools" data-catalog-controls>
-    <label class="field full-field">
-        <span>Search books</span>
-        <input type="search" data-catalog-search placeholder="Search by title, author, genre, ISBN, or publisher">
-    </label>
-    <label class="field">
-        <span>Genre</span>
-        <select data-filter-field="category">
-            <option value="">All genres</option>
-            {% for category in categories %}
-                <option value="{{ category|lower }}">{{ category }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label class="field">
-        <span>Author</span>
-        <select data-filter-field="author">
-            <option value="">All authors</option>
-            {% for author in authors %}
-                <option value="{{ author|lower }}">{{ author }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label class="field">
-        <span>Availability</span>
-        <select data-filter-field="availability">
-            <option value="">All statuses</option>
-            <option value="available">Available</option>
-            <option value="out of stock">Out of Stock</option>
-        </select>
-    </label>
-    <label class="field">
-        <span>Publication Year</span>
-        <select data-filter-field="year">
-            <option value="">All years</option>
-            {% for year in years %}
-                <option value="{{ year }}">{{ year }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label class="field">
-        <span>Language</span>
-        <select data-filter-field="language">
-            <option value="">All languages</option>
-            {% for language in languages %}
-                <option value="{{ language|lower }}">{{ language }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label class="field">
-        <span>Sort</span>
-        <select data-catalog-sort>
-            <option value="az">A-Z</option>
-            <option value="za">Z-A</option>
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="rated">Highest Rated</option>
-            <option value="reviewed">Most Reviewed</option>
-        </select>
-    </label>
-</section>
-
-<section class="catalog-layout">
+<section class="catalog-layout catalog-full">
     <div class="catalog-grid reveal" data-catalog-grid>
         {% for book in books %}
             {% set is_available = book.stock_quantity > 0 %}
@@ -112,15 +115,15 @@
                         {% if session.get('user_id') %}
                             {% if is_favourite %}
                                 <form method="post" action="{{ url_for('auth.remove_from_favourites', book_id=book.id) }}">
-                                    <button class="icon-button is-active" type="submit" aria-label="Remove from favourites">Saved</button>
+                                    <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">★</button>
                                 </form>
                             {% else %}
                                 <form method="post" action="{{ url_for('auth.add_to_favourites', book_id=book.id) }}">
-                                    <button class="icon-button" type="submit" aria-label="Add to favourites">Save</button>
+                                    <button class="favorite-star" type="submit" aria-label="Add to favourites">☆</button>
                                 </form>
                             {% endif %}
                         {% else %}
-                            <a class="icon-button" href="{{ url_for('auth.login', next=url_for('auth.books')) }}" aria-label="Sign in to add favourite">Save</a>
+                            <a class="favorite-star" href="{{ url_for('auth.login', next=url_for('auth.books')) }}" aria-label="Sign in to add favourite">☆</a>
                         {% endif %}
                     </div>
                     <h3>{{ book.title }}</h3>
@@ -174,24 +177,5 @@
             <p>Try a different keyword, filter, or sort option.</p>
         </div>
     </div>
-
-    <aside class="catalog-panel reveal">
-        <h2>Borrowing rhythm</h2>
-        <p>Books move from catalog to your borrowed shelf immediately after checkout. Returning a title makes it available again.</p>
-        <div class="progress-list">
-            <div>
-                <span>Catalog</span>
-                <strong>{{ books|length }} books</strong>
-            </div>
-            <div>
-                <span>Categories</span>
-                <strong>{{ categories|length }} shelves</strong>
-            </div>
-            <div>
-                <span>Session access</span>
-                <strong>{{ 'Active' if session.get('user_id') else 'Browse mode' }}</strong>
-            </div>
-        </div>
-    </aside>
 </section>
 {% endblock %}

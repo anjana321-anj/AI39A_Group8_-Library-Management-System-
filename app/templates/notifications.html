@@ -12,7 +12,14 @@
 <section class="data-panel reveal">
     <div class="panel-heading">
         <h2>Notifications</h2>
-        <span class="status-badge success">{{ notifications|length }} records</span>
+        <div class="admin-actions">
+            <span class="status-badge success">{{ notifications|length }} records</span>
+            {% if notifications %}
+                <form method="post" action="{{ url_for('auth.mark_all_notifications_read_route') }}">
+                    <button class="btn btn-small btn-secondary" type="submit">Mark All Read</button>
+                </form>
+            {% endif %}
+        </div>
     </div>
     <div class="table-wrap">
         <table>

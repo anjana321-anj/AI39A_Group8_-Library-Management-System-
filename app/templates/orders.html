@@ -5,11 +5,57 @@
 {% block content %}
 <section class="page-hero reveal">
     <span class="eyebrow">Dashboard</span>
-    <h1>Active orders.</h1>
-    <p>Track current purchases, payment status, and receipts. Historical activity will move to Activity Logs later.</p>
+    <h1>My borrowed books and active orders.</h1>
+    <p>Start with books currently on your shelf, then review purchase orders, payment status, and receipts.</p>
 </section>
 
 <section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>My Borrowed Books</h2>
+        <a href="{{ url_for('auth.my_library') }}">Start Reading</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Book</th>
+                    <th>Borrow Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in active_borrows %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ loan.title }}</strong><span>{{ loan.author }} &middot; {{ loan.book_type or 'Physical' }} Book</span></td>
+                        <td>{{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'N/A' }}</td>
+                        <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                        <td><span class="status-badge {{ 'warning' if loan.status == 'overdue' else 'success' }}">{{ loan.status|title }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">{{ 'Read Online' if loan.book_type == 'Digital' else 'Details' }}</a>
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">No active borrowed books.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Active Purchase Orders</h2>
+        <a href="{{ url_for('auth.books') }}">Browse Books</a>
+    </div>
     <div class="table-wrap">
         <table>
             <thead>
