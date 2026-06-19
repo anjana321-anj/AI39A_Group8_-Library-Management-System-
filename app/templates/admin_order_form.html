@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Order - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Edit Order #{{ order.id }}</h1>
+    <p>Update quantity or order status.</p>
+</section>
+
+<form class="data-panel reveal admin-form-grid" method="post" data-loading-form>
+    <label class="field">
+        <span>Book</span>
+        <input type="text" value="{{ order.title }}" readonly>
+    </label>
+    <label class="field">
+        <span>User</span>
+        <input type="text" value="{{ order.username }}" readonly>
+    </label>
+    <label class="field">
+        <span>Quantity</span>
+        <input type="number" name="quantity" min="1" value="{{ order.quantity }}" required>
+    </label>
+    <label class="field">
+        <span>Status</span>
+        <select name="status">
+            {% for status in ['Pending', 'Paid', 'Processing', 'Completed', 'Cancelled'] %}
+                <option value="{{ status }}" {{ 'selected' if order.status == status else '' }}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <div class="form-row full-field">
+        <button class="btn btn-primary" type="submit" data-ripple>Save Order</button>
+        <a class="btn btn-secondary" href="{{ url_for('auth.admin_orders') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

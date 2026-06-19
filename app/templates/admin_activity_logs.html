@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Logs</span>
+    <h1>System activity history.</h1>
+    <p>Track user actions, admin actions, and sprint hooks for future reporting.</p>
+</section>
+
+<section class="data-panel reveal">
+    <form class="catalog-tools" method="get">
+        <label class="field">
+            <span>Search</span>
+            <input type="search" name="search" value="{{ search }}" placeholder="User, action, or description">
+        </label>
+        <label class="field">
+            <span>Action Type</span>
+            <input type="text" name="event_type" value="{{ event_type }}" placeholder="login, book_updated...">
+        </label>
+        <button class="btn btn-primary" type="submit">Filter</button>
+        <a class="btn btn-secondary" href="{{ url_for('auth.admin_activity_logs', search=search, event_type=event_type, export='csv') }}">Export CSV</a>
+    </form>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Activity Logs</h2>
+        <span class="status-badge success">{{ logs|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Description</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ log.username or 'System' }}</strong><span>{{ log.email or '' }}</span></td>
+                        <td>{{ log.event_type }}</td>
+                        <td>{{ log.entity_type }} #{{ log.entity_id or 'N/A' }}</td>
+                        <td>{{ log.summary }}</td>
+                        <td>{{ log.created_at.strftime('%b %d, %Y %H:%M') if log.created_at else 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No activity logs found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

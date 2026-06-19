@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Backup Management - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Backups</span>
+    <h1>Database backup management.</h1>
+    <p>Create JSON backups of users, books, reviews, logs, orders, and fines. Restore requests are recorded safely without overwriting live data.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Create Backup</h2>
+        <span class="status-badge success">class_db</span>
+    </div>
+    <form method="post">
+        <input type="hidden" name="action" value="create">
+        <button class="btn btn-primary" type="submit">Create JSON Backup</button>
+    </form>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Backup History</h2>
+        <span class="status-badge success">{{ backups|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Type</th>
+                    <th>Admin</th>
+                    <th>File</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for backup in backups %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ backup.backup_type }}</td>
+                        <td>{{ backup.admin_name or 'System' }}</td>
+                        <td>{{ backup.file_path or 'N/A' }}</td>
+                        <td>{{ backup.created_at.strftime('%b %d, %Y %H:%M') if backup.created_at else 'N/A' }}</td>
+                        <td class="admin-actions">
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.download_backup', backup_id=backup.id) }}">Download</a>
+                            <form method="post">
+                                <input type="hidden" name="action" value="restore">
+                                <input type="hidden" name="backup_id" value="{{ backup.id }}">
+                                <button class="btn btn-small btn-secondary" type="submit" data-confirm="Record restore request for this backup?">Restore Request</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No backups have been created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
