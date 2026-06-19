@@ -29,6 +29,7 @@
                     <span>{{ loan.book_type or 'Physical' }} Book</span>
                     <span>Borrowed {{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'recently' }}</span>
                     <span>Due {{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'soon' }}</span>
+                    <span>Renewals: {{ loan.renewal_count or 0 }}/2</span>
                     <span>Payment: {{ loan.payment_status or 'Unpaid' }}</span>
                 </div>
                 <div class="loan-actions">
@@ -40,6 +41,11 @@
                     {% endif %}
                     {% if loan.payment_status != 'Paid' %}
                         <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
+                    {% endif %}
+                    {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
+                        <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
+                            <button class="btn btn-small btn-secondary" type="submit">Renew</button>
+                        </form>
                     {% endif %}
                     <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
                 </div>

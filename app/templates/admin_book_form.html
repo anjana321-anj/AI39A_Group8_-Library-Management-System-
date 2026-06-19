@@ -57,7 +57,7 @@
     <label class="field">
         <span>Book Status</span>
         <select name="book_status">
-            {% for status in ['Available', 'Borrowed', 'Reserved', 'Purchased', 'In Buy List'] %}
+            {% for status in ['Available', 'Out of Stock', 'Borrowed', 'Reserved', 'Purchased', 'In Buy List'] %}
                 <option value="{{ status }}" {{ 'selected' if book and book.book_status == status else '' }}>{{ status }}</option>
             {% endfor %}
         </select>

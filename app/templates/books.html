@@ -105,7 +105,7 @@
                     <span class="availability-badge {{ 'muted-badge' if not is_available else '' }}">
                         {{ 'Available' if is_available else 'Out of Stock' }}
                     </span>
-                    <span class="book-type-badge status-badge info" style="position: absolute; bottom: 8px; left: 8px;">
+                    <span class="book-type-badge status-badge info">
                         {{ book.book_type or 'Physical' }} Book
                     </span>
                 </div>
@@ -115,15 +115,15 @@
                         {% if session.get('user_id') %}
                             {% if is_favourite %}
                                 <form method="post" action="{{ url_for('auth.remove_from_favourites', book_id=book.id) }}">
-                                    <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">★</button>
+                                    <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">&#9733;</button>
                                 </form>
                             {% else %}
                                 <form method="post" action="{{ url_for('auth.add_to_favourites', book_id=book.id) }}">
-                                    <button class="favorite-star" type="submit" aria-label="Add to favourites">☆</button>
+                                    <button class="favorite-star" type="submit" aria-label="Add to favourites">&#9734;</button>
                                 </form>
                             {% endif %}
                         {% else %}
-                            <a class="favorite-star" href="{{ url_for('auth.login', next=url_for('auth.books')) }}" aria-label="Sign in to add favourite">☆</a>
+                            <a class="favorite-star" href="{{ url_for('auth.login', next=url_for('auth.books')) }}" aria-label="Sign in to add favourite">&#9734;</a>
                         {% endif %}
                     </div>
                     <h3>{{ book.title }}</h3>

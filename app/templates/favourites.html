@@ -25,7 +25,7 @@
                     <div class="card-title-row">
                         <span class="book-category">{{ book.category }}</span>
                         <form method="post" action="{{ url_for('auth.remove_from_favourites', book_id=book.id) }}">
-                            <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">★</button>
+                            <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">&#9733;</button>
                         </form>
                     </div>
                     <h3>{{ book.title }}</h3>

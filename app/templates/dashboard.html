@@ -42,17 +42,7 @@
         <section class="dashboard-hero reveal">
             <div>
                 <span class="eyebrow">Library analytics</span>
-                <h1 style="display: flex; align-items: center; gap: 15px;">
-                    Welcome back, {{ session.get('username', 'Reader') }}.
-                    <span class="notification-bell-container" style="position: relative; display: inline-block;">
-                        <a href="{{ url_for('auth.notifications') }}" aria-label="Notifications" style="text-decoration: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">
-                            🔔
-                            {% if unread_notifications_count and unread_notifications_count > 0 %}
-                                <span class="badge">{{ unread_notifications_count }}</span>
-                            {% endif %}
-                        </a>
-                    </span>
-                </h1>
+                <h1>Welcome back, {{ session.get('username', 'Reader') }}.</h1>
                 <p>Monitor the catalog, active loans, and recent reading movement from one clean dashboard.</p>
             </div>
             <article class="profile-summary">
@@ -97,7 +87,7 @@
                                         <img class="table-cover" src="{{ loan.image }}" alt="{{ loan.title }}">
                                         <div>
                                             <strong>{{ loan.title }}</strong>
-                                            <span>{{ loan.author }} · {{ loan.book_type or 'Physical' }} Book</span>
+                                            <span>{{ loan.author }} &middot; {{ loan.book_type or 'Physical' }} Book</span>
                                         </div>
                                     </div>
                                 </td>
@@ -128,6 +118,11 @@
                                 <td>
                                     {% if loan.status in ['borrowed', 'overdue'] %}
                                         <div style="display: flex; gap: 8px;">
+                                            {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
+                                                <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
+                                                    <button class="btn btn-small btn-secondary" type="submit">Renew</button>
+                                                </form>
+                                            {% endif %}
                                             <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
                                             {% if loan.payment_status != 'Paid' %}
                                                 <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
