@@ -25,6 +25,48 @@
     --max-width: 1600px;
 }
 
+/* UI polish: tables, cards, and small responsive tweaks */
+.data-panel .table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-panel .table-wrap table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.6);
+    font-weight: 800;
+    color: var(--ink-soft);
+}
+.data-panel .table-wrap table tbody td {
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    vertical-align: middle;
+}
+.status-badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.82rem;
+}
+.status-badge.success { background: linear-gradient(135deg, #1f9d6a, #16a085); color: white; }
+.status-badge.warning { background: linear-gradient(135deg, #f6c25e, #d18b00); color: white; }
+.status-badge.danger { background: linear-gradient(135deg, #f7636b, #c64d70); color: white; }
+
+.profile-card { padding: 22px; border-radius: 18px; box-shadow: var(--shadow-sm); }
+.profile-card .avatar { width: 84px; height: 84px; border-radius: 50%; overflow: hidden; display: grid; place-items:center; font-weight: 900; font-size: 1.6rem; }
+
+.loan-card { border-radius: 16px; box-shadow: var(--shadow-sm); overflow: hidden; }
+.loan-card img { width: 140px; height: 180px; object-fit: cover; }
+
+/* Notifications table: nicer spacing and responsive actions */
+.data-panel .table-wrap table td.admin-actions { display: flex; gap: 8px; align-items: center; }
+.data-panel .table-wrap table td .btn { padding: 8px 12px; min-height: 36px; border-radius: 12px; }
+
+/* minor layout smoothing for dashboard sidebar */
+.dashboard-sidebar { padding: 22px; border-radius: 18px; box-shadow: var(--shadow-sm); }
+
+
 *,
 *::before,
 *::after {
@@ -869,6 +911,13 @@ button {
     padding: 8px 11px;
     color: #064828;
     background: rgba(212, 255, 231, 0.9);
+}
+
+.book-type-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 2;
 }
 
 .muted-badge {
@@ -1963,6 +2012,18 @@ td span {
     }
 }
 
+@keyframes fadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -2049,6 +2110,20 @@ td span {
         margin-left: auto;
     }
 
+    .account-name {
+        display: none;
+    }
+
+    .nav-popover-panel {
+        position: fixed;
+        top: 92px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-height: calc(100vh - 110px);
+        overflow: auto;
+    }
+
     .page-wrap,
     .site-footer {
         width: min(var(--max-width), calc(100% - 20px));
@@ -2081,10 +2156,26 @@ td span {
 
     .dashboard-hero,
     .panel-heading,
+    .catalog-header,
     .progress-list div,
     .loan-meta {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .catalog-header {
+        position: relative;
+        top: auto;
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-filter-details {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .catalog-filter-details summary {
+        text-align: center;
     }
 }
 
@@ -2096,6 +2187,12 @@ td span {
 
     .nav-actions {
         gap: 8px;
+    }
+
+    .nav-icon-button,
+    .account-summary {
+        min-height: 38px;
+        padding: 6px 9px;
     }
 
     .btn {
