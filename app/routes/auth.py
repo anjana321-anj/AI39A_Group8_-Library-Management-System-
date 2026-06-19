@@ -86,6 +86,9 @@ class AuthRoutes:
         self.bp.route("/notifications/<int:notification_id>/read", methods=["POST"])(
             self.controller.mark_notification_read_route
         )
+        self.bp.route("/notifications/read-all", methods=["POST"])(
+            self.controller.mark_all_notifications_read_route
+        )
         self.bp.route("/notifications/<int:notification_id>/delete", methods=["POST"])(
             self.controller.delete_notification_route
         )

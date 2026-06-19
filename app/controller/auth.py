@@ -98,6 +98,7 @@ from app.database import (
     list_user_reservations,
     list_users,
     log_security_event,
+    mark_all_notifications_read,
     mark_password_reset_token_used,
     mark_notification_read,
     moderate_book_review,
@@ -622,6 +623,18 @@ class AuthController:
         active_borrows = get_user_active_borrowed_books(session["user_id"])
         active_reservations = list_user_reservations(session["user_id"])
         borrow_history = get_user_borrowed_books(session["user_id"])
+        favourite_books = list_user_favourites(session["user_id"])
+        user_reviews = list_user_reviews_and_ratings(session["user_id"])
+        preferred_genres = {
+            item.get("category")
+            for item in [*active_borrows, *favourite_books, *borrow_history]
+            if item.get("category")
+        }
+        borrowed_ids = {item["book_id"] for item in borrow_history if item.get("book_id")}
+        recommended_books = [
+            book for book in books
+            if book["id"] not in borrowed_ids and (not preferred_genres or book.get("category") in preferred_genres)
+        ][:6]
         unread_notifications_count = fetch_one(
             "SELECT COUNT(*) AS count FROM notifications WHERE user_id = %s AND is_read = 0",
             (session["user_id"],)
@@ -643,6 +656,9 @@ class AuthController:
             outstanding_fine_total=sum(float(fine.get("total_fine") or 0) for fine in outstanding_fines),
             borrow_history=borrow_history,
             current_borrows=active_borrows,
+            favourite_count=len(favourite_books),
+            user_review_count=len([review for review in user_reviews if review.get("review_text")]),
+            recommended_books=recommended_books,
             unread_notifications_count=unread_notifications_count,
             active_reservations=active_reservations,
         )
@@ -758,7 +774,15 @@ class AuthController:
     @login_required
     def my_library(self):
         active_borrows = get_user_active_borrowed_books(session["user_id"])
-        return render_template("my_library.html", active_borrows=active_borrows)
+        borrow_history = get_user_borrowed_books(session["user_id"])
+        return render_template(
+            "my_library.html",
+            active_borrows=active_borrows,
+            favourites=list_user_favourites(session["user_id"]),
+            reservations=list_user_reservations(session["user_id"]),
+            recently_read=[loan for loan in borrow_history if loan.get("status") == "returned"][:6],
+            reviews=list_user_reviews_and_ratings(session["user_id"])[:6],
+        )
 
     @login_required
     def pay_borrow(self, borrowed_id):
@@ -1362,6 +1386,12 @@ class AuthController:
         mark_notification_read(session["user_id"], notification_id)
         flash("Notification marked as read.", "success")
         return redirect(url_for("auth.notifications"))
+
+    @login_required
+    def mark_all_notifications_read_route(self):
+        mark_all_notifications_read(session["user_id"])
+        flash("All notifications marked as read.", "success")
+        return redirect(request.referrer or url_for("auth.notifications"))
 
     @login_required
     def delete_notification_route(self, notification_id):

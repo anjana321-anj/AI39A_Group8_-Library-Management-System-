@@ -1,8 +1,15 @@
 import os
 
-from flask import Flask, request, url_for
+import pymysql
+from flask import Flask, request, session, url_for
 
-from app.database import initialize_mysql_database
+from app.database import (
+    fetch_one,
+    get_active_profile_picture,
+    get_user_by_id,
+    initialize_mysql_database,
+    list_user_notifications,
+)
 from app.routes.auth import AuthRoutes
 
 def create_app():
@@ -22,6 +29,35 @@ def create_app():
 
     auth_routes = AuthRoutes()
     app.register_blueprint(auth_routes.register_routes())
+
+    @app.context_processor
+    def inject_nav_context():
+        if not session.get("user_id"):
+            return {
+                "nav_user": None,
+                "nav_profile_picture": None,
+                "nav_notifications": [],
+                "nav_unread_notifications": 0,
+            }
+        try:
+            user_id = session["user_id"]
+            unread_row = fetch_one(
+                "SELECT COUNT(*) AS total FROM notifications WHERE user_id = %s AND is_read = 0",
+                (user_id,),
+            )
+            return {
+                "nav_user": get_user_by_id(user_id),
+                "nav_profile_picture": get_active_profile_picture(user_id),
+                "nav_notifications": list_user_notifications(user_id, limit=5),
+                "nav_unread_notifications": unread_row["total"] if unread_row else 0,
+            }
+        except pymysql.MySQLError:
+            return {
+                "nav_user": None,
+                "nav_profile_picture": None,
+                "nav_notifications": [],
+                "nav_unread_notifications": 0,
+            }
 
     @app.context_processor
     def inject_breadcrumbs():

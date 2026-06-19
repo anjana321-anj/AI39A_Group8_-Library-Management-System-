@@ -151,6 +151,18 @@ def _ensure_users_table(cursor):
         cursor.execute(
             """
             UPDATE users
+            SET name = COALESCE(NULLIF(name, ''), NULLIF(username, ''), SUBSTRING_INDEX(email, '@', 1))
+            WHERE name IS NULL OR name = ''
+            """
+        )
+        try:
+            cursor.execute("ALTER TABLE users MODIFY name VARCHAR(100) NULL")
+        except pymysql.MySQLError:
+            # Some legacy schemas may define name differently; including it in INSERTs still keeps writes safe.
+            pass
+        cursor.execute(
+            """
+            UPDATE users
             SET username = COALESCE(NULLIF(username, ''), NULLIF(name, ''), SUBSTRING_INDEX(email, '@', 1))
             WHERE username IS NULL OR username = ''
             """
@@ -172,6 +184,17 @@ def _ensure_users_table(cursor):
             WHERE password_hash IS NULL OR password_hash = ''
             """
         )
+        cursor.execute(
+            """
+            UPDATE users
+            SET password = COALESCE(NULLIF(password, ''), password_hash)
+            WHERE password IS NULL OR password = ''
+            """
+        )
+        try:
+            cursor.execute("ALTER TABLE users MODIFY password VARCHAR(255) NULL")
+        except pymysql.MySQLError:
+            pass
 
     fallback_hash = generate_password_hash("bookverse123")
     cursor.execute(
@@ -3753,6 +3776,10 @@ def mark_notification_read(user_id, notification_id):
         "UPDATE notifications SET is_read = 1 WHERE id = %s AND user_id = %s",
         (notification_id, user_id),
     )
+
+
+def mark_all_notifications_read(user_id):
+    execute("UPDATE notifications SET is_read = 1 WHERE user_id = %s", (user_id,))
 
 
 def delete_notification(user_id, notification_id):
