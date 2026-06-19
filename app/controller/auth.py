@@ -108,6 +108,7 @@ from app.database import (
     remove_profile_picture,
     restore_profile_picture,
     return_book,
+    renew_borrowed_book,
     save_profile_picture,
     set_book_rating,
     update_borrow_record,
@@ -770,6 +771,28 @@ class AuthController:
         else:
             flash("That borrowed book could not be returned.", "warning")
         return redirect(url_for("auth.borrowed"))
+
+    @login_required
+    def renew_borrowed(self, borrowed_id):
+        renewed, reason = renew_borrowed_book(session["user_id"], borrowed_id)
+        if renewed:
+            borrow_record = get_borrow_record(borrowed_id, session["user_id"])
+            log_event(session["user_id"], "renew_book", "borrowed_book", borrowed_id, "Borrowed book renewed")
+            create_notification(
+                session["user_id"],
+                "Book Renewed",
+                f"Your due date for '{borrow_record['title'] if borrow_record else 'the borrowed book'}' was extended by 7 days.",
+                "borrow",
+                borrowed_id,
+            )
+            flash("Book renewed successfully. Your due date was extended by 7 days.", "success")
+        elif reason == "limit":
+            flash("Renewal limit reached for this borrowed book.", "warning")
+        elif reason == "overdue":
+            flash("Overdue books cannot be renewed. Please return the book or contact the library desk.", "warning")
+        else:
+            flash("This borrowed book cannot be renewed.", "warning")
+        return redirect(request.referrer or url_for("auth.borrowed"))
 
     @login_required
     def my_library(self):

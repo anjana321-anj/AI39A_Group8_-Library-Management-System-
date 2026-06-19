@@ -59,6 +59,9 @@ class AuthRoutes:
         self.bp.route("/borrowed/<int:borrowed_id>/return", methods=["GET", "POST"])(
             self.controller.return_borrowed
         )
+        self.bp.route("/borrowed/<int:borrowed_id>/renew", methods=["POST"])(
+            self.controller.renew_borrowed
+        )
         self.bp.route("/my-library", methods=["GET"])(self.controller.my_library)
         self.bp.route("/borrowed/<int:borrowed_id>/pay", methods=["GET", "POST"])(
             self.controller.pay_borrow

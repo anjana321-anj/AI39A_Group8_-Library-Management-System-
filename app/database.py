@@ -275,7 +275,7 @@ def _ensure_books_table(cursor):
         UPDATE books
         SET book_status = CASE
             WHEN stock_quantity > 0 AND (book_status IS NULL OR book_status = '' OR book_status = 'Out of Stock') THEN 'Available'
-            WHEN stock_quantity = 0 AND (book_status IS NULL OR book_status = '' OR book_status = 'Available') THEN 'Purchased'
+            WHEN stock_quantity = 0 AND (book_status IS NULL OR book_status = '' OR book_status = 'Available') THEN 'Out of Stock'
             ELSE book_status
         END
         """
@@ -1565,6 +1565,12 @@ def initialize_mysql_database():
             "payment_date",
             "ALTER TABLE borrowed_books ADD COLUMN payment_date DATETIME NULL AFTER payment_amount",
         )
+        _ensure_column(
+            cursor,
+            "borrowed_books",
+            "renewal_count",
+            "ALTER TABLE borrowed_books ADD COLUMN renewal_count INT NOT NULL DEFAULT 0 AFTER due_date",
+        )
         cursor.execute(
             """
             UPDATE borrowed_books
@@ -1761,9 +1767,14 @@ def get_book(book_id):
 def _normalized_book_inventory(data):
     stock_quantity = max(int(data.get("stock_quantity") or data.get("available_copies") or 0), 0)
     total_copies = max(int(data.get("total_copies") or stock_quantity or 1), stock_quantity, 1)
-    allowed_statuses = {"Available", "Borrowed", "Reserved", "Purchased", "In Buy List"}
+    allowed_statuses = {"Available", "Out of Stock", "Borrowed", "Reserved", "Purchased", "In Buy List"}
     requested_status = data.get("book_status")
-    book_status = requested_status if requested_status in allowed_statuses else ("Available" if stock_quantity > 0 else "Purchased")
+    if stock_quantity == 0 and requested_status == "Available":
+        book_status = "Out of Stock"
+    elif requested_status in allowed_statuses:
+        book_status = requested_status
+    else:
+        book_status = "Available" if stock_quantity > 0 else "Out of Stock"
     return {
         "total_copies": total_copies,
         "available_copies": stock_quantity,
@@ -2063,6 +2074,63 @@ def return_book(user_id, borrowed_id):
         connection.close()
 
 
+def renew_borrowed_book(user_id, borrowed_id, max_renewals=2):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    user_id,
+                    book_id,
+                    due_date,
+                    borrow_date,
+                    renewal_count,
+                    status,
+                    COALESCE(due_date, DATE_ADD(borrow_date, INTERVAL 21 DAY)) AS effective_due_date
+                FROM borrowed_books
+                WHERE id = %s AND user_id = %s AND status = 'borrowed'
+                FOR UPDATE
+                """,
+                (borrowed_id, user_id),
+            )
+            loan = cursor.fetchone()
+            if not loan:
+                return False, "not_found"
+            if int(loan.get("renewal_count") or 0) >= max_renewals:
+                return False, "limit"
+            effective_due_date = loan.get("effective_due_date")
+            if effective_due_date and not isinstance(effective_due_date, datetime):
+                effective_due_date = datetime.combine(effective_due_date, datetime.max.time())
+            if effective_due_date and effective_due_date < datetime.now():
+                return False, "overdue"
+
+            cursor.execute(
+                """
+                UPDATE borrowed_books
+                SET due_date = DATE_ADD(COALESCE(due_date, DATE_ADD(borrow_date, INTERVAL 21 DAY)), INTERVAL 7 DAY),
+                    renewal_count = renewal_count + 1
+                WHERE id = %s
+                """,
+                (borrowed_id,),
+            )
+            cursor.execute(
+                """
+                INSERT INTO borrow_history (borrowed_id, user_id, book_id, action, status, note)
+                VALUES (%s, %s, %s, 'Renewed', 'borrowed', 'Borrowed book renewed by user')
+                """,
+                (borrowed_id, user_id, loan["book_id"]),
+            )
+            connection.commit()
+            return True, "renewed"
+    except pymysql.MySQLError:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
 def get_user_borrowed_books(user_id):
     return fetch_all(
         """
@@ -2076,6 +2144,7 @@ def get_user_borrowed_books(user_id):
             borrowed_books.payment_status,
             borrowed_books.payment_amount,
             borrowed_books.payment_date,
+            borrowed_books.renewal_count,
             books.title,
             books.author,
             books.category,
@@ -2113,6 +2182,7 @@ def get_user_active_borrowed_books(user_id):
                 borrowed_books.payment_status,
                 borrowed_books.payment_amount,
                 borrowed_books.payment_date,
+                borrowed_books.renewal_count,
                 books.title,
                 books.author,
                 books.category,
@@ -2156,6 +2226,7 @@ def get_borrow_record(borrowed_id, user_id=None):
             borrowed_books.payment_status,
             borrowed_books.payment_amount,
             borrowed_books.payment_date,
+            borrowed_books.renewal_count,
             books.title,
             books.author,
             books.image,
@@ -2580,7 +2651,7 @@ def cancel_reservation(user_id, reservation_id):
             cursor.execute(
                 """
                 UPDATE books
-                SET book_status = CASE WHEN stock_quantity > 0 THEN 'Available' ELSE 'Purchased' END
+                SET book_status = CASE WHEN stock_quantity > 0 THEN 'Available' ELSE 'Out of Stock' END
                 WHERE id = %s
                 """,
                 (reservation["book_id"],),
@@ -2624,7 +2695,7 @@ def update_reservation_status(reservation_id, status, note=None):
                 SET book_status = CASE
                     WHEN %s = 'Reserved' THEN 'Reserved'
                     WHEN stock_quantity > 0 THEN 'Available'
-                    ELSE 'Purchased'
+                    ELSE 'Out of Stock'
                 END
                 WHERE id = %s
                 """,
@@ -2675,7 +2746,7 @@ def update_reservation_admin(reservation_id, expiry_date, status, note=None):
                 SET book_status = CASE
                     WHEN %s IN ('Pending', 'Approved') THEN 'Reserved'
                     WHEN stock_quantity > 0 THEN 'Available'
-                    ELSE 'Purchased'
+                    ELSE 'Out of Stock'
                 END
                 WHERE id = %s
                 """,
@@ -2697,7 +2768,7 @@ def delete_reservation(reservation_id):
         execute(
             """
             UPDATE books
-            SET book_status = CASE WHEN stock_quantity > 0 THEN 'Available' ELSE 'Purchased' END
+            SET book_status = CASE WHEN stock_quantity > 0 THEN 'Available' ELSE 'Out of Stock' END
             WHERE id = %s
             """,
             (reservation["book_id"],),
@@ -4082,8 +4153,8 @@ def generate_return_reminders(user_id=None):
                users.email,
                users.username,
                books.title,
-               DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY) AS due_date,
-               DATEDIFF(DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY), CURDATE()) AS days_until_due
+               COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS due_date,
+               DATEDIFF(COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)), CURDATE()) AS days_until_due
         FROM borrowed_books
         INNER JOIN users ON borrowed_books.user_id = users.id
         INNER JOIN books ON borrowed_books.book_id = books.id
@@ -4164,7 +4235,7 @@ def refresh_fine_records(user_id=None):
         SELECT id AS borrowed_id,
                user_id,
                GREATEST(
-                   DATEDIFF(COALESCE(return_date, NOW()), DATE_ADD(borrow_date, INTERVAL 21 DAY)),
+                   DATEDIFF(COALESCE(return_date, NOW()), COALESCE(due_date, DATE_ADD(borrow_date, INTERVAL 21 DAY))),
                    0
                ) AS overdue_days
         FROM borrowed_books
@@ -4229,7 +4300,7 @@ def list_user_fines(user_id):
         """
         SELECT fine_records.*,
                borrowed_books.borrow_date,
-               DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY) AS due_date,
+               COALESCE(borrowed_books.due_date, DATE_ADD(borrowed_books.borrow_date, INTERVAL 21 DAY)) AS due_date,
                borrowed_books.return_date,
                books.title,
                books.author,
