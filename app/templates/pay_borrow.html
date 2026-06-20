@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Borrow Payment - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Mock Payment</span>
+    <h1>Pay borrow fee.</h1>
+    <p>This placeholder payment records payment status, amount, and date for the borrowed book.</p>
+</section>
+
+<section class="book-detail-layout reveal">
+    <div class="detail-cover">
+        <img src="{{ borrow.image }}" alt="{{ borrow.title }}">
+    </div>
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>{{ borrow.title }}</h2>
+            <span class="status-badge warning">{{ borrow.payment_status }}</span>
+        </div>
+        <div class="detail-grid">
+            <div><span>Author</span><strong>{{ borrow.author }}</strong></div>
+            <div><span>Amount</span><strong>NPR {{ "%.2f"|format(borrow.payment_amount or 50) }}</strong></div>
+            <div><span>Borrow Date</span><strong>{{ borrow.borrow_date.strftime('%b %d, %Y') if borrow.borrow_date else 'N/A' }}</strong></div>
+            <div><span>Due Date</span><strong>{{ borrow.display_due_date.strftime('%b %d, %Y') if borrow.display_due_date else borrow.due_date.strftime('%b %d, %Y') if borrow.due_date else 'N/A' }}</strong></div>
+        </div>
+        <form class="review-form" method="post">
+            <label class="field">
+                <span>Payment Method</span>
+                <select name="payment_method" required>
+                    <option value="">Select method</option>
+                    <option value="Cash Payment">Cash Payment</option>
+                    <option value="QR Payment">QR Payment</option>
+                    <option value="Card Payment">Card Payment</option>
+                </select>
+            </label>
+            <p class="empty-state">This is a mock payment. No real gateway will be charged.</p>
+            <div class="form-row">
+                <button class="btn btn-primary" type="submit">Confirm Payment</button>
+                <a class="btn btn-secondary" href="{{ url_for('auth.my_library') }}">Cancel</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}
