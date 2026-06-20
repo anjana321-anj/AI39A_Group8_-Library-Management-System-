@@ -97,3 +97,20 @@ This project was made possible by the hard work and dedication of the following 
 5. Deshantar B.C
 6. Kritesh Maharjan
 
+# Library Management System
+
+This project is a Library Management System.
+
+## Current Status
+- Branch: Aakriti
+- Latest Update: Synchronization complete.
+- Project Goal: Efficiently manage library records and operations.
+
+## How to use
+1. Clone the repository.
+2. Install dependencies (if any).
+3. Run the main application script.
+
+## Git Workflow
+- Commits are being tracked on the `Aakriti` branch.
+- Changes are pushed to origin.
