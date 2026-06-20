@@ -1,1 +1,0 @@
-# BookVerse – controller package
