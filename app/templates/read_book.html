@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Read {{ book.title }} - BookVerse{% endblock %}
+{% block body_class %}{{ 'reader-fullscreen' if fullscreen else '' }}{% endblock %}
+
+{% block content %}
+<section class="reader-shell reveal">
+    <div class="reader-toolbar">
+        <div>
+            <span class="eyebrow">PDF Reader</span>
+            <h1>{{ book.title }}</h1>
+            <p>{{ book.author }}</p>
+        </div>
+        <form class="reader-controls" method="get">
+            <label>
+                <span>Page</span>
+                <input type="number" name="page" min="1" value="{{ page }}">
+            </label>
+            <label>
+                <span>Zoom</span>
+                <select name="zoom">
+                    {% for value in [75, 100, 125, 150, 200] %}
+                        <option value="{{ value }}" {{ 'selected' if zoom == value else '' }}>{{ value }}%</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <input type="hidden" name="fullscreen" value="{{ 1 if fullscreen else 0 }}">
+            <button class="btn btn-small btn-primary" type="submit">Apply</button>
+            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id, page=page, zoom=zoom, fullscreen=0 if fullscreen else 1) }}">
+                {{ 'Exit Full Screen' if fullscreen else 'Full Screen' }}
+            </a>
+        </form>
+    </div>
+    <div class="pdf-frame">
+        <iframe
+            title="Demo PDF reader for {{ book.title }}"
+            src="{{ url_for('auth.demo_pdf') }}#page={{ page }}&zoom={{ zoom }}"
+        ></iframe>
+    </div>
+</section>
+{% endblock %}
