@@ -1,131 +1,145 @@
-# 🚀 BookVerse – Quick Start Guide
+# 🚀 Bookverse App - Quick Start Guide
 
 ## ✅ VERIFIED & READY TO RUN
 
----
-
-### Step 1: Install Python dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### Step 2: Configure your MySQL database
-Open `config.py` and update these values (or set them as environment variables):
-
-```python
-MYSQL_HOST     = "localhost"
-MYSQL_USER     = "root"
-MYSQL_PASSWORD = "your_password"
-MYSQL_DATABASE = "class_db"
-SECRET_KEY     = "change-this-to-something-random"
-```
-
-### Step 3: Run the application
-```bash
-python run.py
-```
-Both `python run.py` and `python bookverse.py` work identically.
-
-### Step 4: Open in your browser
-```
-http://127.0.0.1:5000/
-```
-
-The **Login Page** loads automatically. All MySQL tables are created on first run — no manual SQL setup needed.
-
----
-
-## 📋 All Routes at a Glance
-
-```
-/                       ← Login page (index)
-/login                  ← Sign in
-/register               ← Create account
-/logout                 ← Sign out (POST)
-/forgot-password        ← Request reset email
-/reset-password/<token> ← Set new password
-/home                   ← Landing page
-/about                  ← About BookVerse
-/services               ← Library services
-/contact                ← Contact form
-/books                  ← Book catalog
-/books/<id>             ← Book detail page
-/books/<id>/borrow      ← Borrow a book (POST)
-/borrowed               ← My borrowed books
-/borrowed/<id>/return   ← Return a book (POST)
-/dashboard              ← Dashboard (login required, stays open)
-/profile                ← View profile
-/profile/edit           ← Edit profile + social links
-/profile/change-password← Change password
-/admin/books/add        ← Add book (admin only)
-/admin/books/<id>/edit  ← Edit book (admin only)
-/admin/books/<id>/delete← Delete book (admin only)
-/admin/users/<id>/edit  ← Edit user (admin only)
-/admin/users/<id>/delete← Delete user (admin only)
-```
-
----
-
-## 🔑 Making an Admin Account
-
-After registering, run this SQL:
-```sql
-UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
-```
-Or add your email to `ADMIN_EMAILS` in `config.py`.
-
-Admin users see **Edit** and **Delete** buttons on the dashboard for both books and users, and can access the **Add Book** form.
-
----
-
-## 🔐 Password Reset (Forgot Password)
-
-1. Click **Forgot password?** on the login page
-2. Enter your registered email
-3. A reset link is sent (in dev mode the link prints to the terminal if MAIL_PASSWORD is not set)
-4. Click the link → enter a new password → sign in
-
-To enable real email sending, set these in `config.py`:
-```python
-MAIL_USERNAME = "your@gmail.com"
-MAIL_PASSWORD = "your_app_password"   # Gmail App Password
-MAIL_SERVER   = "smtp.gmail.com"
-MAIL_PORT     = 587
-MAIL_USE_TLS  = True
-```
-
----
-
-## 📂 Key Files
-
-| File | Purpose |
-|------|---------|
-| `run.py` | **Start here** — `python run.py` |
-| `bookverse.py` | Alias entry point |
-| `config.py` | DB, mail, and app settings |
-| `app/__init__.py` | Flask app factory |
-| `app/database.py` | All database queries |
-| `app/controller/auth.py` | All route logic |
-| `app/routes/auth.py` | URL → controller mapping |
-| `app/modal/auth.py` | Form validation |
-| `app/static/css/main.css` | All styles |
-| `app/static/js/app.js` | All client-side JS |
-
----
-
-## 📚 Book Availability
-
-Books can be marked **Available** or **Unavailable** when adding or editing them via the admin panel. The catalog shows a colour-coded badge on every card, and filter buttons let readers quickly find available titles.
-
----
-
-## 🎉 READY TO LAUNCH
-
+### Step 1: Run the Application
 ```bash
 python run.py
 ```
 
-→ **http://127.0.0.1:5000/** — Login page loads by default  
-→ Register an account or sign in  
-→ Explore the dashboard, browse books, borrow titles  
-→ Make your account an admin to unlock the full control panel  
+### Step 2: Access the App
+Open your browser to: **http://127.0.0.1:5000/**
+
+The **Login Page** will load automatically as the index/homepage.
+
+---
+
+## 📋 Complete File Paths
+
+### Core Files
+| File | Path |
+|------|------|
+| **Entry Point** | `run.py` |
+| **App Factory** | `app/__init__.py` |
+| **Routes** | `app/routes/auth.py` |
+| **Controllers** | `app/controller/auth.py` |
+
+### Templates
+| Template | Path | Route |
+|----------|------|-------|
+| Base Layout | `app/templates/base.html` | (inherited by all) |
+| **Login (INDEX)** | `app/templates/login.html` | `/` |
+| Register | `app/templates/register.html` | `/register` |
+| Home | `app/templates/home.html` | `/home` |
+| Books | `app/templates/books.html` | `/books` |
+| About | `app/templates/about.html` | `/about` |
+| Services | `app/templates/services.html` | `/services` |
+| Contact | `app/templates/contact.html` | `/contact` |
+| Profile | `app/templates/profile.html` | `/profile` |
+
+---
+
+## 🔗 All Routes Map
+
+**Root Route (/)** → Login Page ← **THIS IS YOUR INDEX/HOMEPAGE**
+
+```
+/ .......................... Login Page (with navbar)
+/login ..................... Login Page
+/register .................. Register Page  
+/home ...................... Homepage
+/books ..................... Books Catalog
+/about ..................... About Us
+/services .................. Services
+/contact ................... Contact Form
+/profile ................... User Profile
+```
+
+---
+
+## 🎯 How Navigation Works
+
+1. **Every page** has the Bootstrap navbar from `base.html`
+2. **Navbar links** use Flask's `url_for()` function
+3. **All pages** extend `base.html` template
+4. **Click any navbar link** to navigate to different pages
+
+### Navbar Items:
+- Bookverse Logo (links to login)
+- Home
+- Books  
+- About
+- Services
+- Contact
+- Profile
+- Login
+
+---
+
+## ✨ What Was Fixed/Configured
+
+✅ Fixed import path: `app.controller.auth` (was `app.controllers.auth`)
+✅ Created `base.html` with responsive navbar
+✅ Updated all templates to extend `base.html`
+✅ Configured root route `/` to serve login page as index
+✅ All 9 routes properly registered and linked
+✅ All controller methods created and working
+
+---
+
+## 📂 Complete Directory Tree
+
+```
+Bookverse Project/
+├── run.py
+├── requirements.txt
+├── PROJECT_STRUCTURE.md
+├── app/
+│   ├── __init__.py
+│   ├── controller/
+│   │   ├── __init__.py
+│   │   └── auth.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   └── auth.py
+│   ├── modal/
+│   │   ├── __init__.py
+│   │   └── auth.py
+│   ├── static/
+│   └── templates/
+│       ├── base.html ⭐ (Master template)
+│       ├── login.html ⭐ (INDEX - Route /)
+│       ├── register.html
+│       ├── home.html
+│       ├── books.html
+│       ├── about.html
+│       ├── services.html
+│       ├── contact.html
+│       └── profile.html
+└── venv/
+```
+
+---
+
+## 🎨 Design Features
+
+- **Bootstrap 5.3.2** - Responsive, mobile-friendly
+- **Clean navbar** - Consistent across all pages
+- **Template inheritance** - DRY principle
+- **URL routing** - Dynamic links with `url_for()`
+- **Gray background** - Professional look
+
+---
+
+## 🚀 READY TO LAUNCH!
+
+```bash
+python run.py
+```
+
+→ Opens at **http://127.0.0.1:5000/**
+→ Shows **Login Page** by default
+→ Fully functional navbar with all links working
+→ All pages styled with Bootstrap
+
+**Everything is linked and ready to go!** 🎉

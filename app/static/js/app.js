@@ -88,6 +88,60 @@ document.querySelectorAll("[data-password-toggle]").forEach((toggle) => {
     });
 });
 
+const confirmModal = document.querySelector("[data-confirm-modal]");
+const confirmMessage = document.querySelector("[data-confirm-message]");
+const confirmAccept = document.querySelector("[data-confirm-accept]");
+const confirmCancel = document.querySelector("[data-confirm-cancel]");
+let pendingConfirmation = null;
+let defaultConfirmAcceptLabel = confirmAccept ? confirmAccept.textContent : "Confirm";
+
+const closeConfirmModal = () => {
+    if (!confirmModal) return;
+    confirmModal.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (confirmAccept) confirmAccept.textContent = defaultConfirmAcceptLabel;
+    pendingConfirmation = null;
+};
+
+const openConfirmModal = (message, onConfirm, acceptLabel) => {
+    if (!confirmModal || !confirmMessage) {
+        if (window.confirm(message)) onConfirm();
+        return;
+    }
+    confirmMessage.textContent = message;
+    if (confirmAccept && acceptLabel) confirmAccept.textContent = acceptLabel;
+    pendingConfirmation = onConfirm;
+    confirmModal.hidden = false;
+    document.body.classList.add("modal-open");
+};
+
+document.addEventListener(
+    "submit",
+    (event) => {
+        const form = event.target.closest("form[data-confirm]");
+        if (!form || form.dataset.confirmed === "true") return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openConfirmModal(form.dataset.confirm || "Are you sure you want to continue?", () => {
+            form.dataset.confirmed = "true";
+            form.submit();
+        }, form.dataset.confirmAcceptLabel);
+    },
+    true
+);
+
+if (confirmAccept) {
+    confirmAccept.addEventListener("click", () => {
+        const action = pendingConfirmation;
+        closeConfirmModal();
+        if (action) action();
+    });
+}
+
+if (confirmCancel) {
+    confirmCancel.addEventListener("click", closeConfirmModal);
+}
+
 document.querySelectorAll("[data-loading-form]").forEach((form) => {
     form.addEventListener("submit", () => {
         const button = form.querySelector("button[type='submit']");
@@ -98,190 +152,126 @@ document.querySelectorAll("[data-loading-form]").forEach((form) => {
     });
 });
 
+const catalogGrid = document.querySelector("[data-catalog-grid]");
+const catalogCards = catalogGrid ? Array.from(catalogGrid.querySelectorAll("[data-book-card]")) : [];
+const catalogSearch = document.querySelector("[data-catalog-search]");
+const catalogSort = document.querySelector("[data-catalog-sort]");
+const catalogFilters = Array.from(document.querySelectorAll("[data-filter-field]"));
+const catalogEmpty = document.querySelector("[data-catalog-empty]");
 const filterButtons = document.querySelectorAll("[data-filter]");
-const filterCards = document.querySelectorAll("[data-category]");
+let shortcutCategory = "all";
+
+const normalize = (value) => String(value || "").toLowerCase().trim();
+
+const getFilterValue = (name) => {
+    const field = catalogFilters.find((filter) => filter.dataset.filterField === name);
+    return field ? normalize(field.value) : "";
+};
+
+const sortCards = (cards) => {
+    const sort = catalogSort ? catalogSort.value : "az";
+    return [...cards].sort((first, second) => {
+        const firstTitle = first.dataset.title || "";
+        const secondTitle = second.dataset.title || "";
+        const firstYear = Number(first.dataset.year || 0);
+        const secondYear = Number(second.dataset.year || 0);
+        const firstRating = Number(first.dataset.rating || 0);
+        const secondRating = Number(second.dataset.rating || 0);
+        const firstReviews = Number(first.dataset.reviews || 0);
+        const secondReviews = Number(second.dataset.reviews || 0);
+
+        if (sort === "za") return secondTitle.localeCompare(firstTitle);
+        if (sort === "newest") return secondYear - firstYear;
+        if (sort === "oldest") return firstYear - secondYear;
+        if (sort === "rated") return secondRating - firstRating;
+        if (sort === "reviewed") return secondReviews - firstReviews;
+        return firstTitle.localeCompare(secondTitle);
+    });
+};
+
+const updateCatalog = () => {
+    if (!catalogGrid) return;
+
+    const query = normalize(catalogSearch ? catalogSearch.value : "");
+    const selectedCategory = getFilterValue("category");
+    const activeCategory = selectedCategory || (shortcutCategory === "all" ? "" : shortcutCategory);
+    const selectedAvailability = getFilterValue("availability");
+    const selectedYear = getFilterValue("year");
+    const selectedLanguage = getFilterValue("language");
+    let visibleCount = 0;
+
+    sortCards(catalogCards).forEach((card) => {
+        catalogGrid.appendChild(card);
+        const searchable = [
+            card.dataset.title,
+            card.dataset.author,
+            card.dataset.category,
+            card.dataset.isbn,
+            card.dataset.publisher,
+        ].join(" ");
+
+        const visible =
+            (!query || searchable.includes(query)) &&
+            (!activeCategory || normalize(card.dataset.category) === activeCategory || card.dataset.categorySlug === activeCategory) &&
+            (!selectedAvailability || normalize(card.dataset.availability) === selectedAvailability) &&
+            (!selectedYear || normalize(card.dataset.year) === selectedYear) &&
+            (!selectedLanguage || normalize(card.dataset.language) === selectedLanguage);
+
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+    });
+
+    if (catalogEmpty) {
+        catalogGrid.appendChild(catalogEmpty);
+        catalogEmpty.hidden = visibleCount > 0;
+    }
+};
 
 filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
-        const filter = button.dataset.filter;
+        shortcutCategory = button.dataset.filter;
         filterButtons.forEach((item) => item.classList.toggle("active", item === button));
-        filterCards.forEach((card) => {
-            const visible = filter === "all" || card.dataset.category === filter;
-            card.hidden = !visible;
-        });
+        updateCatalog();
     });
 });
 
-/* ================================================================
-   BOOKVERSE EXTENDED JS – new feature interactions
-   ================================================================ */
-
-/* ---------- Password-toggle (new [data-pw-toggle] attribute) ---------- */
-document.querySelectorAll("[data-pw-toggle]").forEach((toggle) => {
-    toggle.addEventListener("click", function () {
-        const wrap  = toggle.closest(".input-pw-wrap");
-        const input = wrap ? wrap.querySelector("input") : null;
-        if (!input) return;
-        const show  = input.type === "password";
-        input.type  = show ? "text" : "password";
-        // Swap icon opacity as visual feedback
-        toggle.style.opacity = show ? "1" : "0.55";
-    });
+[catalogSearch, catalogSort, ...catalogFilters].forEach((control) => {
+    if (!control) return;
+    control.addEventListener("input", updateCatalog);
+    control.addEventListener("change", updateCatalog);
 });
 
-/* ---------- Auto-dismiss flash messages after 5 s ---------- */
-(function () {
-    const flashes = document.querySelectorAll(".flash");
-    flashes.forEach((flash) => {
-        setTimeout(() => {
-            flash.style.transition = "opacity .5s, max-height .5s, padding .5s, margin .5s";
-            flash.style.opacity    = "0";
-            flash.style.maxHeight  = "0";
-            flash.style.padding    = "0";
-            flash.style.margin     = "0";
-            flash.addEventListener("transitionend", () => flash.remove());
-        }, 5000);
-    });
-})();
+updateCatalog();
 
-/* ---------- Stat-card hover glow ---------- */
-document.querySelectorAll(".stat-card").forEach((card) => {
-    card.addEventListener("mouseenter", () => {
-        card.style.boxShadow = "0 8px 32px rgba(31,143,255,.22)";
-        card.style.transform = "translateY(-3px)";
-    });
-    card.addEventListener("mouseleave", () => {
-        card.style.boxShadow = "";
-        card.style.transform = "";
-    });
-});
+const usernameInput = document.querySelector("[data-username-check]");
+const usernameMessage = document.querySelector("[data-username-message]");
 
-/* ---------- Table row highlight on click ---------- */
-document.querySelectorAll(".data-table tbody tr").forEach((row) => {
-    row.addEventListener("click", function (e) {
-        // Don't intercept button/link clicks
-        if (e.target.closest("button, a, form")) return;
-        document.querySelectorAll(".data-table tbody tr.row-selected")
-            .forEach((r) => r.classList.remove("row-selected"));
-        row.classList.toggle("row-selected");
-    });
-});
+if (usernameInput && usernameMessage) {
+    let usernameTimer = null;
+    usernameInput.addEventListener("input", () => {
+        clearTimeout(usernameTimer);
+        const username = usernameInput.value.trim();
+        usernameInput.setCustomValidity("");
+        usernameMessage.textContent = "";
+        usernameMessage.classList.remove("is-error", "is-success");
+        if (!username) return;
 
-/* ---------- Confirm-on-submit for delete forms (fallback) ---------- */
-document.querySelectorAll("form[data-confirm]").forEach((form) => {
-    form.addEventListener("submit", (e) => {
-        const msg = form.dataset.confirm || "Are you sure?";
-        if (!window.confirm(msg)) e.preventDefault();
+        usernameTimer = setTimeout(async () => {
+            const url = `${usernameInput.dataset.usernameUrl}?username=${encodeURIComponent(username)}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (!data.available) {
+                    usernameInput.setCustomValidity("Username already taken.");
+                    usernameMessage.textContent = "Username already taken.";
+                    usernameMessage.classList.add("is-error");
+                } else {
+                    usernameMessage.textContent = "Username available.";
+                    usernameMessage.classList.add("is-success");
+                }
+            } catch (error) {
+                usernameMessage.textContent = "";
+            }
+        }, 250);
     });
-});
-
-/* ---------- Book catalog live search ---------- */
-(function () {
-    const searchInput = document.getElementById("catalogSearch");
-    if (!searchInput) return;
-    searchInput.addEventListener("input", function () {
-        const q = this.value.toLowerCase().trim();
-        document.querySelectorAll(".book-card-catalog").forEach((card) => {
-            const title  = (card.querySelector("h3")  || {}).textContent || "";
-            const author = (card.querySelector(".book-author") || {}).textContent || "";
-            card.style.display = (title + author).toLowerCase().includes(q) ? "" : "none";
-        });
-    });
-})();
-
-/* ---------- Profile avatar initials colour cycle ---------- */
-(function () {
-    const avatar = document.querySelector(".profile-avatar");
-    if (!avatar) return;
-    const colours = [
-        "linear-gradient(135deg,#1f8fff,#7c6af7)",
-        "linear-gradient(135deg,#1f9d6a,#4ab8ff)",
-        "linear-gradient(135deg,#c37a12,#c64d70)",
-        "linear-gradient(135deg,#7c6af7,#c64d70)",
-    ];
-    const idx = (avatar.textContent.charCodeAt(0) || 0) % colours.length;
-    avatar.style.background = colours[idx];
-})();
-
-/* ---------- Form validation feedback ---------- */
-document.querySelectorAll(".form-control").forEach((input) => {
-    input.addEventListener("blur", function () {
-        if (this.required && !this.value.trim()) {
-            this.style.borderColor = "var(--rose, #c64d70)";
-        } else {
-            this.style.borderColor = "";
-        }
-    });
-    input.addEventListener("input", function () {
-        this.style.borderColor = "";
-    });
-});
-
-/* ---------- Smooth scroll for anchor links ---------- */
-document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener("click", function (e) {
-        const target = document.querySelector(this.getAttribute("href"));
-        if (target) {
-            e.preventDefault();
-            target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    });
-});
-
-/* ---------- Tilt card effect (home shelf) ---------- */
-document.querySelectorAll(".tilt-card").forEach((card) => {
-    card.addEventListener("mousemove", (e) => {
-        const rect   = card.getBoundingClientRect();
-        const x      = e.clientX - rect.left;
-        const y      = e.clientY - rect.top;
-        const cx     = rect.width  / 2;
-        const cy     = rect.height / 2;
-        const rx     = ((y - cy) / cy) * 6;
-        const ry     = ((x - cx) / cx) * -6;
-        card.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`;
-    });
-    card.addEventListener("mouseleave", () => {
-        card.style.transform = "";
-    });
-});
-
-/* ---------- Badge click ripple ---------- */
-document.querySelectorAll(".badge").forEach((badge) => {
-    badge.style.cursor = "default";
-});
-
-/* ---------- Admin: preview book cover image URL ---------- */
-(function () {
-    const imageInput = document.getElementById("image");
-    if (!imageInput) return;
-    let preview = document.getElementById("coverPreview");
-    if (!preview) {
-        preview = document.createElement("img");
-        preview.id              = "coverPreview";
-        preview.style.cssText   = "max-width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:.5rem;display:none;";
-        imageInput.parentNode.insertBefore(preview, imageInput.nextSibling);
-    }
-    function updatePreview() {
-        const url = imageInput.value.trim();
-        if (url) {
-            preview.src          = url;
-            preview.style.display = "block";
-            preview.onerror      = () => (preview.style.display = "none");
-        } else {
-            preview.style.display = "none";
-        }
-    }
-    imageInput.addEventListener("input", updatePreview);
-    updatePreview();
-})();
-
-/* ---------- Dashboard: highlight current user row ---------- */
-(function () {
-    const currentUserId = document.body.dataset.userId;
-    if (!currentUserId) return;
-    document.querySelectorAll("tr[data-user-id]").forEach((row) => {
-        if (row.dataset.userId === currentUserId) {
-            row.style.background = "rgba(31,143,255,.06)";
-        }
-    });
-})();
+}

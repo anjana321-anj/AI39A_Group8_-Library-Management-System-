@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Waitlist Management - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Waitlist</span>
+    <h1>Manage book waitlists.</h1>
+    <p>Edit waitlist status, remove users, and review notification dates.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Waitlist Records</h2>
+        <span class="status-badge success">{{ waitlists|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Book</th>
+                    <th>Joined</th>
+                    <th>Notification</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in waitlists %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ item.username }}</strong><span>{{ item.email }}</span></td>
+                        <td><strong>{{ item.title }}</strong><span>{{ item.author }}</span></td>
+                        <td>{{ item.join_date.strftime('%b %d, %Y') if item.join_date else 'N/A' }}</td>
+                        <td>{{ item.notification_date.strftime('%b %d, %Y') if item.notification_date else 'Pending' }}</td>
+                        <td><span class="status-badge {{ 'success' if item.status == 'Notified' else 'warning' }}">{{ item.status }}</span></td>
+                        <td class="admin-actions">
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_waitlist_admin', waitlist_id=item.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('auth.delete_waitlist_admin_route', waitlist_id=item.id) }}">
+                                <button class="btn btn-small btn-disabled" type="submit" data-confirm="Remove this waitlist record?">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7">No waitlist records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

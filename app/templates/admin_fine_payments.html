@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Fine Payments - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Fine payments.</h1>
+    <p>Set fine rates and manage submitted payment records.</p>
+</section>
+
+<form class="data-panel reveal compact-form" method="post">
+    <label class="field">
+        <span>Fine Per Day</span>
+        <input type="number" step="0.01" name="fine_per_day" value="{{ fine_per_day }}" min="1" required>
+    </label>
+    <button class="btn btn-primary" type="submit" data-ripple>Save Fine Setting</button>
+</form>
+
+<section class="data-panel reveal">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Book</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ payment.username }}</strong><span>{{ payment.email }}</span></td>
+                        <td><strong>{{ payment.title }}</strong><span>{{ payment.overdue_days }} overdue days</span></td>
+                        <td>NPR {{ "%.2f"|format(payment.amount or 0) }}</td>
+                        <td><strong>{{ payment.payment_method }}</strong><span>{{ payment.transaction_id }}</span></td>
+                        <td><span class="status-badge {{ 'success' if payment.status == 'Approved' else 'warning' }}">{{ payment.status }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_fine_payment', payment_id=payment.id) }}">Edit</a>
+                                <form method="post" action="{{ url_for('auth.approve_fine_payment', payment_id=payment.id) }}" data-confirm="Verify and approve this payment?">
+                                    <button class="btn btn-small btn-primary" type="submit">Verify</button>
+                                </form>
+                                <form method="post" action="{{ url_for('auth.reject_fine_payment', payment_id=payment.id) }}" data-confirm="Reject this payment?">
+                                    <button class="btn btn-small btn-secondary" type="submit">Reject</button>
+                                </form>
+                                <form method="post" action="{{ url_for('auth.delete_fine_payment_admin', payment_id=payment.id) }}" data-confirm="Are you sure you want to delete this record?">
+                                    <button class="btn btn-small btn-disabled" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">No fine payment submissions yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

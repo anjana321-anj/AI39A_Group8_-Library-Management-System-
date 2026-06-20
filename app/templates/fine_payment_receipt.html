@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Fine Payment Receipt - BookVerse{% endblock %}
+
+{% block content %}
+<section class="data-panel reveal receipt-panel">
+    <div class="panel-heading">
+        <h1>Fine Payment Receipt</h1>
+        <span class="status-badge {{ 'success' if payment.status == 'Approved' else 'warning' }}">{{ payment.status }}</span>
+    </div>
+    <div class="detail-grid">
+        <div><span>Receipt Number</span><strong>{{ payment.receipt_number or ('BV-FINE-%05d'|format(payment.id)) }}</strong></div>
+        <div><span>User Name</span><strong>{{ payment.username }}</strong></div>
+        <div><span>Date</span><strong>{{ payment.receipt_issued_at.strftime('%b %d, %Y') if payment.receipt_issued_at else payment.payment_date.strftime('%b %d, %Y') if payment.payment_date else 'N/A' }}</strong></div>
+        <div><span>Book Information</span><strong>{{ payment.title }} by {{ payment.author }}</strong></div>
+        <div><span>Amount</span><strong>NPR {{ "%.2f"|format(payment.amount or 0) }}</strong></div>
+        <div><span>Payment Method</span><strong>{{ payment.payment_method }}</strong></div>
+        <div><span>Payment Status</span><strong>{{ payment.status }}</strong></div>
+        <div><span>Transaction ID</span><strong>{{ payment.transaction_id }}</strong></div>
+    </div>
+</section>
+{% endblock %}

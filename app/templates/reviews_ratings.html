@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Reviews & Ratings - BookVerse{% endblock %}
+
+{% block content %}
+<section class="compact-page-heading reveal">
+    <div>
+        <span class="eyebrow">Reviews & Ratings</span>
+        <h1>Books, ratings, and user reviews.</h1>
+        <p>A clean view of your book feedback and the highest-rated titles.</p>
+    </div>
+    <form class="sort-form" method="get">
+        <label class="field">
+            <span>Sort</span>
+            <select name="sort">
+                <option value="highest" {{ 'selected' if sort == 'highest' else '' }}>Highest rated to lowest rated</option>
+                <option value="lowest" {{ 'selected' if sort == 'lowest' else '' }}>Lowest rated to highest rated</option>
+                <option value="most-reviewed" {{ 'selected' if sort == 'most-reviewed' else '' }}>Most reviewed</option>
+                <option value="newest" {{ 'selected' if sort == 'newest' else '' }}>Newest reviews</option>
+            </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Apply</button>
+    </form>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Top-rated Books</h2>
+        <a href="{{ url_for('auth.books') }}">Open catalog</a>
+    </div>
+    <div class="top-rated-grid">
+        {% for book in book_statistics.top_rated %}
+            <a class="top-rated-card" href="{{ url_for('auth.book_details', book_id=book.id) }}">
+                <strong>{{ book.title }}</strong>
+                <span>{{ book.author }}</span>
+                <small>{{ book.average_rating }}/5 from {{ book.total_ratings }} ratings</small>
+            </a>
+        {% else %}
+            <p class="empty-state">No rated books yet.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>User Reviews</h2>
+        <a href="{{ url_for('auth.books') }}">Review another book</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Book</th>
+                    <th>Rating</th>
+                    <th>User review</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in reviews %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ review.title }}</strong><span>{{ review.author }}</span></td>
+                        <td>{{ review.rating or 'N/A' }}/5</td>
+                        <td>{{ review.review_text or 'No text review submitted.' }}</td>
+                        <td>{{ review.review_date.strftime('%b %d, %Y') if review.review_date else 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">No reviews or ratings yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

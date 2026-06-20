@@ -1,216 +1,132 @@
-# BookVerse – Complete Project Structure & Configuration Guide
+# Bookverse Project - Complete Configuration Guide
 
-## Overview
-
-BookVerse is a Flask-based digital library management platform that allows readers to browse books, borrow and return titles, and manage their profiles. Administrators can add, edit, and delete books and user accounts directly from the dashboard.
-
----
-
-## Directory Structure
-
+## Project Structure
 ```
-main verse/
-├── run.py                              ← Primary entry point  (python run.py)
-├── bookverse.py                        ← Alias entry point    (python bookverse.py)
-├── config.py                           ← All config: DB, mail, secrets
-├── requirements.txt                    ← Python dependencies
-├── .gitignore                          ← Git ignore rules
-├── PROJECT_STRUCTURE.md                ← This file
-├── QUICK_START.md                      ← Fast setup guide
-│
-└── app/
-    ├── __init__.py                     ← Flask application factory (create_app)
-    ├── database.py                     ← All MySQL helpers (no raw SQL in controllers)
-    │
-    ├── controller/
-    │   ├── __init__.py
-    │   ├── auth.py                     ← Main controller: login, register, dashboard,
-    │   │                                  profile, forgot/reset password, admin CRUD
-    │   └── dashb.py                    ← Dashboard/admin helper functions
-    │
-    ├── routes/
-    │   ├── __init__.py
-    │   └── auth.py                     ← URL → controller method bindings (blueprint)
-    │
-    ├── modal/
-    │   ├── __init__.py
-    │   └── auth.py                     ← Form validation classes (no ORM)
-    │
-    ├── image/
-    │   └── Logo.png                    ← BookVerse logo
-    │
-    ├── static/
-    │   ├── style.css                   ← Legacy entry: @import css/main.css
-    │   ├── css/
-    │   │   └── main.css                ← All styles (base + extended features)
-    │   └── js/
-    │       └── app.js                  ← All client-side JS (base + extended)
-    │
-    └── templates/
-        ├── base.html                   ← Master layout: navbar, footer, flash messages
-        │
-        ├── ── Public pages ──
-        ├── login.html                  ← Sign-in form  (route: / and /login)
-        ├── register.html               ← Create account
-        ├── home.html                   ← Landing page with hero + stats
-        ├── about.html                  ← About BookVerse
-        ├── services.html               ← Library services overview
-        ├── contact.html                ← Contact form
-        │
-        ├── ── Auth / Password ──
-        ├── forgot_password.html        ← Enter email → receive reset link
-        ├── reset_password.html         ← Set new password via token
-        ├── change_password.html        ← Change password while logged in
-        │
-        ├── ── Books ──
-        ├── books.html                  ← Full catalog with Available/Unavailable filters
-        ├── book_detail.html            ← Single book: all metadata + borrow button
-        ├── borrowedpage.html           ← My borrowed books + return button
-        │
-        ├── ── Profile ──
-        ├── profile.html                ← View profile + social links
-        ├── edit_profile.html           ← Edit name, email, contact email, social URLs
-        │
-        ├── ── Dashboard ──
-        ├── dashboard.html              ← Stats, book table, user table, activity feed
-        │
-        ├── ── Admin forms ──
-        ├── admin_book_form.html        ← Add or edit a book (admin only)
-        ├── admin_user_form.html        ← Edit a user account (admin only)
-        │
-        └── index_enhanced.html         ← Enhanced login page variant
+Bookverse Project/
+├── run.py                          # Entry point - starts Flask app
+├── app/
+│   ├── __init__.py                 # Flask app factory
+│   ├── controller/
+│   │   ├── __init__.py
+│   │   └── auth.py                 # AuthController with all page handlers
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   └── auth.py                 # Route definitions
+│   ├── modal/
+│   │   ├── __init__.py
+│   │   └── auth.py
+│   ├── static/                     # Static files (CSS, JS, images)
+│   └── templates/
+│       ├── base.html               # Base template (navbar, layout)
+│       ├── login.html              # Login page (index)
+│       ├── register.html           # Registration page
+│       ├── home.html               # Homepage
+│       ├── about.html              # About page
+│       ├── books.html              # Books catalog
+│       ├── contact.html            # Contact form
+│       ├── profile.html            # User profile
+│       └── services.html           # Services overview
+├── requirements.txt                # Python dependencies
+└── venv/                          # Virtual environment
 ```
 
----
+## URL Routes (All accessible from navbar)
 
-## All URL Routes
+| Page | URL | Route | Controller Method |
+|------|-----|-------|-------------------|
+| **Login (Index/Home)** | `http://127.0.0.1:5000/` | `/` | `AuthController.login()` |
+| Login | `http://127.0.0.1:5000/login` | `/login` | `AuthController.login()` |
+| Register | `http://127.0.0.1:5000/register` | `/register` | `AuthController.register()` |
+| Home | `http://127.0.0.1:5000/home` | `/home` | `AuthController.home()` |
+| Books | `http://127.0.0.1:5000/books` | `/books` | `AuthController.books()` |
+| About | `http://127.0.0.1:5000/about` | `/about` | `AuthController.about()` |
+| Services | `http://127.0.0.1:5000/services` | `/services` | `AuthController.services()` |
+| Contact | `http://127.0.0.1:5000/contact` | `/contact` | `AuthController.contact()` |
+| Profile | `http://127.0.0.1:5000/profile` | `/profile` | `AuthController.profile()` |
 
-| Route | Method | Auth | Description |
-|-------|--------|------|-------------|
-| `/` | GET | Public | Login page (index) |
-| `/login` | GET, POST | Public | Sign in |
-| `/register` | GET, POST | Public | Create account |
-| `/logout` | POST | User | Clear session and redirect |
-| `/forgot-password` | GET, POST | Public | Request reset email |
-| `/reset-password/<token>` | GET, POST | Public | Set new password via token |
-| `/home` | GET | Public | Landing page |
-| `/about` | GET | Public | About page |
-| `/services` | GET | Public | Services page |
-| `/contact` | GET, POST | Public | Contact form |
-| `/books` | GET | Public | Book catalog |
-| `/books/<id>` | GET | Public | Book detail |
-| `/books/<id>/borrow` | POST | User | Borrow a book |
-| `/borrowed` | GET | User | My borrowed books |
-| `/borrowed/<id>/return` | POST | User | Return a book |
-| `/dashboard` | GET | User | Dashboard (stays open while logged in) |
-| `/profile` | GET | User | View profile |
-| `/profile/edit` | GET, POST | User | Edit profile + social links |
-| `/profile/change-password` | GET, POST | User | Change password |
-| `/admin/books/add` | GET, POST | Admin | Add a new book |
-| `/admin/books/<id>/edit` | GET, POST | Admin | Edit a book |
-| `/admin/books/<id>/delete` | POST | Admin | Delete a book |
-| `/admin/users/<id>/edit` | GET, POST | Admin | Edit any user |
-| `/admin/users/<id>/delete` | POST | Admin | Delete a user |
+## How It Works
 
----
-
-## MySQL Tables
-
-| Table | Purpose |
-|-------|---------|
-| `users` | Registered readers and admins |
-| `books` | Library catalog with availability flag |
-| `borrowed_books` | Borrow/return ledger |
-| `skills` | Reader skill tags on the profile page |
-| `password_resets` | One-time tokens for forgot-password flow |
-
----
-
-## Feature Summary
-
-### Authentication & Session
-- Login keeps dashboard open (session stays active until logout)
-- Logout clears session and redirects to login
-- Register creates a new account and auto-logs in
-
-### Password Recovery
-- Forgot password → email with a secure 1-hour token link
-- Reset password page verifies token and updates password hash
-- Change password from profile (requires current password)
-
-### Profile
-- Edit: username, login email, contact email (public), LinkedIn, GitHub, Instagram
-- Social pills with brand icons shown on the profile card
-- Contact email can differ from login email
-
-### Books Catalog
-- Available / Unavailable badge on every book card
-- Filter buttons: All, Available, Unavailable, by Category
-- Book detail page: description, ISBN, publisher, year, pages, language
-
-### Borrow / Return
-- Borrow button only active when book is available and user is signed in
-- Return button on borrowed books list
-- Due date shown (21 days from borrow date)
-
-### Dashboard
-- Stats row: Total Books, Available, Unavailable, Borrowed, Members
-- Book catalog table with Edit/Delete (admin only)
-- Users table with Edit/Delete (admin only)
-- Recent activity feed
-
-### Admin Controls (role = 'admin' or email in ADMIN_EMAILS)
-- Add book with full metadata (title, author, category, description, cover URL, ISBN, publisher, year, pages, language, availability)
-- Edit / Delete any book
-- Edit / Delete any user account
-
----
-
-## Running the Application
-
-### 1. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Configure MySQL
-Edit `config.py` or set environment variables:
-```
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=class_db
-SECRET_KEY=your-secret-key
-```
-
-### 3. Start the server
-```bash
-python run.py
-# or
-python bookverse.py
-```
-
-### 4. Open in browser
-```
-http://127.0.0.1:5000/
-```
-
-The database tables are created automatically on first run.
-
----
-
-## Making a User an Admin
-
-Run this SQL in your MySQL client:
-```sql
-UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
-```
-
-Or add the email to `ADMIN_EMAILS` in `config.py`:
+### 1. Entry Point (run.py)
 ```python
-ADMIN_EMAILS = "your@email.com"
+from app import create_app
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(debug=True)  # Runs on http://127.0.0.1:5000
 ```
 
----
+### 2. App Initialization (app/__init__.py)
+- Creates Flask app
+- Registers AuthRoutes blueprint
+- Blueprint registered with no url_prefix, so routes are at root level
 
-**Status**: ✅ Ready to run — `python run.py`
+### 3. Route Registration (app/routes/auth.py)
+- Defines all URL routes (/, /login, /register, /home, /books, /about, /services, /contact, /profile)
+- Maps each route to AuthController methods
+
+### 4. Controllers (app/controller/auth.py)
+- `login()` → renders login.html
+- `register()` → renders register.html
+- `home()` → renders home.html
+- `books()` → renders books.html
+- `about()` → renders about.html
+- `services()` → renders services.html
+- `contact()` → renders contact.html
+- `profile()` → renders profile.html
+
+### 5. Templates (app/templates/)
+- **base.html**: Master template with responsive Bootstrap navbar
+- All other pages extend base.html using `{% extends "base.html" %}`
+- Navbar links to all pages using Flask's `url_for()` function
+
+## Navigation Structure
+
+The **base.html** template includes a responsive navbar with links to:
+- Bookverse Logo (links to login)
+- Home
+- Books
+- About
+- Services
+- Contact
+- Profile
+- Login
+
+All pages inherit this navbar automatically!
+
+## To Run the Project
+
+1. Activate virtual environment:
+   ```bash
+   .\venv\Scripts\Activate.ps1
+   ```
+
+2. Run the application:
+   ```bash
+   python run.py
+   ```
+
+3. Open your browser and navigate to:
+   - **Login Page (Default)**: http://127.0.0.1:5000/
+   - **Homepage**: http://127.0.0.1:5000/home
+   - Or use the navbar links to navigate
+
+## Key Features
+
+✅ **Responsive Design**: Bootstrap 5.3.2 for mobile-friendly layout
+✅ **Template Inheritance**: All pages extend base.html
+✅ **Dynamic Navigation**: url_for() ensures links always work
+✅ **Clean Architecture**: Separation of routes, controllers, and templates
+✅ **Easy to Extend**: Add new pages by:
+   1. Creating new route in app/routes/auth.py
+   2. Adding controller method in app/controller/auth.py
+   3. Creating new template in app/templates/
+
+## Fixed Issues
+
+✅ Fixed import path: Changed `from app.controllers.auth` to `from app.controller.auth`
+✅ Verified all templates exist and are properly linked
+✅ Confirmed all routes are registered correctly
+✅ Verified controller methods match routes
+
+---
+**Status**: ✅ Ready to run! Execute `python run.py` to start the application.

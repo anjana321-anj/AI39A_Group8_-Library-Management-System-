@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} - BookVerse Admin{% endblock %}
+
+{% block content %}
+<section class="auth-screen">
+    <div class="auth-card reveal" style="max-width:640px; margin:auto;">
+        <div class="form-heading">
+            <h2>{{ form_title }}</h2>
+            <p>Enter the book details and set the availability status.</p>
+        </div>
+        <form method="post">
+            <label class="field">
+                <span>Title</span>
+                <input type="text" name="title" value="{{ book.title if book else '' }}" required autocomplete="off">
+            </label>
+            <label class="field">
+                <span>Author</span>
+                <input type="text" name="author" value="{{ book.author if book else '' }}" required autocomplete="off">
+            </label>
+            <label class="field">
+                <span>Category</span>
+                <input type="text" name="category" value="{{ book.category if book else '' }}" required autocomplete="off">
+            </label>
+            <label class="field">
+                <span>Cover image URL</span>
+                <input type="url" name="image" value="{{ book.image if book else '' }}" placeholder="https://example.com/cover.jpg">
+            </label>
+            <label class="field">
+                <span>Description</span>
+                <textarea name="description" rows="5">{{ book.description if book else '' }}</textarea>
+            </label>
+            <label class="check-field">
+                <input type="checkbox" name="available" {% if book and book.available %}checked{% endif %}>
+                <span>Mark book as available</span>
+            </label>
+            <button class="btn btn-primary btn-wide" type="submit" data-ripple>Save book</button>
+        </form>
+        <p class="form-note">Return to <a href="{{ url_for('auth.admin_books') }}">book management</a>.</p>
+    </div>
+</section>
+{% endblock %}

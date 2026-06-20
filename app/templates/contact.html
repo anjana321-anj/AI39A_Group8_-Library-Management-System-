@@ -3,56 +3,52 @@
 {% block title %}Contact - BookVerse{% endblock %}
 
 {% block content %}
-<section class="surface">
-    <div class="contact-grid">
-        <div class="stack">
-            <span class="eyebrow">Get in touch</span>
-            <h1 class="headline">Ask for help, request a title, or reach the library team without leaving the theme.</h1>
-            <p class="subheadline">
-                The contact page now has a complete layout with support information, a working form shell, and the
-                same BookVerse styling as the rest of the app.
-            </p>
-            <div class="info-grid">
-                <article class="support-card">
-                    <h3>Front desk</h3>
-                    <p>Open Monday to Saturday for membership questions, borrow renewals, and shelf help.</p>
-                </article>
-                <article class="support-card">
-                    <h3>Catalog requests</h3>
-                    <p>Suggest new books or ask about unavailable titles for upcoming coursework.</p>
-                </article>
-            </div>
+<section class="contact-layout">
+    <div class="page-hero reveal">
+        <span class="eyebrow">Contact</span>
+        <h1>Reach the BookVerse library desk.</h1>
+        <p>Send catalog requests, borrowing questions, or support messages from a clean responsive contact page.</p>
+        <div class="contact-cards">
+            <article>
+                <span>Email</span>
+                <strong>library@bookverse.local</strong>
+            </article>
+            <article>
+                <span>Phone</span>
+                <strong>+977-01-5550198</strong>
+            </article>
+            <article>
+                <span>Address</span>
+                <strong>BookVerse Library Desk, Kathmandu</strong>
+            </article>
         </div>
-
-        <aside class="auth-panel">
-            <h2>Send a message</h2>
-            <p>This demo form keeps the page interactive and ready for backend handling later.</p>
-            <form class="auth-form" method="get" action="{{ url_for('auth.contact') }}">
-                <div class="field-grid">
-                    <div class="input-group">
-                        <label for="contact-name">Your name</label>
-                        <input id="contact-name" name="name" type="text" placeholder="Reader name" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="contact-email">Email</label>
-                        <input id="contact-email" name="email" type="email" placeholder="reader@bookverse.com" required>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="contact-topic">Topic</label>
-                    <select id="contact-topic" name="topic">
-                        <option>Borrowing help</option>
-                        <option>Book request</option>
-                        <option>General support</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="contact-message">Message</label>
-                    <textarea id="contact-message" name="message" placeholder="Tell the library team how we can help."></textarea>
-                </div>
-                <button class="btn btn-primary" type="submit">Send message</button>
-            </form>
-        </aside>
     </div>
+
+    <form class="auth-card reveal" method="post" data-loading-form>
+        <div class="form-heading">
+            <h2>Send message</h2>
+            <p>We will keep this ready for backend contact handling.</p>
+        </div>
+        <label class="field">
+            <span>Your name</span>
+            <input type="text" name="name" placeholder="Reader name" required>
+        </label>
+        <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="reader@bookverse.com" required>
+        </label>
+        <label class="field">
+            <span>Subject</span>
+            <input type="text" name="subject" placeholder="Borrowing help" required>
+        </label>
+        <label class="field">
+            <span>Message</span>
+            <textarea name="message" placeholder="How can the library team help?" required></textarea>
+        </label>
+        <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+            <span class="btn-label">Send Message</span>
+            <span class="btn-loader"></span>
+        </button>
+    </form>
 </section>
 {% endblock %}
