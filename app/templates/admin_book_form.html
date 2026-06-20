@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Book' if book else 'Add Book' }} - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>{{ 'Edit Book' if book else 'Add Book' }}</h1>
+    <p>Complete the book information and availability fields.</p>
+</section>
+
+<form class="data-panel reveal admin-form-grid" method="post" data-loading-form>
+    <label class="field">
+        <span>Book Title</span>
+        <input type="text" name="title" value="{{ book.title if book else '' }}" required>
+    </label>
+    <label class="field">
+        <span>Author</span>
+        <input type="text" name="author" value="{{ book.author if book else '' }}" required>
+    </label>
+    <label class="field">
+        <span>Genre</span>
+        <input type="text" name="genre" value="{{ book.category if book else '' }}" required>
+    </label>
+    <label class="field">
+        <span>ISBN</span>
+        <input type="text" name="isbn" value="{{ book.isbn if book and book.isbn else '' }}">
+    </label>
+    <label class="field">
+        <span>Publication Year</span>
+        <input type="number" name="publication_year" value="{{ book.publication_year if book and book.publication_year else '' }}" min="0">
+    </label>
+    <label class="field">
+        <span>Publisher</span>
+        <input type="text" name="publisher" value="{{ book.publisher if book and book.publisher else '' }}">
+    </label>
+    <label class="field">
+        <span>Language</span>
+        <input type="text" name="language" value="{{ book.language if book and book.language else 'English' }}">
+    </label>
+    <label class="field">
+        <span>Book Cover Image</span>
+        <input type="url" name="image" value="{{ book.image if book and book.image else '' }}" placeholder="https://...">
+    </label>
+    <label class="field">
+        <span>Price (NPR)</span>
+        <input type="number" step="0.01" name="price" value="{{ book.price if book else 0 }}" min="0">
+    </label>
+    <label class="field">
+        <span>Stock</span>
+        <input type="number" name="stock_quantity" value="{{ book.stock_quantity if book else 0 }}" min="0">
+    </label>
+    <label class="field">
+        <span>Total Copies</span>
+        <input type="number" name="total_copies" value="{{ book.total_copies if book else 1 }}" min="1" required>
+    </label>
+    <label class="field">
+        <span>Book Status</span>
+        <select name="book_status">
+            {% for status in ['Available', 'Out of Stock', 'Borrowed', 'Reserved', 'Purchased', 'In Buy List'] %}
+                <option value="{{ status }}" {{ 'selected' if book and book.book_status == status else '' }}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label class="field">
+        <span>Book Type</span>
+        <select name="book_type">
+            {% for type in ['Physical', 'Digital'] %}
+                <option value="{{ type }}" {{ 'selected' if book and book.book_type == type else '' }}>{{ type }} Book</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label class="field">
+        <span>Availability</span>
+        <input type="text" value="{{ book.availability_status if book else 'Auto: Available when stock is above 0' }}" readonly>
+    </label>
+    <label class="field full-field">
+        <span>Description</span>
+        <textarea name="description">{{ book.description if book and book.description else '' }}</textarea>
+    </label>
+    <div class="form-row full-field">
+        <button class="btn btn-primary" type="submit" data-ripple>
+            <span class="btn-label">{{ 'Save Book' if book else 'Add Book' }}</span>
+            <span class="btn-loader"></span>
+        </button>
+        <a class="btn btn-secondary" href="{{ url_for('auth.admin_books') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

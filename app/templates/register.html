@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - BookVerse{% endblock %}
+
+{% block content %}
+<section class="auth-screen">
+    <div class="auth-visual reveal">
+        <span class="eyebrow">Join BookVerse</span>
+        <h1 class="hero-title">Create a student-friendly reading space.</h1>
+        <p class="hero-copy">
+            Register once, then borrow books, return titles, and view your personal profile from a secure session.
+        </p>
+        <div class="floating-note">
+            <strong>Secure by default</strong>
+            <span>Passwords are stored with Werkzeug hashing, never plain text.</span>
+        </div>
+    </div>
+
+    <form class="auth-card reveal" method="post" data-loading-form>
+        <div class="form-heading">
+            <h2>Create account</h2>
+            <p>Start with your name, email, and a strong password.</p>
+        </div>
+        <label class="field">
+            <span>Username</span>
+            <input type="text" name="username" placeholder="Aarav Sharma" required autocomplete="username">
+        </label>
+        <label class="field">
+            <span>Email address</span>
+            <input type="email" name="email" placeholder="reader@bookverse.com" required autocomplete="email">
+        </label>
+        <label class="field">
+            <span>Phone Number</span>
+            <input type="tel" name="phone_number" placeholder="98XXXXXXXX" autocomplete="tel">
+        </label>
+        <label class="field password-field">
+            <span>Password</span>
+            <input type="password" name="password" placeholder="Minimum 8 characters" minlength="8" required autocomplete="new-password" data-password-input>
+            <button type="button" class="field-icon" aria-label="Show password" data-password-toggle>Show</button>
+        </label>
+        <label class="field password-field">
+            <span>Confirm password</span>
+            <input type="password" name="confirm_password" placeholder="Repeat password" minlength="8" required autocomplete="new-password" data-password-input>
+            <button type="button" class="field-icon" aria-label="Show password" data-password-toggle>Show</button>
+        </label>
+        <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+            <span class="btn-label">Create Account</span>
+            <span class="btn-loader"></span>
+        </button>
+        <p class="form-note">Already registered? <a href="{{ url_for('auth.login') }}">Sign in instead</a>.</p>
+    </form>
+</section>
+{% endblock %}

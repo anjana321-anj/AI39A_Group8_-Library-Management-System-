@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Catalog - BookVerse{% endblock %}
+
+{% block content %}
+<section class="catalog-header reveal" data-catalog-controls>
+    <div>
+        <span class="eyebrow">Books</span>
+        <h1>Browse books</h1>
+    </div>
+    <label class="catalog-search">
+        <span>Search</span>
+        <input type="search" data-catalog-search placeholder="Title, author, genre, ISBN, or publisher">
+    </label>
+    <div class="filter-row catalog-chip-row" data-category-shortcuts>
+        <button class="filter-chip active" type="button" data-filter="all">All</button>
+        {% for category in categories %}
+            <button class="filter-chip" type="button" data-filter="{{ category|lower|replace(' ', '-') }}">{{ category }}</button>
+        {% endfor %}
+    </div>
+    <details class="catalog-filter-details">
+        <summary>More filters</summary>
+        <div class="catalog-tools">
+            <label class="field">
+                <span>Genre</span>
+                <select data-filter-field="category">
+                    <option value="">All genres</option>
+                    {% for category in categories %}
+                        <option value="{{ category|lower }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Author</span>
+                <select data-filter-field="author">
+                    <option value="">All authors</option>
+                    {% for author in authors %}
+                        <option value="{{ author|lower }}">{{ author }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Availability</span>
+                <select data-filter-field="availability">
+                    <option value="">All statuses</option>
+                    <option value="available">Available</option>
+                    <option value="out of stock">Out of Stock</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Publication Year</span>
+                <select data-filter-field="year">
+                    <option value="">All years</option>
+                    {% for year in years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Language</span>
+                <select data-filter-field="language">
+                    <option value="">All languages</option>
+                    {% for language in languages %}
+                        <option value="{{ language|lower }}">{{ language }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Sort</span>
+                <select data-catalog-sort>
+                    <option value="az">A-Z</option>
+                    <option value="za">Z-A</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="rated">Highest Rated</option>
+                    <option value="reviewed">Most Reviewed</option>
+                </select>
+            </label>
+        </div>
+    </details>
+</section>
+
+<section class="catalog-layout catalog-full">
+    <div class="catalog-grid reveal" data-catalog-grid>
+        {% for book in books %}
+            {% set is_available = book.stock_quantity > 0 %}
+            {% set is_favourite = session.get('user_id') and book.id in favourite_ids %}
+            <article
+                class="book-card tilt-card"
+                data-book-card
+                data-category="{{ book.category|lower }}"
+                data-category-slug="{{ book.category|lower|replace(' ', '-') }}"
+                data-title="{{ book.title|lower }}"
+                data-author="{{ book.author|lower }}"
+                data-isbn="{{ (book.isbn or '')|lower }}"
+                data-publisher="{{ (book.publisher or '')|lower }}"
+                data-year="{{ book.publication_year or '' }}"
+                data-language="{{ (book.language or 'English')|lower }}"
+                data-availability="{{ 'available' if is_available else 'out of stock' }}"
+                data-rating="{{ book.average_rating or 0 }}"
+                data-reviews="{{ book.review_count or 0 }}"
+            >
+                <div class="book-cover">
+                    <img src="{{ book.image }}" alt="{{ book.title }}">
+                    <span class="availability-badge {{ 'muted-badge' if not is_available else '' }}">
+                        {{ 'Available' if is_available else 'Out of Stock' }}
+                    </span>
+                    <span class="book-type-badge status-badge info">
+                        {{ book.book_type or 'Physical' }} Book
+                    </span>
+                </div>
+                <div class="book-body">
+                    <div class="card-title-row">
+                        <span class="book-category">{{ book.category }}</span>
+                        {% if session.get('user_id') %}
+                            {% if is_favourite %}
+                                <form method="post" action="{{ url_for('auth.remove_from_favourites', book_id=book.id) }}">
+                                    <button class="favorite-star is-active" type="submit" aria-label="Remove from favourites">&#9733;</button>
+                                </form>
+                            {% else %}
+                                <form method="post" action="{{ url_for('auth.add_to_favourites', book_id=book.id) }}">
+                                    <button class="favorite-star" type="submit" aria-label="Add to favourites">&#9734;</button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <a class="favorite-star" href="{{ url_for('auth.login', next=url_for('auth.books')) }}" aria-label="Sign in to add favourite">&#9734;</a>
+                        {% endif %}
+                    </div>
+                    <h3>{{ book.title }}</h3>
+                    <p>{{ book.description }}</p>
+                    <div class="mini-meta">
+                        <span>{{ book.author }}</span>
+                        <span>{{ book.language or 'English' }}</span>
+                        <span>{{ book.publication_year or 'Year N/A' }}</span>
+                        <span>NPR {{ "%.0f"|format(book.price or 0) }}</span>
+                    </div>
+                    <div class="rating-line">
+                        <span aria-hidden="true">Rating</span>
+                        <strong>{{ book.average_rating or 0 }}/5</strong>
+                        <small>{{ book.review_count or 0 }} reviews</small>
+                    </div>
+                    <div class="book-meta">
+                        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}" data-ripple>Details</a>
+                        {% if is_available %}
+                            {% if session.get('user_id') %}
+                                {% if book.id in borrowed_book_ids %}
+                                    <button class="btn btn-small btn-disabled" type="button" disabled>Already Borrowed</button>
+                                {% else %}
+                                    <a class="btn btn-small btn-primary" href="{{ url_for('auth.borrow', book_id=book.id) }}" data-ripple>Borrow</a>
+                                {% endif %}
+                            {% else %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.login', next=url_for('auth.book_details', book_id=book.id)) }}" data-ripple>Sign in</a>
+                            {% endif %}
+                        {% else %}
+                            {% if session.get('user_id') %}
+                                <form method="post" action="{{ url_for('auth.join_book_waitlist', book_id=book.id) }}">
+                                    <button class="btn btn-small btn-secondary" type="submit" data-ripple>Join Waitlist</button>
+                                </form>
+                            {% else %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.login', next=url_for('auth.book_details', book_id=book.id)) }}" data-ripple>Join Waitlist</a>
+                            {% endif %}
+                        {% endif %}
+                        {% if session.get('user_id') %}
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.reserve_book', book_id=book.id) }}" data-ripple>Reserve</a>
+                            {% if book.stock_quantity > 0 %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.buy_book', book_id=book.id) }}" data-ripple>Buy</a>
+                            {% else %}
+                                <button class="btn btn-small btn-disabled" type="button" disabled>Out of Stock</button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% endfor %}
+        <div class="empty-panel catalog-empty" data-catalog-empty hidden>
+            <h2>No books match your search.</h2>
+            <p>Try a different keyword, filter, or sort option.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

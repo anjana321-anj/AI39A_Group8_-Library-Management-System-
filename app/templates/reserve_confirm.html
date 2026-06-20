@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Reservation - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Reservation Confirmation</span>
+    <h1>Reserve this book?</h1>
+    <p>Reservation requests stay active for 3 days and can be managed from your dashboard.</p>
+</section>
+
+<section class="book-detail-layout reveal">
+    <div class="detail-cover">
+        <img src="{{ book.image }}" alt="{{ book.title }}">
+    </div>
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>{{ book.title }}</h2>
+            <span class="status-badge success">{{ book.book_type or 'Physical' }} Book</span>
+        </div>
+        <p>{{ book.description or 'No description available.' }}</p>
+        <div class="detail-grid">
+            <div><span>Author</span><strong>{{ book.author }}</strong></div>
+            <div><span>Genre</span><strong>{{ book.category }}</strong></div>
+            <div><span>Reservation Expiry</span><strong>3 days after request</strong></div>
+            <div><span>Status</span><strong>Pending admin review</strong></div>
+        </div>
+        <form class="review-form" method="post" action="{{ url_for('auth.reserve_book', book_id=book.id) }}">
+            <p class="empty-state">You will receive a notification after the reservation is submitted.</p>
+            <div class="form-row">
+                <button class="btn btn-primary" type="submit">Confirm Reservation</button>
+                <a class="btn btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Cancel</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}

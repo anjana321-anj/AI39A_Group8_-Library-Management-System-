@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Reservations - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Reservation Management</h1>
+    <p>Edit, cancel, or remove active reservations with user and book details.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Reservation Details</th>
+                    <th>User Details</th>
+                    <th>Book Details</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>#{{ reservation.id }}</strong><span>{{ reservation.reservation_date.strftime('%b %d, %Y') if reservation.reservation_date else 'N/A' }}</span></td>
+                        <td><strong>{{ reservation.username }}</strong><span>{{ reservation.email }}</span></td>
+                        <td><strong>{{ reservation.title }}</strong><span>{{ reservation.author }}</span></td>
+                        <td>{{ reservation.expiry_date.strftime('%b %d, %Y %I:%M %p') if reservation.expiry_date else 'N/A' }}</td>
+                        <td><span class="status-badge {{ 'success' if reservation.status == 'Approved' else 'warning' }}">{{ reservation.status }}</span></td>
+                        <td>
+                            <div class="admin-actions">
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_reservation_admin', reservation_id=reservation.id) }}">Edit</a>
+                                <form method="post" action="{{ url_for('auth.cancel_reservation_admin', reservation_id=reservation.id) }}" data-confirm="Are you sure you want to cancel this reservation?">
+                                    <button class="btn btn-small btn-secondary" type="submit">Cancel</button>
+                                </form>
+                                <form method="post" action="{{ url_for('auth.delete_reservation_admin', reservation_id=reservation.id) }}" data-confirm="Are you sure you want to remove this reservation?">
+                                    <button class="btn btn-small btn-disabled" type="submit">Remove</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">No active reservations.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

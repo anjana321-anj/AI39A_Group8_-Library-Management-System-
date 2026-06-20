@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Security</span>
+    <h1>Authentication and access events.</h1>
+    <p>Monitor successful logins, failed login attempts, lockout hooks, and suspicious activity records.</p>
+</section>
+
+<section class="data-panel reveal">
+    <form class="catalog-tools" method="get">
+        <label class="field full-field">
+            <span>Search security logs</span>
+            <input type="search" name="search" value="{{ search }}" placeholder="Email, event type, or summary">
+        </label>
+        <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Security Logs</h2>
+        <span class="status-badge success">{{ logs|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Event</th>
+                    <th>IP</th>
+                    <th>Summary</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ log.username or 'Unknown' }}</td>
+                        <td>{{ log.email or 'N/A' }}</td>
+                        <td><span class="status-badge {{ 'warning' if log.event_type == 'failed_login' else 'success' }}">{{ log.event_type|replace('_', ' ')|title }}</span></td>
+                        <td>{{ log.ip_address or 'N/A' }}</td>
+                        <td>{{ log.summary }}</td>
+                        <td>{{ log.created_at.strftime('%b %d, %Y %H:%M') if log.created_at else 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7">No security logs found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

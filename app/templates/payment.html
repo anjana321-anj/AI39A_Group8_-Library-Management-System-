@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Proceed To Pay - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Payment</span>
+    <h1>Proceed to pay.</h1>
+    <p>Choose a payment method and confirm your BookVerse purchase.</p>
+</section>
+
+<section class="dashboard-grid reveal">
+    <form class="data-panel" method="post" data-loading-form>
+        <div class="panel-heading">
+            <h2>Choose Payment Method</h2>
+            <span class="status-badge warning">Order #{{ order.id }}</span>
+        </div>
+        <div class="payment-methods">
+            <label>
+                <input type="radio" name="payment_method" value="Cash Payment" required>
+                <span>Cash Payment</span>
+            </label>
+            <div class="empty-state">Please visit the library counter to complete payment. Receipt will be generated for this order.</div>
+            <label>
+                <input type="radio" name="payment_method" value="QR Payment">
+                <span>QR Payment</span>
+            </label>
+            <div class="qr-box">BookVerse QR Code</div>
+            <label>
+                <input type="radio" name="payment_method" value="Card Payment">
+                <span>Card Payment</span>
+            </label>
+            <div class="card-payment-fields">
+                <input type="text" name="card_number" placeholder="Card Number">
+                <input type="text" name="card_holder" placeholder="Card Holder">
+                <input type="text" name="card_expiry" placeholder="MM/YY">
+                <input type="text" name="card_cvv" placeholder="CVV">
+            </div>
+            <label class="field">
+                <span>Payment Reference</span>
+                <input type="text" name="payment_reference" placeholder="Optional transaction/reference number">
+            </label>
+        </div>
+        <button class="btn btn-primary" type="submit" data-ripple>
+            <span class="btn-label">Confirm Payment</span>
+            <span class="btn-loader"></span>
+        </button>
+    </form>
+
+    <aside class="data-panel">
+        <h2>Order Summary</h2>
+        <div class="detail-grid">
+            <div><span>Book</span><strong>{{ order.title }}</strong></div>
+            <div><span>Author</span><strong>{{ order.author }}</strong></div>
+            <div><span>Quantity</span><strong>{{ order.quantity }}</strong></div>
+            <div><span>Unit Price</span><strong>NPR {{ "%.2f"|format(order.unit_price or 0) }}</strong></div>
+            <div><span>Total</span><strong>NPR {{ "%.2f"|format(order.total_amount or 0) }}</strong></div>
+            <div><span>Status</span><strong>{{ order.status }}</strong></div>
+        </div>
+    </aside>
+</section>
+{% endblock %}

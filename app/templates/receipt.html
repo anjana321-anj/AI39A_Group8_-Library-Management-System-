@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt - BookVerse{% endblock %}
+
+{% block content %}
+<section class="data-panel reveal receipt-panel">
+    <div class="panel-heading">
+        <h1>BookVerse Receipt</h1>
+        <span class="status-badge {{ 'success' if order.status in ['Paid', 'Completed'] else 'warning' }}">{{ order.status }}</span>
+    </div>
+    <div class="detail-grid">
+        <div><span>Receipt Number</span><strong>{{ order.receipt_number or ('BV-RCPT-%05d'|format(order.id)) }}</strong></div>
+        <div><span>User Name</span><strong>{{ order.username }}</strong></div>
+        <div><span>Date</span><strong>{{ order.receipt_issued_at.strftime('%b %d, %Y') if order.receipt_issued_at else order.order_date.strftime('%b %d, %Y') if order.order_date else 'N/A' }}</strong></div>
+        <div><span>Book Information</span><strong>{{ order.title }} by {{ order.author }}</strong></div>
+        <div><span>Amount</span><strong>NPR {{ "%.2f"|format(order.total_amount or 0) }}</strong></div>
+        <div><span>Payment Method</span><strong>{{ order.payment_method or 'Pending' }}</strong></div>
+        <div><span>Payment Status</span><strong>{{ order.status }}</strong></div>
+        <div><span>Reference</span><strong>{{ order.payment_reference or 'N/A' }}</strong></div>
+    </div>
+    {% if order.payment_note %}
+        <p class="empty-state">{{ order.payment_note }}</p>
+    {% endif %}
+</section>
+{% endblock %}

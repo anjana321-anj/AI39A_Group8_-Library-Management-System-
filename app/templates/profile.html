@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - BookVerse{% endblock %}
+
+{% block content %}
+<section class="profile-layout">
+    <aside class="profile-card reveal">
+        <div class="avatar">
+            {% if profile_picture %}
+                <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture" style="object-position: {{ profile_picture.object_position or 'center center' }};">
+            {% else %}
+                {{ user.username[:1]|upper if user else 'B' }}
+            {% endif %}
+        </div>
+        <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
+        <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
+        <p>{{ user.phone_number or user.phone or 'Phone not added' }}</p>
+        <p>{{ user.address or 'Address not added' }}</p>
+        <form class="profile-picture-form" id="profile-pic-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
+            <label class="field">
+                <span>Profile picture</span>
+                <input type="file" id="profile-file-input" name="profile_picture" accept=".png,.jpg,.jpeg,.webp,.gif">
+            </label>
+            
+            <input type="hidden" name="cropped_image_data" id="cropped-image-data">
+            
+            <div id="crop-container" style="display: none; margin: 15px 0; text-align: center;">
+                <span style="font-size: 0.85rem; color: var(--ink-soft, #666); display: block; margin-bottom: 8px;">Drag to reposition, slider to zoom</span>
+                <canvas id="crop-canvas" width="200" height="200" style="border: 2px solid var(--border); border-radius: 50%; cursor: move; background: #eee; box-shadow: var(--shadow-sm); display: inline-block;"></canvas>
+                <div style="margin: 12px 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span>🔍-</span>
+                    <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" style="width: 150px; accent-color: var(--blue-800);">
+                    <span>🔍+</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary btn-wide" type="submit" id="profile-upload-btn">Upload Picture</button>
+        </form>
+        {% if profile_picture %}
+            <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}">
+                <input type="hidden" name="action" value="adjust">
+                <label class="field">
+                    <span>Adjust picture position</span>
+                    <select name="object_position">
+                        {% for position in ['center center', 'top center', 'bottom center', 'center left', 'center right', 'top left', 'top right', 'bottom left', 'bottom right'] %}
+                            <option value="{{ position }}" {{ 'selected' if profile_picture.object_position == position else '' }}>{{ position|title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button class="btn btn-secondary btn-wide" type="submit">Save Position</button>
+            </form>
+            <form method="post" action="{{ url_for('auth.update_profile_picture') }}">
+                <input type="hidden" name="action" value="remove">
+                <button class="btn btn-disabled btn-wide" type="submit" data-confirm="Remove your profile picture?">Remove Picture</button>
+            </form>
+        {% endif %}
+        <div class="profile-meta">
+            <span>Member since</span>
+            <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
+        </div>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Reset Password</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.favourites') }}" data-ripple>Favourites</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reservations') }}" data-ripple>Reservations</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.waitlists') }}" data-ripple>Waitlist</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.notifications') }}" data-ripple>Notifications</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.orders') }}" data-ripple>Orders</a>
+        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
+    </aside>
+
+    <div class="profile-main">
+        <section class="stats-grid reveal">
+            <article class="stat-widget">
+                <span>Total Loans</span>
+                <strong data-counter="{{ borrowed_books|length }}">0</strong>
+                <small>All borrowed records</small>
+            </article>
+            <article class="stat-widget">
+                <span>Active</span>
+                <strong data-counter="{{ borrowed_books|selectattr('status', 'equalto', 'borrowed')|list|length }}">0</strong>
+                <small>Currently on your shelf</small>
+            </article>
+            <article class="stat-widget">
+                <span>Skills</span>
+                <strong data-counter="{{ skills|length }}">0</strong>
+                <small>Profile learning tags</small>
+            </article>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Reading activity</h2>
+                <a href="{{ url_for('auth.borrowed') }}">Manage returns</a>
+            </div>
+            <div class="activity-list">
+                {% if borrowed_books %}
+                    {% for loan in borrowed_books[:5] %}
+                        <div class="activity-item">
+                            <span class="activity-dot"></span>
+                            <div>
+                                <strong>{{ loan.title }}</strong>
+                                <small>{{ loan.status|title }} &middot; {{ loan.author }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No reading activity yet. Your first borrowed book will appear here.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Notifications</h2>
+                <a href="{{ url_for('auth.fine_payments') }}">Fine payments</a>
+            </div>
+            <div class="activity-list">
+                {% if notifications %}
+                    {% for notification in notifications %}
+                        <div class="activity-item">
+                            <span class="activity-dot"></span>
+                            <div>
+                                <strong>{{ notification.title }}</strong>
+                                <small>{{ notification.message }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">No notifications yet.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Profile Updates</h2>
+                <a href="{{ url_for('auth.edit_profile') }}">Edit profile</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Field</th>
+                            <th>Old Value</th>
+                            <th>New Value</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for update in profile_updates %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ update.field_name|replace('_', ' ')|title }}</td>
+                                <td>{{ update.old_value or 'N/A' }}</td>
+                                <td>{{ update.new_value or 'N/A' }}</td>
+                                <td>{{ update.created_at.strftime('%b %d, %Y') if update.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No profile updates recorded yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Profile Picture History</h2>
+                <span class="status-badge success">{{ picture_history|length }} records</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Action</th>
+                            <th>Image</th>
+                            <th>Handled By</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in picture_history %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ item.action }}</td>
+                                <td>{{ item.image_path or 'N/A' }}</td>
+                                <td>{{ item.admin_name or 'Self' }}</td>
+                                <td>{{ item.created_at.strftime('%b %d, %Y') if item.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No profile picture history yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}
