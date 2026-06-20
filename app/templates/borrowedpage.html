@@ -45,12 +45,15 @@
                     </div>
                     <div class="loan-actions">
                         <span class="status-badge {{ 'warning' if loan.status == 'overdue' else 'success' }}">{{ loan.status|title }}</span>
+                        {% if loan.book_id in readable_book_ids %}
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=loan.book_id) }}" data-ripple>Read</a>
+                        {% endif %}
                         {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
                             <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
                                 <button class="btn btn-small btn-secondary" type="submit" data-ripple>Renew</button>
                             </form>
                         {% endif %}
-                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}" data-ripple>Return</a>
+                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}" data-ripple>Return Book</a>
                     </div>
                 </div>
             </article>
@@ -80,6 +83,7 @@
                     <th>Return Date</th>
                     <th>Renewals</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -92,10 +96,17 @@
                         <td>{{ loan.return_date.strftime('%b %d, %Y') if loan.return_date else 'Pending' }}</td>
                         <td>{{ loan.renewal_count or 0 }}/2</td>
                         <td><span class="status-badge {{ 'warning' if loan.status in ['overdue', 'borrowed'] else 'success' }}">{{ loan.status|title }}</span></td>
+                        <td>
+                            {% if loan.book_id in readable_book_ids %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=loan.book_id) }}">Read</a>
+                            {% else %}
+                                <span class="empty-state">Unavailable</span>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="7">No borrowing history yet.</td>
+                        <td colspan="8">No borrowing history yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>

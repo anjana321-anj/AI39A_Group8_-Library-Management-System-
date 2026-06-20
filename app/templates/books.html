@@ -31,15 +31,6 @@
                 </select>
             </label>
             <label class="field">
-                <span>Author</span>
-                <select data-filter-field="author">
-                    <option value="">All authors</option>
-                    {% for author in authors %}
-                        <option value="{{ author|lower }}">{{ author }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label class="field">
                 <span>Availability</span>
                 <select data-filter-field="availability">
                     <option value="">All statuses</option>
@@ -86,7 +77,7 @@
             {% set is_available = book.stock_quantity > 0 %}
             {% set is_favourite = session.get('user_id') and book.id in favourite_ids %}
             <article
-                class="book-card tilt-card"
+                class="book-card tilt-card {{ 'is-focused-book' if focus_book_id == book.id else '' }}"
                 data-book-card
                 data-category="{{ book.category|lower }}"
                 data-category-slug="{{ book.category|lower|replace(' ', '-') }}"
@@ -140,6 +131,9 @@
                         <small>{{ book.review_count or 0 }} reviews</small>
                     </div>
                     <div class="book-meta">
+                        {% if book.id in readable_book_ids %}
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}" data-ripple>Read</a>
+                        {% endif %}
                         <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}" data-ripple>Details</a>
                         {% if is_available %}
                             {% if session.get('user_id') %}

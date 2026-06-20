@@ -39,13 +39,13 @@
         </div>
         <div class="book-stack">
             {% for book in books %}
-                <article class="floating-book" style="--delay: {{ loop.index0 * 120 }}ms;">
+                <a class="floating-book" href="{{ url_for('auth.books', focus=book.id) }}" style="--delay: {{ loop.index0 * 120 }}ms;">
                     <img src="{{ book.image }}" alt="{{ book.title }}">
                     <div>
                         <strong>{{ book.title }}</strong>
                         <span>{{ book.author }}</span>
                     </div>
-                </article>
+                </a>
             {% endfor %}
         </div>
         <div class="hero-orbit-card card-two">

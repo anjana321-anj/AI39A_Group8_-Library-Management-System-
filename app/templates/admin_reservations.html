@@ -34,6 +34,14 @@
                         <td><span class="status-badge {{ 'success' if reservation.status == 'Approved' else 'warning' }}">{{ reservation.status }}</span></td>
                         <td>
                             <div class="admin-actions">
+                                {% if reservation.status == 'Pending' %}
+                                    <form method="post" action="{{ url_for('auth.approve_reservation', reservation_id=reservation.id) }}">
+                                        <button class="btn btn-small btn-primary" type="submit">Accept</button>
+                                    </form>
+                                    <form method="post" action="{{ url_for('auth.reject_reservation', reservation_id=reservation.id) }}" data-confirm="Reject this reservation?">
+                                        <button class="btn btn-small btn-disabled" type="submit">Reject</button>
+                                    </form>
+                                {% endif %}
                                 <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_reservation_admin', reservation_id=reservation.id) }}">Edit</a>
                                 <form method="post" action="{{ url_for('auth.cancel_reservation_admin', reservation_id=reservation.id) }}" data-confirm="Are you sure you want to cancel this reservation?">
                                     <button class="btn btn-small btn-secondary" type="submit">Cancel</button>

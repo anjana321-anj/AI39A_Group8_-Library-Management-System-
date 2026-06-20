@@ -23,7 +23,8 @@
         </div>
         <label class="field">
             <span>Username</span>
-            <input type="text" name="username" placeholder="Aarav Sharma" required autocomplete="username">
+            <input type="text" name="username" placeholder="Aarav Sharma" required autocomplete="username" data-username-check data-username-url="{{ url_for('auth.check_username') }}">
+            <small class="field-hint" data-username-message></small>
         </label>
         <label class="field">
             <span>Email address</span>

@@ -22,7 +22,7 @@
     --radius-sm: 14px;
     --radius-md: 20px;
     --radius-lg: 28px;
-    --max-width: 1600px;
+    --max-width: 1480px;
 }
 
 /* UI polish: tables, cards, and small responsive tweaks */
@@ -159,11 +159,11 @@ button {
     position: sticky;
     top: 16px;
     z-index: 30;
-    width: min(var(--max-width), calc(100% - 32px));
+    width: min(var(--max-width), calc(100% - 48px));
     margin: 16px auto 0;
     border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.74);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(233, 248, 255, 0.78));
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(22px);
     transition: transform 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
@@ -180,7 +180,7 @@ button {
     justify-content: space-between;
     gap: 18px;
     min-height: 74px;
-    padding: 10px 14px 10px 16px;
+    padding: 10px 18px;
 }
 
 .brand {
@@ -302,13 +302,14 @@ button {
     font-weight: 800;
 }
 
-.nav-icon-button span {
-    font-size: 0;
-}
-
-.nav-icon-button::before {
-    content: "Bell";
-    font-size: 0.82rem;
+.nav-bell-icon {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .nav-icon-button strong {
@@ -359,6 +360,8 @@ button {
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(22px);
     animation: fadeSlide 0.18s ease;
+    max-height: min(520px, calc(100vh - 130px));
+    overflow: hidden;
 }
 
 .popover-heading,
@@ -387,6 +390,14 @@ button {
     display: grid;
     gap: 8px;
     margin: 12px 0;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+    overscroll-behavior: contain;
+}
+
+.popover-list {
+    max-height: 290px;
 }
 
 .popover-item,
@@ -496,7 +507,7 @@ button {
 
 .page-wrap,
 .site-footer {
-    width: min(var(--max-width), calc(100% - 32px));
+    width: min(var(--max-width), calc(100% - 48px));
     margin-inline: auto;
 }
 
@@ -859,6 +870,11 @@ button {
     background: rgba(255, 255, 255, 0.78);
     box-shadow: var(--shadow-sm);
     transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.book-card.is-focused-book {
+    border-color: rgba(31, 157, 106, 0.5);
+    box-shadow: 0 24px 70px rgba(31, 157, 106, 0.18);
 }
 
 .tilt-card:hover {
@@ -1800,6 +1816,226 @@ td span {
     margin-inline: auto;
 }
 
+.reader-shell {
+    display: grid;
+    gap: 16px;
+}
+
+.reader-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: var(--radius-lg);
+    background: var(--glass-strong);
+    box-shadow: var(--shadow-sm);
+}
+
+.reader-toolbar h1 {
+    margin: 6px 0 4px;
+    font-family: "Poppins", sans-serif;
+    font-size: 1.5rem;
+}
+
+.reader-toolbar p {
+    margin: 0;
+    color: var(--ink-soft);
+}
+
+.reader-controls {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.reader-controls label {
+    display: grid;
+    gap: 5px;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.reader-controls input,
+.reader-controls select {
+    width: 92px;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.pdf-frame {
+    height: min(78vh, 860px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: var(--radius-lg);
+    background: #f8fbfd;
+    box-shadow: var(--shadow-md);
+}
+
+.pdf-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.reader-fullscreen .site-header,
+.reader-fullscreen .site-footer,
+.reader-fullscreen .breadcrumb-trail {
+    display: none;
+}
+
+.reader-fullscreen .page-wrap {
+    width: 100%;
+    padding: 0;
+}
+
+.reader-fullscreen .reader-toolbar,
+.reader-fullscreen .pdf-frame {
+    border-radius: 0;
+}
+
+.reader-fullscreen .pdf-frame {
+    height: calc(100vh - 106px);
+}
+
+.receipt-slip {
+    width: min(520px, 100%);
+    margin-inline: auto;
+    padding: 26px;
+    border: 1px dashed rgba(13, 79, 139, 0.32);
+    border-radius: 10px;
+    background: #fffefa;
+    box-shadow: var(--shadow-sm);
+}
+
+.receipt-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed rgba(13, 79, 139, 0.24);
+}
+
+.receipt-head h1 {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    font-size: 1.25rem;
+}
+
+.receipt-head span {
+    font-weight: 900;
+}
+
+.receipt-lines {
+    display: grid;
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.receipt-lines div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.receipt-lines span {
+    color: var(--ink-soft);
+}
+
+.favorite-book-grid,
+.top-rated-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.favorite-book-card,
+.top-rated-card {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.76);
+}
+
+.favorite-book-card img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.favorite-book-card span,
+.top-rated-card span,
+.top-rated-card small {
+    color: var(--ink-soft);
+}
+
+.reading-chart {
+    display: flex;
+    align-items: end;
+    gap: 14px;
+    min-height: 230px;
+    overflow-x: auto;
+    padding: 12px 4px 0;
+}
+
+.reading-bar {
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    justify-items: center;
+    gap: 8px;
+    min-width: 86px;
+    height: 210px;
+}
+
+.reading-bar span {
+    align-self: end;
+    width: 42px;
+    min-height: 14px;
+    border-radius: 12px 12px 4px 4px;
+    background: linear-gradient(180deg, var(--green), var(--blue-500));
+    transition: transform 0.18s ease;
+}
+
+.reading-bar:hover span {
+    transform: scaleY(1.04);
+}
+
+.reading-bar small {
+    color: var(--ink-soft);
+    text-align: center;
+}
+
+.sort-form {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.field-hint {
+    min-height: 18px;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+}
+
+.field-hint.is-error {
+    color: #8b1d1d;
+}
+
+.field-hint.is-success {
+    color: #126342;
+}
+
 .confirm-modal {
     position: fixed;
     inset: 0;
@@ -2126,7 +2362,7 @@ td span {
 
     .page-wrap,
     .site-footer {
-        width: min(var(--max-width), calc(100% - 20px));
+        width: min(var(--max-width), calc(100% - 24px));
     }
 
     .hero-title {
@@ -2157,6 +2393,7 @@ td span {
     .dashboard-hero,
     .panel-heading,
     .catalog-header,
+    .reader-toolbar,
     .progress-list div,
     .loan-meta {
         align-items: flex-start;

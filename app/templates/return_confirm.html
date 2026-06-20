@@ -4,9 +4,9 @@
 
 {% block content %}
 <section class="page-hero reveal">
-    <span class="eyebrow">Return Flow</span>
-    <h1>{{ 'Final return confirmation' if confirm_step else 'Rate, review, or skip.' }}</h1>
-    <p>{{ 'Confirming will return the book and update your borrowing history.' if confirm_step else 'Before returning, you can leave a quick rating and review. You may also skip this step.' }}</p>
+    <span class="eyebrow">Return Book</span>
+    <h1>{{ 'Leave an optional review.' if review_step else 'Complete return payment.' }}</h1>
+    <p>{{ 'Your book has been returned. Share feedback now or skip it.' if review_step else 'Review the return summary and pay any amount due before the return is completed.' }}</p>
 </section>
 
 <section class="book-detail-layout reveal">
@@ -16,18 +16,52 @@
     <article class="data-panel">
         <div class="panel-heading">
             <h2>{{ borrow.title }}</h2>
-            <span class="status-badge warning">{{ borrow.status|title }}</span>
+            <span class="status-badge {{ 'success' if review_step else 'warning' }}">{{ 'Returned' if review_step else borrow.status|title }}</span>
         </div>
         <div class="detail-grid">
-            <div><span>Author</span><strong>{{ borrow.author }}</strong></div>
-            <div><span>Borrow Date</span><strong>{{ borrow.borrow_date.strftime('%b %d, %Y') if borrow.borrow_date else 'N/A' }}</strong></div>
-            <div><span>Due Date</span><strong>{{ borrow.display_due_date.strftime('%b %d, %Y') if borrow.display_due_date else borrow.due_date.strftime('%b %d, %Y') if borrow.due_date else 'N/A' }}</strong></div>
-            <div><span>Book Type</span><strong>{{ borrow.book_type or 'Physical' }} Book</strong></div>
+            <div><span>Book title</span><strong>{{ borrow.title }}</strong></div>
+            <div><span>Borrow date</span><strong>{{ borrow.borrow_date.strftime('%b %d, %Y') if borrow.borrow_date else 'N/A' }}</strong></div>
+            <div><span>Return date</span><strong>{{ borrow.return_date.strftime('%b %d, %Y') if borrow.return_date else 'Today' }}</strong></div>
+            <div><span>Fine amount</span><strong>NPR {{ "%.2f"|format(totals.fine_amount or 0) }}</strong></div>
+            <div><span>Total amount to pay</span><strong>NPR {{ "%.2f"|format(totals.total_amount or 0) }}</strong></div>
+            <div><span>Overdue days</span><strong>{{ totals.overdue_days }}</strong></div>
         </div>
 
-        {% if not confirm_step %}
+        {% if payment_step %}
             <form class="review-form" method="post">
-                <input type="hidden" name="action" value="review">
+                <input type="hidden" name="action" value="pay">
+                <label class="field">
+                    <span>Payment Method</span>
+                    <select name="payment_method" required>
+                        <option value="">Select method</option>
+                        <option value="Cash Payment">Cash Payment</option>
+                        <option value="QR Payment">QR Payment</option>
+                        <option value="Card Payment">Card Payment</option>
+                    </select>
+                </label>
+                <p class="empty-state">This mock payment completes the return and generates a receipt record.</p>
+                <div class="form-row">
+                    <button class="btn btn-primary" type="submit">Pay and Return Book</button>
+                    <a class="btn btn-secondary" href="{{ url_for('auth.my_library') }}">Cancel</a>
+                </div>
+            </form>
+        {% elif review_step %}
+            <section class="receipt-slip">
+                <div class="receipt-head">
+                    <h1>Borrowing Receipt</h1>
+                    <span>Paid</span>
+                </div>
+                <div class="receipt-lines">
+                    <div><span>Receipt number</span><strong>BV-BORROW-{{ "%05d"|format(borrow.id) }}</strong></div>
+                    <div><span>Date and time</span><strong>{{ borrow.payment_date.strftime('%b %d, %Y %I:%M %p') if borrow.payment_date else 'Just now' }}</strong></div>
+                    <div><span>User name</span><strong>{{ borrow.username }}</strong></div>
+                    <div><span>Book title</span><strong>{{ borrow.title }}</strong></div>
+                    <div><span>Amount paid</span><strong>NPR {{ "%.2f"|format(totals.total_amount or 0) }}</strong></div>
+                    <div><span>Payment status</span><strong>Paid</strong></div>
+                </div>
+            </section>
+            <form class="review-form" method="post">
+                <input type="hidden" name="action" value="save_review">
                 <label class="field">
                     <span>Rating</span>
                     <select name="rating">
@@ -42,28 +76,8 @@
                     <textarea name="review_text" placeholder="Optional review after reading...">{{ review_text or '' }}</textarea>
                 </label>
                 <div class="form-row">
-                    <button class="btn btn-primary" type="submit">Continue</button>
-                    <button class="btn btn-secondary" type="submit" name="action" value="skip">Skip Review</button>
-                    <a class="btn btn-secondary" href="{{ url_for('auth.borrowed') }}">Cancel</a>
-                </div>
-            </form>
-        {% else %}
-            <form class="review-form" method="post">
-                <input type="hidden" name="action" value="confirm">
-                <input type="hidden" name="rating" value="{{ rating or '' }}">
-                <input type="hidden" name="review_text" value="{{ review_text or '' }}">
-                <div class="confirm-box" style="width: 100%;">
-                    <h2>Confirm return</h2>
-                    <p>Are you sure you want to return <strong>{{ borrow.title }}</strong>? This will mark the borrow record as returned and make the book available again.</p>
-                    {% if rating or review_text %}
-                        <p>Your feedback will be saved with this return.</p>
-                    {% else %}
-                        <p>No review will be saved because you skipped feedback.</p>
-                    {% endif %}
-                    <div class="form-row">
-                        <button class="btn btn-primary" type="submit">Return Book</button>
-                        <a class="btn btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=borrow.id) }}">Back</a>
-                    </div>
+                    <button class="btn btn-primary" type="submit">Save Review</button>
+                    <button class="btn btn-secondary" type="submit" name="action" value="skip_review">Skip Review</button>
                 </div>
             </form>
         {% endif %}

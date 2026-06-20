@@ -93,20 +93,23 @@ const confirmMessage = document.querySelector("[data-confirm-message]");
 const confirmAccept = document.querySelector("[data-confirm-accept]");
 const confirmCancel = document.querySelector("[data-confirm-cancel]");
 let pendingConfirmation = null;
+let defaultConfirmAcceptLabel = confirmAccept ? confirmAccept.textContent : "Confirm";
 
 const closeConfirmModal = () => {
     if (!confirmModal) return;
     confirmModal.hidden = true;
     document.body.classList.remove("modal-open");
+    if (confirmAccept) confirmAccept.textContent = defaultConfirmAcceptLabel;
     pendingConfirmation = null;
 };
 
-const openConfirmModal = (message, onConfirm) => {
+const openConfirmModal = (message, onConfirm, acceptLabel) => {
     if (!confirmModal || !confirmMessage) {
         if (window.confirm(message)) onConfirm();
         return;
     }
     confirmMessage.textContent = message;
+    if (confirmAccept && acceptLabel) confirmAccept.textContent = acceptLabel;
     pendingConfirmation = onConfirm;
     confirmModal.hidden = false;
     document.body.classList.add("modal-open");
@@ -122,7 +125,7 @@ document.addEventListener(
         openConfirmModal(form.dataset.confirm || "Are you sure you want to continue?", () => {
             form.dataset.confirmed = "true";
             form.submit();
-        });
+        }, form.dataset.confirmAcceptLabel);
     },
     true
 );
@@ -192,7 +195,6 @@ const updateCatalog = () => {
     const query = normalize(catalogSearch ? catalogSearch.value : "");
     const selectedCategory = getFilterValue("category");
     const activeCategory = selectedCategory || (shortcutCategory === "all" ? "" : shortcutCategory);
-    const selectedAuthor = getFilterValue("author");
     const selectedAvailability = getFilterValue("availability");
     const selectedYear = getFilterValue("year");
     const selectedLanguage = getFilterValue("language");
@@ -211,7 +213,6 @@ const updateCatalog = () => {
         const visible =
             (!query || searchable.includes(query)) &&
             (!activeCategory || normalize(card.dataset.category) === activeCategory || card.dataset.categorySlug === activeCategory) &&
-            (!selectedAuthor || normalize(card.dataset.author) === selectedAuthor) &&
             (!selectedAvailability || normalize(card.dataset.availability) === selectedAvailability) &&
             (!selectedYear || normalize(card.dataset.year) === selectedYear) &&
             (!selectedLanguage || normalize(card.dataset.language) === selectedLanguage);
@@ -241,3 +242,36 @@ filterButtons.forEach((button) => {
 });
 
 updateCatalog();
+
+const usernameInput = document.querySelector("[data-username-check]");
+const usernameMessage = document.querySelector("[data-username-message]");
+
+if (usernameInput && usernameMessage) {
+    let usernameTimer = null;
+    usernameInput.addEventListener("input", () => {
+        clearTimeout(usernameTimer);
+        const username = usernameInput.value.trim();
+        usernameInput.setCustomValidity("");
+        usernameMessage.textContent = "";
+        usernameMessage.classList.remove("is-error", "is-success");
+        if (!username) return;
+
+        usernameTimer = setTimeout(async () => {
+            const url = `${usernameInput.dataset.usernameUrl}?username=${encodeURIComponent(username)}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (!data.available) {
+                    usernameInput.setCustomValidity("Username already taken.");
+                    usernameMessage.textContent = "Username already taken.";
+                    usernameMessage.classList.add("is-error");
+                } else {
+                    usernameMessage.textContent = "Username available.";
+                    usernameMessage.classList.add("is-success");
+                }
+            } catch (error) {
+                usernameMessage.textContent = "";
+            }
+        }, 250);
+    });
+}

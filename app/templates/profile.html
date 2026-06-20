@@ -3,7 +3,7 @@
 {% block title %}Profile - BookVerse{% endblock %}
 
 {% block content %}
-<section class="profile-layout">
+<section class="profile-layout profile-redesign">
     <aside class="profile-card reveal">
         <div class="avatar">
             {% if profile_picture %}
@@ -16,124 +16,91 @@
         <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
         <p>{{ user.phone_number or user.phone or 'Phone not added' }}</p>
         <p>{{ user.address or 'Address not added' }}</p>
-        <form class="profile-picture-form" id="profile-pic-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
-            <label class="field">
-                <span>Profile picture</span>
-                <input type="file" id="profile-file-input" name="profile_picture" accept=".png,.jpg,.jpeg,.webp,.gif">
-            </label>
-            
-            <input type="hidden" name="cropped_image_data" id="cropped-image-data">
-            
-            <div id="crop-container" style="display: none; margin: 15px 0; text-align: center;">
-                <span style="font-size: 0.85rem; color: var(--ink-soft, #666); display: block; margin-bottom: 8px;">Drag to reposition, slider to zoom</span>
-                <canvas id="crop-canvas" width="200" height="200" style="border: 2px solid var(--border); border-radius: 50%; cursor: move; background: #eee; box-shadow: var(--shadow-sm); display: inline-block;"></canvas>
-                <div style="margin: 12px 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span>🔍-</span>
-                    <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" style="width: 150px; accent-color: var(--blue-800);">
-                    <span>🔍+</span>
-                </div>
-            </div>
-            
-            <button class="btn btn-secondary btn-wide" type="submit" id="profile-upload-btn">Upload Picture</button>
-        </form>
-        {% if profile_picture %}
-            <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}">
-                <input type="hidden" name="action" value="adjust">
-                <label class="field">
-                    <span>Adjust picture position</span>
-                    <select name="object_position">
-                        {% for position in ['center center', 'top center', 'bottom center', 'center left', 'center right', 'top left', 'top right', 'bottom left', 'bottom right'] %}
-                            <option value="{{ position }}" {{ 'selected' if profile_picture.object_position == position else '' }}>{{ position|title }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <button class="btn btn-secondary btn-wide" type="submit">Save Position</button>
-            </form>
-            <form method="post" action="{{ url_for('auth.update_profile_picture') }}">
-                <input type="hidden" name="action" value="remove">
-                <button class="btn btn-disabled btn-wide" type="submit" data-confirm="Remove your profile picture?">Remove Picture</button>
-            </form>
-        {% endif %}
         <div class="profile-meta">
             <span>Member since</span>
             <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
         </div>
-        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
-        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Reset Password</a>
-        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.favourites') }}" data-ripple>Favourites</a>
-        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reservations') }}" data-ripple>Reservations</a>
-        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.waitlists') }}" data-ripple>Waitlist</a>
-        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.notifications') }}" data-ripple>Notifications</a>
+        <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
+            <label class="field">
+                <span>Profile picture</span>
+                <input type="file" name="profile_picture" accept=".png,.jpg,.jpeg">
+            </label>
+            <button class="btn btn-secondary btn-wide" type="submit">Upload Picture</button>
+        </form>
+        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Profile Settings</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.orders') }}" data-ripple>Orders</a>
-        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.books') }}" data-ripple>Borrow Another Book</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.borrowed') }}" data-ripple>Borrowing History</a>
     </aside>
 
     <div class="profile-main">
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Favorite Books</h2>
+                <a href="{{ url_for('auth.favourites') }}">View all</a>
+            </div>
+            <div class="favorite-book-grid">
+                {% for book in favourites[:6] %}
+                    <a class="favorite-book-card" href="{{ url_for('auth.book_details', book_id=book.id) }}">
+                        <img src="{{ book.image }}" alt="{{ book.title }}">
+                        <strong>{{ book.title }}</strong>
+                        <span>{{ book.author }}</span>
+                    </a>
+                {% else %}
+                    <p class="empty-state">Favorite books will appear here after you save them from the catalog.</p>
+                {% endfor %}
+            </div>
+        </section>
+
         <section class="stats-grid reveal">
-            <article class="stat-widget">
-                <span>Total Loans</span>
-                <strong data-counter="{{ borrowed_books|length }}">0</strong>
-                <small>All borrowed records</small>
+            <article class="stat-widget accent-widget">
+                <span>Total borrowed</span>
+                <strong data-counter="{{ stats.total_borrowed }}">0</strong>
+                <small>Books explored through BookVerse</small>
             </article>
             <article class="stat-widget">
-                <span>Active</span>
-                <strong data-counter="{{ borrowed_books|selectattr('status', 'equalto', 'borrowed')|list|length }}">0</strong>
-                <small>Currently on your shelf</small>
+                <span>Currently borrowed</span>
+                <strong data-counter="{{ stats.active }}">0</strong>
+                <small>On your active shelf</small>
             </article>
             <article class="stat-widget">
-                <span>Skills</span>
-                <strong data-counter="{{ skills|length }}">0</strong>
-                <small>Profile learning tags</small>
+                <span>Total books read</span>
+                <strong data-counter="{{ stats.total_read }}">0</strong>
+                <small>Returned after reading</small>
+            </article>
+            <article class="stat-widget">
+                <span>Favorite genre</span>
+                <strong>{{ stats.favorite_genre }}</strong>
+                <small>Your most borrowed category</small>
+            </article>
+            <article class="stat-widget">
+                <span>Reading streak</span>
+                <strong data-counter="{{ stats.reading_streak }}">0</strong>
+                <small>Reading momentum score</small>
             </article>
         </section>
 
         <section class="data-panel reveal">
             <div class="panel-heading">
-                <h2>Reading activity</h2>
-                <a href="{{ url_for('auth.borrowed') }}">Manage returns</a>
+                <h2>Monthly Borrowing Summary</h2>
+                <span class="status-badge info">Books over time</span>
             </div>
-            <div class="activity-list">
-                {% if borrowed_books %}
-                    {% for loan in borrowed_books[:5] %}
-                        <div class="activity-item">
-                            <span class="activity-dot"></span>
-                            <div>
-                                <strong>{{ loan.title }}</strong>
-                                <small>{{ loan.status|title }} &middot; {{ loan.author }}</small>
-                            </div>
-                        </div>
-                    {% endfor %}
+            <div class="reading-chart">
+                {% for month, count in stats.monthly_summary %}
+                    <div class="reading-bar" title="{{ count }} books in {{ month }}">
+                        <span style="height: {{ (count / stats.max_monthly * 100)|round|int }}%;"></span>
+                        <strong>{{ count }}</strong>
+                        <small>{{ month }}</small>
+                    </div>
                 {% else %}
-                    <p class="empty-state">No reading activity yet. Your first borrowed book will appear here.</p>
-                {% endif %}
+                    <p class="empty-state">Borrow books to build your reading graph.</p>
+                {% endfor %}
             </div>
         </section>
 
         <section class="data-panel reveal">
             <div class="panel-heading">
-                <h2>Notifications</h2>
-                <a href="{{ url_for('auth.fine_payments') }}">Fine payments</a>
-            </div>
-            <div class="activity-list">
-                {% if notifications %}
-                    {% for notification in notifications %}
-                        <div class="activity-item">
-                            <span class="activity-dot"></span>
-                            <div>
-                                <strong>{{ notification.title }}</strong>
-                                <small>{{ notification.message }}</small>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="empty-state">No notifications yet.</p>
-                {% endif %}
-            </div>
-        </section>
-
-        <section class="data-panel reveal">
-            <div class="panel-heading">
-                <h2>Profile Updates</h2>
+                <h2>Profile Settings</h2>
                 <a href="{{ url_for('auth.edit_profile') }}">Edit profile</a>
             </div>
             <div class="table-wrap">
@@ -159,41 +126,6 @@
                         {% else %}
                             <tr>
                                 <td colspan="5">No profile updates recorded yet.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="data-panel reveal">
-            <div class="panel-heading">
-                <h2>Profile Picture History</h2>
-                <span class="status-badge success">{{ picture_history|length }} records</span>
-            </div>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S.No</th>
-                            <th>Action</th>
-                            <th>Image</th>
-                            <th>Handled By</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in picture_history %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ item.action }}</td>
-                                <td>{{ item.image_path or 'N/A' }}</td>
-                                <td>{{ item.admin_name or 'Self' }}</td>
-                                <td>{{ item.created_at.strftime('%b %d, %Y') if item.created_at else 'N/A' }}</td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="5">No profile picture history yet.</td>
                             </tr>
                         {% endfor %}
                     </tbody>

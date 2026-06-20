@@ -18,10 +18,22 @@ class AuthRoutes:
             self.controller.reset_password
         )
         self.bp.route("/register", methods=["GET", "POST"])(self.controller.register)
+        self.bp.route("/register/check-username", methods=["GET"])(
+            self.controller.check_username
+        )
         self.bp.route("/home", methods=["GET"])(self.controller.home)
         self.bp.route("/about", methods=["GET"])(self.controller.about)
         self.bp.route("/books", methods=["GET"])(self.controller.books)
+        self.bp.route("/community", methods=["GET"])(self.controller.community)
+        self.bp.route("/community/reviews/<int:review_id>/like", methods=["POST"])(
+            self.controller.like_community_review
+        )
+        self.bp.route("/community/reviews/<int:review_id>/reply", methods=["POST"])(
+            self.controller.reply_community_review
+        )
         self.bp.route("/books/<int:book_id>", methods=["GET"])(self.controller.book_details)
+        self.bp.route("/books/<int:book_id>/read", methods=["GET"])(self.controller.read_book)
+        self.bp.route("/demo-book.pdf", methods=["GET"])(self.controller.demo_pdf)
         self.bp.route("/books/<int:book_id>/borrow", methods=["GET", "POST"])(self.controller.borrow)
         self.bp.route("/books/<int:book_id>/favourite", methods=["POST"])(
             self.controller.add_to_favourites
@@ -65,6 +77,9 @@ class AuthRoutes:
         self.bp.route("/my-library", methods=["GET"])(self.controller.my_library)
         self.bp.route("/borrowed/<int:borrowed_id>/pay", methods=["GET", "POST"])(
             self.controller.pay_borrow
+        )
+        self.bp.route("/borrowed/<int:borrowed_id>/receipt", methods=["GET"])(
+            self.controller.borrow_receipt
         )
         self.bp.route("/reviews-ratings", methods=["GET"])(self.controller.reviews_ratings)
         self.bp.route("/library-review", methods=["POST"])(

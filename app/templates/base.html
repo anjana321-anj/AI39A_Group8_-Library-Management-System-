@@ -43,14 +43,18 @@
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.home' else '' }}" href="{{ url_for('auth.home') }}">Home</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.my_library' else '' }}" href="{{ url_for('auth.my_library') }}">My Library</a>
-                <a class="nav-link {{ 'active' if current_endpoint == 'auth.reviews_ratings' else '' }}" href="{{ url_for('auth.reviews_ratings') }}">Reviews & Ratings</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.community' else '' }}" href="{{ url_for('auth.community') if session.get('user_id') else url_for('auth.login', next=url_for('auth.community')) }}">Community</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.contact' else '' }}" href="{{ url_for('auth.contact') }}">Contact</a>
             </nav>
 
             <div class="nav-actions">
                 {% if session.get('user_id') %}
                     <details class="nav-popover notification-popover">
                         <summary class="nav-icon-button" aria-label="Notifications">
-                            <span>Notifications</span>
+                            <svg class="nav-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                                <path d="M10 21h4"></path>
+                            </svg>
                             {% if nav_unread_notifications %}
                                 <strong>{{ nav_unread_notifications }}</strong>
                             {% endif %}

@@ -30,24 +30,19 @@
                     <span>Borrowed {{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'recently' }}</span>
                     <span>Due {{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'soon' }}</span>
                     <span>Renewals: {{ loan.renewal_count or 0 }}/2</span>
-                    <span>Payment: {{ loan.payment_status or 'Unpaid' }}</span>
                 </div>
                 <div class="loan-actions">
                     <span class="status-badge {{ 'warning' if loan.status == 'overdue' else 'success' }}">{{ loan.status|title }}</span>
-                    {% if loan.book_type == 'Digital' %}
-                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">Read Online</a>
-                    {% else %}
-                        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">View Details</a>
+                    {% if loan.book_id in readable_book_ids %}
+                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=loan.book_id) }}">Read</a>
                     {% endif %}
-                    {% if loan.payment_status != 'Paid' %}
-                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
-                    {% endif %}
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">View Details</a>
                     {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
                         <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
                             <button class="btn btn-small btn-secondary" type="submit">Renew</button>
                         </form>
                     {% endif %}
-                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return Book</a>
                 </div>
             </div>
         </article>
@@ -74,6 +69,9 @@
                         <strong>{{ book.title }}</strong>
                         <small>{{ book.author }} &middot; {{ book.availability_status }}</small>
                     </div>
+                    {% if book.id in readable_book_ids %}
+                        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                    {% endif %}
                     <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
                 </div>
             {% else %}

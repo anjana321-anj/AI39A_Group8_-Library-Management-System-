@@ -14,11 +14,6 @@ MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
 PERMANENT_SESSION_LIFETIME = timedelta(hours=4)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_FROM = os.getenv("SMTP_FROM", "support@bookverse.com")
 
 
 DATABASE_CONFIG = {
