@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Waitlist - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Waitlist</span>
+    <h1>Books you are waiting for.</h1>
+    <p>Join a waitlist when a book is unavailable and BookVerse will notify you when it returns to the shelf.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Active Waitlist</h2>
+        <a href="{{ url_for('auth.books') }}">Find books</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Book</th>
+                    <th>Joined</th>
+                    <th>Notification</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in waitlists %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ item.title }}</strong><span>{{ item.author }}</span></td>
+                        <td>{{ item.join_date.strftime('%b %d, %Y') if item.join_date else 'N/A' }}</td>
+                        <td>{{ item.notification_date.strftime('%b %d, %Y') if item.notification_date else 'Not sent yet' }}</td>
+                        <td><span class="status-badge {{ 'success' if item.status == 'Notified' else 'warning' }}">{{ item.status }}</span></td>
+                        <td>
+                            <form method="post" action="{{ url_for('auth.leave_user_waitlist', waitlist_id=item.id) }}">
+                                <button class="btn btn-small btn-disabled" type="submit" data-confirm="Leave this waitlist?">Leave</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">You are not waiting for any books.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

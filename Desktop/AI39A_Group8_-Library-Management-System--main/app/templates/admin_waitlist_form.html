@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Waitlist - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Waitlist</span>
+    <h1>Edit waitlist record.</h1>
+    <p>{{ waitlist.username }} is waiting for {{ waitlist.title }}.</p>
+</section>
+
+<section class="data-panel reveal">
+    <form class="admin-form-grid" method="post">
+        <label class="field">
+            <span>Status</span>
+            <select name="status">
+                {% for status in ['Active', 'Notified', 'Left', 'Removed'] %}
+                    <option value="{{ status }}" {{ 'selected' if waitlist.status == status else '' }}>{{ status }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="field full-field">
+            <span>Admin note</span>
+            <input type="text" name="admin_note" value="{{ waitlist.admin_note or '' }}">
+        </label>
+        <div class="form-row full-field">
+            <button class="btn btn-primary" type="submit">Update Waitlist</button>
+            <a class="btn btn-secondary" href="{{ url_for('auth.admin_waitlists') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Review Moderation - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Reviews</span>
+    <h1>Review and rating moderation.</h1>
+    <p>Manage book reviews and library reviews separately, with visible action history.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Library Reviews</h2>
+        <span class="status-badge success">{{ library_reviews|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Reviewer</th>
+                    <th>Rating</th>
+                    <th>Review</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in library_reviews %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ review.username }}</strong><span>{{ review.email }}</span></td>
+                        <td>{{ review.rating }}/5</td>
+                        <td>{{ review.review_text }}</td>
+                        <td><span class="status-badge {{ 'success' if review.status == 'Visible' else 'warning' }}">{{ review.status }}{{ ' / Pinned' if review.is_pinned else '' }}</span></td>
+                        <td class="admin-actions">
+                            <form method="post" action="{{ url_for('auth.moderate_library_review_route', review_id=review.id, action='approve') }}"><button class="btn btn-small btn-primary" type="submit">Approve</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_library_review_route', review_id=review.id, action='pin') }}"><button class="btn btn-small btn-secondary" type="submit">Pin</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_library_review_route', review_id=review.id, action='unpin') }}"><button class="btn btn-small btn-secondary" type="submit">Unpin</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_library_review_route', review_id=review.id, action='hide') }}"><button class="btn btn-small btn-secondary" type="submit">Hide</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_library_review_route', review_id=review.id, action='restore') }}"><button class="btn btn-small btn-secondary" type="submit">Restore</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_library_review_route', review_id=review.id, action='delete') }}" data-confirm="Are you sure you want to delete this review?" data-confirm-accept-label="Delete"><button class="btn btn-small btn-disabled" type="submit">Delete</button></form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No library reviews yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Book Reviews</h2>
+        <span class="status-badge success">{{ book_reviews|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Reviewer</th>
+                    <th>Book</th>
+                    <th>Action Type</th>
+                    <th>Rating</th>
+                    <th>Review</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in book_reviews %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ review.username }}</strong><span>{{ review.email }}</span></td>
+                        <td><strong>{{ review.title }}</strong><span>{{ review.author }}</span></td>
+                        <td>{{ review.action_type or 'Verified' }}</td>
+                        <td>{{ review.rating or 'N/A' }}</td>
+                        <td>{{ review.review_text or 'Rating only' }}</td>
+                        <td><span class="status-badge {{ 'success' if review.status == 'Visible' else 'warning' }}">{{ review.status }}{{ ' / Pinned' if review.is_pinned else '' }}</span></td>
+                        <td class="admin-actions">
+                            <form method="post" action="{{ url_for('auth.moderate_book_review_route', review_id=review.id, action='approve') }}"><button class="btn btn-small btn-primary" type="submit">Approve</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_book_review_route', review_id=review.id, action='pin') }}"><button class="btn btn-small btn-secondary" type="submit">Pin</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_book_review_route', review_id=review.id, action='unpin') }}"><button class="btn btn-small btn-secondary" type="submit">Unpin</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_book_review_route', review_id=review.id, action='hide') }}"><button class="btn btn-small btn-secondary" type="submit">Hide</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_book_review_route', review_id=review.id, action='restore') }}"><button class="btn btn-small btn-secondary" type="submit">Restore</button></form>
+                            <form method="post" action="{{ url_for('auth.moderate_book_review_route', review_id=review.id, action='delete') }}" data-confirm="Are you sure you want to delete this review?" data-confirm-accept-label="Delete"><button class="btn btn-small btn-disabled" type="submit">Delete</button></form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="8">No book reviews yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Action History</h2>
+        <span class="status-badge success">{{ moderation_logs|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Type</th>
+                    <th>Review ID</th>
+                    <th>Admin</th>
+                    <th>Action</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in moderation_logs %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ log.review_type|title }}</td>
+                        <td>{{ log.review_id }}</td>
+                        <td>{{ log.admin_name or 'System' }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.created_at.strftime('%b %d, %Y') if log.created_at else 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No moderation history yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

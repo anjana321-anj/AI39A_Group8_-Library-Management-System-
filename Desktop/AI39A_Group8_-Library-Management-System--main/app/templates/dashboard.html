@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - BookVerse{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell">
+    <aside class="dashboard-sidebar reveal">
+        <span class="eyebrow">Workspace</span>
+        <h2>{{ session.get('username', 'Reader') }}</h2>
+        <nav>
+            <a class="active" href="{{ url_for('auth.dashboard') }}">Overview</a>
+            <a href="{{ url_for('auth.books') }}">Catalog</a>
+            <a href="{{ url_for('auth.borrowed') }}">Borrowed</a>
+            <a href="{{ url_for('auth.favourites') }}">Favourites</a>
+            <a href="{{ url_for('auth.reservations') }}">Reservations</a>
+            <a href="{{ url_for('auth.waitlists') }}">Waitlist</a>
+            <a href="{{ url_for('auth.notifications') }}">Notifications</a>
+            <a href="{{ url_for('auth.orders') }}">Orders</a>
+            <a href="{{ url_for('auth.reviews_ratings') }}">Reviews & Ratings</a>
+            <a href="{{ url_for('auth.fine_payments') }}">Fine Payments</a>
+            <a href="{{ url_for('auth.profile') }}">Profile</a>
+            {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('auth.admin_users') }}">User Management</a>
+                <a href="{{ url_for('auth.admin_books') }}">Book Management</a>
+                <a href="{{ url_for('auth.admin_orders') }}">Manage Orders</a>
+                <a href="{{ url_for('auth.admin_reservations') }}">Manage Reservations</a>
+                <a href="{{ url_for('auth.admin_fine_payments') }}">Verify Payments</a>
+                <a href="{{ url_for('auth.admin_reviews') }}">Review Moderation</a>
+                <a href="{{ url_for('auth.admin_profile_pictures') }}">Profile Pictures</a>
+                <a href="{{ url_for('auth.admin_borrows') }}">Borrow Management</a>
+                <a href="{{ url_for('auth.admin_waitlists') }}">Waitlist Management</a>
+                <a href="{{ url_for('auth.admin_fines') }}">Fine Reports</a>
+                <a href="{{ url_for('auth.admin_notifications') }}">Notifications</a>
+                <a href="{{ url_for('auth.admin_activity_logs') }}">Activity Logs</a>
+                <a href="{{ url_for('auth.admin_security') }}">Security</a>
+                <a href="{{ url_for('auth.admin_backups') }}">Backups</a>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <div class="dashboard-main">
+        <section class="dashboard-hero reveal">
+            <div>
+                <span class="eyebrow">Library analytics</span>
+                <h1>Welcome back, {{ session.get('username', 'Reader') }}.</h1>
+                <p>Monitor the catalog, active loans, and recent reading movement from one clean dashboard.</p>
+            </div>
+            <article class="profile-summary">
+                <div class="avatar">
+                    {% if profile_picture %}
+                        <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture" style="object-position: {{ profile_picture.object_position or 'center center' }};">
+                    {% else %}
+                        {{ user.username[:1]|upper if user else 'B' }}
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>{{ user.username if user else session.get('username', 'Reader') }}</strong>
+                    <span>{{ (user.role if user else session.get('role', 'user'))|title }} account</span>
+                    <span>Membership: {{ (user.status if user else 'active')|title }}</span>
+                    <span>{{ active_borrow_count }} active borrows | {{ active_reservation_count }} reservations | NPR {{ "%.2f"|format(outstanding_fine_total) }} fines</span>
+                </div>
+            </article>
+        </section>
+
+        <section class="data-panel reveal" style="margin-bottom: 22px;">
+            <div class="panel-heading">
+                <h2>My Borrowed Books</h2>
+                <a href="{{ url_for('auth.my_library') }}">Go to My Library</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Borrow Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in current_borrows %}
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img class="table-cover" src="{{ loan.image }}" alt="{{ loan.title }}">
+                                        <div>
+                                            <strong>{{ loan.title }}</strong>
+                                            <span>{{ loan.author }} &middot; {{ loan.book_type or 'Physical' }} Book</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'N/A' }}</td>
+                                <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                                <td>
+                                    {% if loan.status == 'borrowed' %}
+                                        <span class="status-badge success">Borrowed</span>
+                                    {% elif loan.status == 'returned' %}
+                                        <span class="status-badge muted-badge">Returned</span>
+                                    {% elif loan.status == 'overdue' %}
+                                        <span class="status-badge danger">Overdue</span>
+                                    {% else %}
+                                        <span class="status-badge info">{{ loan.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if loan.status in ['borrowed', 'overdue'] %}
+                                        <div class="admin-actions">
+                                            {% if loan.book_id in readable_book_ids %}
+                                                <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=loan.book_id) }}">Read</a>
+                                            {% endif %}
+                                            {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
+                                                <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
+                                                    <button class="btn btn-small btn-secondary" type="submit">Renew</button>
+                                                </form>
+                                            {% endif %}
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return Book</a>
+                                        </div>
+                                    {% elif loan.status == 'returned' %}
+                                    <span class="text-muted">Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        
+                        {% for res in active_reservations %}
+                            <tr>
+                                <td>
+                                    <strong>{{ res.title }}</strong>
+                                    <span>{{ res.author }}</span>
+                                </td>
+                                <td>Reserved</td>
+                                <td>Expires: {{ res.expiry_date.strftime('%b %d, %Y') if res.expiry_date else 'N/A' }}</td>
+                                <td>
+                                    <span class="status-badge info">Reserved ({{ res.status }})</span>
+                                </td>
+                                <td>-</td>
+                                <td>
+                                    <form method="post" action="{{ url_for('auth.cancel_user_reservation', reservation_id=res.id) }}">
+                                        <button class="btn btn-small btn-secondary" type="submit" data-confirm="Are you sure you want to cancel this reservation?">Cancel</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        
+                        {% if not current_borrows and not active_reservations %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 20px;">
+                                    <p class="empty-state">No borrowed books or active reservations. <a href="{{ url_for('auth.books') }}">Browse the catalog</a> to borrow one!</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats-grid reveal">
+            {% if session.get('role') == 'admin' %}
+                <article class="stat-widget">
+                    <span>Total Books</span>
+                    <strong data-counter="{{ stats.books }}">0</strong>
+                    <small>{{ stats.available }} currently available</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Total Users</span>
+                    <strong data-counter="{{ stats.members }}">0</strong>
+                    <small>Registered readers</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Active Loans</span>
+                    <strong data-counter="{{ stats.borrowed }}">0</strong>
+                    <small>Books in circulation</small>
+                </article>
+                <article class="stat-widget accent-widget">
+                    <span>Reservations</span>
+                    <strong>{{ stats.reserved }}</strong>
+                    <small>Active reservation queue</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Active Users</span>
+                    <strong>{{ stats.active_users }}</strong>
+                    <small>Accounts in good standing</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Reserved Books</span>
+                    <strong>{{ stats.reserved }}</strong>
+                    <small>Active reservations</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Purchased Books</span>
+                    <strong>{{ stats.purchased }}</strong>
+                    <small>Paid or processing orders</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Outstanding Fines</span>
+                    <strong>NPR {{ "%.0f"|format(stats.outstanding_fines or 0) }}</strong>
+                    <small>Pending fine balance</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Library Rating</span>
+                    <strong>{{ stats.average_library_rating }}/5</strong>
+                    <small>{{ stats.library_reviews }} library reviews</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Book Reviews</span>
+                    <strong>{{ stats.book_reviews }}</strong>
+                    <small>Visible book reviews</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Pending Waitlists</span>
+                    <strong>{{ stats.pending_waitlists }}</strong>
+                    <small>Readers waiting</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Security Alerts</span>
+                    <strong>{{ stats.security_alerts }}</strong>
+                    <small>Failed or flagged events</small>
+                </article>
+            {% else %}
+                <article class="stat-widget">
+                    <span>Borrowed Books</span>
+                    <strong>{{ active_borrow_count }}</strong>
+                    <small>Currently on your shelf</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Favorites</span>
+                    <strong>{{ favourite_count }}</strong>
+                    <small>Saved for later</small>
+                </article>
+                <article class="stat-widget">
+                    <span>Reservations</span>
+                    <strong>{{ active_reservation_count }}</strong>
+                    <small>Waiting or pending</small>
+                </article>
+                <article class="stat-widget accent-widget">
+                    <span>Notifications</span>
+                    <strong>{{ unread_notifications_count }}</strong>
+                    <small>Unread updates</small>
+                </article>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-grid reveal">
+            <article class="data-panel">
+                <div class="panel-heading">
+                    <h2>{{ 'Catalog health' if session.get('role') == 'admin' else 'Recommended books' }}</h2>
+                    <a href="{{ url_for('auth.books') }}">View all</a>
+                </div>
+                {% if session.get('role') == 'admin' %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in books[:6] %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ book.title }}</strong>
+                                        <span>{{ book.author }}</span>
+                                    </td>
+                                    <td>{{ book.category }}</td>
+                                    <td><span class="status-badge {{ 'warning' if book.stock_quantity < 1 else 'success' }}">{{ book.availability_status }}</span></td>
+                                    <td>
+                                        {% if book.id in readable_book_ids %}
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                                        {% else %}
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <div class="activity-list">
+                        {% for book in recommended_books %}
+                            <div class="activity-item">
+                                <span class="activity-dot"></span>
+                                <div>
+                                    <strong>{{ book.title }}</strong>
+                                    <small>{{ book.author }} &middot; {{ book.category }} &middot; {{ book.average_rating or 0 }}/5</small>
+                                </div>
+                                {% if book.id in readable_book_ids %}
+                                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                                {% endif %}
+                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
+                            </div>
+                        {% else %}
+                            <p class="empty-state">No recommendations yet. Borrow or favorite books to personalize this list.</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </article>
+
+            <article class="data-panel">
+                <div class="panel-heading">
+                    <h2>Recent activity</h2>
+                    <a href="{{ url_for('auth.borrowed') }}">Open borrowed</a>
+                </div>
+                <div class="activity-list">
+                    {% if borrow_history %}
+                        {% for item in borrow_history[:6] %}
+                            <div class="activity-item">
+                                <span class="activity-dot"></span>
+                                <div>
+                                    <strong>{{ item.title }}</strong>
+                                    <small>{{ item.status|title }} on {{ item.borrow_date.strftime('%b %d, %Y') if item.borrow_date else 'recently' }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">No borrowing activity yet. Borrow a book to see this panel come alive.</p>
+                    {% endif %}
+                </div>
+            </article>
+
+            <article class="data-panel">
+                <div class="panel-heading">
+                    <h2>Notifications</h2>
+                    <a href="{{ url_for('auth.fine_payments') }}">Fine payments</a>
+                </div>
+                <div class="activity-list">
+                    {% if notifications %}
+                        {% for notification in notifications %}
+                            <div class="activity-item">
+                                <span class="activity-dot"></span>
+                                <div>
+                                    <strong>{{ notification.title }}</strong>
+                                    <small>{{ notification.message }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">No notifications yet.</p>
+                    {% endif %}
+                </div>
+            </article>
+        </section>
+    </div>
+</section>
+{% endblock %}

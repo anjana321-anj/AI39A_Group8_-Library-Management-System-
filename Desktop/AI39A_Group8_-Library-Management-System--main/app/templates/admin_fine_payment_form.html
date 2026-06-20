@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Fine Payment - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Panel</span>
+    <h1>Edit Fine Payment</h1>
+    <p>Update submitted payment details and verification status.</p>
+</section>
+
+<form class="data-panel reveal admin-form-grid" method="post" data-loading-form>
+    <label class="field">
+        <span>User</span>
+        <input type="text" value="{{ payment.username }} ({{ payment.email }})" readonly>
+    </label>
+    <label class="field">
+        <span>Book</span>
+        <input type="text" value="{{ payment.title }}" readonly>
+    </label>
+    <label class="field">
+        <span>Payment Method</span>
+        <input type="text" name="payment_method" value="{{ payment.payment_method }}" required>
+    </label>
+    <label class="field">
+        <span>Transaction ID</span>
+        <input type="text" name="transaction_id" value="{{ payment.transaction_id }}" required>
+    </label>
+    <label class="field">
+        <span>Amount</span>
+        <input type="number" step="0.01" name="amount" value="{{ payment.amount }}" min="1" required>
+    </label>
+    <label class="field">
+        <span>Status</span>
+        <select name="status">
+            {% for status in ['Pending Verification', 'Approved', 'Rejected'] %}
+                <option value="{{ status }}" {{ 'selected' if payment.status == status else '' }}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label class="field full-field">
+        <span>Proof of Payment</span>
+        <input type="text" name="proof_of_payment" value="{{ payment.proof_of_payment or '' }}">
+    </label>
+    <div class="form-row full-field">
+        <button class="btn btn-primary" type="submit" data-ripple>Save Payment</button>
+        <a class="btn btn-secondary" href="{{ url_for('auth.admin_fine_payments') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

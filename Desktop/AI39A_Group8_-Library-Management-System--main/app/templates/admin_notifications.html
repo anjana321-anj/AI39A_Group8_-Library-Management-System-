@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Notifications - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Notifications</span>
+    <h1>Send and manage notifications.</h1>
+    <p>Notify users about availability, reservations, fines, reminders, and admin updates.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Send Manual Notification</h2>
+        <span class="status-badge success">{{ users|length }} users</span>
+    </div>
+    <form class="admin-form-grid" method="post">
+        <label class="field">
+            <span>User</span>
+            <select name="user_id" required>
+                <option value="">Select user</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }} - {{ user.email }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="field">
+            <span>Title</span>
+            <input type="text" name="title" required>
+        </label>
+        <label class="field full-field">
+            <span>Message</span>
+            <textarea name="message" required></textarea>
+        </label>
+        <button class="btn btn-primary" type="submit">Send Notification</button>
+    </form>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Notification History</h2>
+        <span class="status-badge success">{{ notifications|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notification in notifications %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ notification.username }}</strong><span>{{ notification.email }}</span></td>
+                        <td>{{ notification.title }}<span>{{ notification.message }}</span></td>
+                        <td>{{ notification.notification_type|replace('_', ' ')|title }}</td>
+                        <td>{{ 'Read' if notification.is_read else 'Unread' }}</td>
+                        <td>{{ notification.created_at.strftime('%b %d, %Y') if notification.created_at else 'N/A' }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('auth.delete_notification_admin_route', notification_id=notification.id) }}">
+                                <button class="btn btn-small btn-disabled" type="submit" data-confirm="Delete this notification?">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7">No notification history yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
