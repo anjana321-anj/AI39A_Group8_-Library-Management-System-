@@ -1,0 +1,208 @@
+{% set current_endpoint = request.endpoint or '' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookVerse | Digital Library Management System</title>
+    <link rel="icon" type="image/png" href="{{ url_for('serve_image', filename='Logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('serve_image', filename='Logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}" data-page="{{ current_endpoint }}">
+    <div class="ambient-bg" aria-hidden="true">
+        <span class="mesh mesh-one"></span>
+        <span class="mesh mesh-two"></span>
+        <span class="mesh mesh-three"></span>
+        <span class="particle-field"></span>
+    </div>
+
+    <header class="site-header" data-navbar>
+        <div class="nav-container">
+            <a class="brand" href="{{ url_for('auth.home') }}" aria-label="BookVerse home">
+                <span class="brand-mark">
+                    <img src="{{ url_for('serve_image', filename='Logo.png') }}" alt="">
+                </span>
+                <span>
+                    <span class="brand-name">BookVerse</span>
+                    <span class="brand-subtitle">Digital Library</span>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" data-menu-toggle>
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="nav-menu" aria-label="Primary navigation" data-menu>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.home' else '' }}" href="{{ url_for('auth.home') }}">Home</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.my_library' else '' }}" href="{{ url_for('auth.my_library') }}">My Library</a>
+            </nav>
+
+            <div class="nav-actions">
+                {% if session.get('user_id') %}
+                    <details class="nav-popover notification-popover">
+                        <summary class="nav-icon-button" aria-label="Notifications">
+                            <svg class="nav-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                                <path d="M10 21h4"></path>
+                            </svg>
+                            {% if nav_unread_notifications %}
+                                <strong>{{ nav_unread_notifications }}</strong>
+                            {% endif %}
+                        </summary>
+                        <div class="nav-popover-panel notification-panel">
+                            <div class="popover-heading">
+                                <h2>Notifications</h2>
+                                {% if nav_unread_notifications %}
+                                    <form method="post" action="{{ url_for('auth.mark_all_notifications_read_route') }}">
+                                        <button class="text-button" type="submit">Mark all read</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                            <div class="popover-list">
+                                {% for notification in nav_notifications %}
+                                    <article class="popover-item {{ 'is-unread' if not notification.is_read else '' }}">
+                                        <strong>{{ notification.title }}</strong>
+                                        <span>{{ notification.message }}</span>
+                                        <small>{{ notification.created_at.strftime('%b %d, %Y') if notification.created_at else 'Recent' }}</small>
+                                    </article>
+                                {% else %}
+                                    <p class="empty-state">No notifications yet.</p>
+                                {% endfor %}
+                            </div>
+                            <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.notifications') }}">See All Notifications</a>
+                        </div>
+                    </details>
+                    <details class="nav-popover account-popover">
+                        <summary class="account-summary">
+                            <span class="nav-avatar">
+                                {% if nav_profile_picture %}
+                                    <img src="{{ nav_profile_picture.image_path }}" alt="{{ nav_user.username if nav_user else 'Profile' }}" style="object-position: {{ nav_profile_picture.object_position or 'center center' }};">
+                                {% else %}
+                                    {{ (nav_user.username if nav_user else session.get('username', 'U'))[:1]|upper }}
+                                {% endif %}
+                            </span>
+                            <span class="account-name">{{ nav_user.username if nav_user else session.get('username', 'Profile') }}</span>
+                            <span aria-hidden="true">v</span>
+                        </summary>
+                        <div class="nav-popover-panel account-panel">
+                            <div class="account-card-mini">
+                                <span class="nav-avatar large">
+                                    {% if nav_profile_picture %}
+                                        <img src="{{ nav_profile_picture.image_path }}" alt="{{ nav_user.username if nav_user else 'Profile' }}" style="object-position: {{ nav_profile_picture.object_position or 'center center' }};">
+                                    {% else %}
+                                        {{ (nav_user.username if nav_user else session.get('username', 'U'))[:1]|upper }}
+                                    {% endif %}
+                                </span>
+                                <div>
+                                    <strong>{{ nav_user.username if nav_user else session.get('username', 'Profile') }}</strong>
+                                    <span>{{ nav_user.email if nav_user else '' }}</span>
+                                    <small>{{ (nav_user.role if nav_user else session.get('role', 'user'))|title }}</small>
+                                </div>
+                            </div>
+                            <nav class="account-menu" aria-label="Account menu">
+                                <a href="{{ url_for('auth.dashboard') }}">Dashboard</a>
+                                <a href="{{ url_for('auth.profile') }}">My Profile</a>
+                                <a href="{{ url_for('auth.edit_profile') }}">Edit Profile</a>
+                                <a href="{{ url_for('auth.my_library') }}">My Library</a>
+                                <a href="{{ url_for('auth.borrowed') }}">Borrowed Books</a>
+                                <a href="{{ url_for('auth.favourites') }}">Favorites</a>
+                                <a href="{{ url_for('auth.reservations') }}">Reservations</a>
+                                <a href="{{ url_for('auth.orders') }}">Orders</a>
+                                <a href="{{ url_for('auth.notifications') }}">Notifications</a>
+                                <a href="{{ url_for('auth.reviews_ratings') }}">Reviews & Ratings</a>
+                                <a href="{{ url_for('auth.reset_logged_in_password') }}">Settings</a>
+                            </nav>
+                            <form class="account-logout" method="post" action="{{ url_for('auth.logout') }}" data-confirm="Are you sure you want to logout?">
+                                <button type="submit">Logout</button>
+                            </form>
+                        </div>
+                    </details>
+                {% else %}
+                    <a class="text-link" href="{{ url_for('auth.login') }}">Sign In</a>
+                    <a class="btn btn-primary" href="{{ url_for('auth.register') }}" data-ripple>Create Account</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="page-wrap">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-stack" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+        {% if breadcrumbs %}
+            <nav class="breadcrumb-trail reveal" aria-label="Breadcrumb">
+                {% for crumb in breadcrumbs %}
+                    {% if crumb.url and not loop.last %}
+                        <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+                    {% else %}
+                        <span aria-current="{{ 'page' if loop.last else 'false' }}">{{ crumb.label }}</span>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer reveal">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a class="brand" href="{{ url_for('auth.home') }}">
+                    <span class="brand-mark">
+                        <img src="{{ url_for('serve_image', filename='Logo.png') }}" alt="">
+                    </span>
+                    <span>
+                        <span class="brand-name">BookVerse</span>
+                        <span class="brand-subtitle">Premium library platform</span>
+                    </span>
+                </a>
+                <p>Built for student readers, library teams, and clean digital borrowing workflows.</p>
+            </div>
+            <div class="footer-column">
+                <h3>Explore</h3>
+                <a href="{{ url_for('auth.books') }}">Catalog</a>
+                <a href="{{ url_for('auth.services') }}">Services</a>
+                <a href="{{ url_for('auth.about') }}">About</a>
+            </div>
+            <div class="footer-column">
+                <h3>Account</h3>
+                <a href="{{ url_for('auth.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('auth.borrowed') }}">Borrowed Books</a>
+                <a href="{{ url_for('auth.profile') }}">Profile</a>
+            </div>
+            <div class="footer-column">
+                <h3>Contact</h3>
+                <a href="{{ url_for('auth.contact') }}">Library Desk</a>
+                <a href="mailto:support@bookverse.com">support@bookverse.com</a>
+            </div>
+        </div>
+    </footer>
+
+    <div class="confirm-modal" data-confirm-modal hidden>
+        <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+            <h2 id="confirm-title">Please confirm</h2>
+            <p data-confirm-message>Are you sure you want to continue?</p>
+            <div class="form-row">
+                <button class="btn btn-secondary" type="button" data-confirm-cancel>Cancel</button>
+                <button class="btn btn-primary" type="button" data-confirm-accept>Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

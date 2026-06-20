@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - BookVerse{% endblock %}
+
+{% block content %}
+<section class="profile-layout profile-redesign">
+    <aside class="profile-card reveal">
+        <div class="avatar">
+            {% if profile_picture %}
+                <img src="{{ profile_picture.image_path }}" alt="{{ user.username }} profile picture" style="object-position: {{ profile_picture.object_position or 'center center' }};">
+            {% else %}
+                {{ user.username[:1]|upper if user else 'B' }}
+            {% endif %}
+        </div>
+        <h1>{{ user.username if user else session.get('username', 'Reader') }}</h1>
+        <p>{{ user.email if user else 'reader@bookverse.local' }}</p>
+        <p>{{ user.phone_number or user.phone or 'Phone not added' }}</p>
+        <p>{{ user.address or 'Address not added' }}</p>
+        <div class="profile-meta">
+            <span>Member since</span>
+            <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
+        </div>
+        <a class="btn btn-primary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Profile Settings</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.orders') }}" data-ripple>Orders</a>
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.borrowed') }}" data-ripple>Borrowing History</a>
+    </aside>
+
+    <div class="profile-main">
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Favorite Books</h2>
+                <a href="{{ url_for('auth.favourites') }}">View all</a>
+            </div>
+            <div class="favorite-book-grid">
+                {% for book in favourites[:6] %}
+                    <a class="favorite-book-card" href="{{ url_for('auth.book_details', book_id=book.id) }}">
+                        <img src="{{ book.image }}" alt="{{ book.title }}">
+                        <strong>{{ book.title }}</strong>
+                        <span>{{ book.author }}</span>
+                    </a>
+                {% else %}
+                    <p class="empty-state">Favorite books will appear here after you save them from the catalog.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="stats-grid reveal">
+            <article class="stat-widget accent-widget">
+                <span>Total borrowed</span>
+                <strong data-counter="{{ stats.total_borrowed }}">0</strong>
+                <small>Books explored through BookVerse</small>
+            </article>
+            <article class="stat-widget">
+                <span>Currently borrowed</span>
+                <strong data-counter="{{ stats.active }}">0</strong>
+                <small>On your active shelf</small>
+            </article>
+            <article class="stat-widget">
+                <span>Total books read</span>
+                <strong data-counter="{{ stats.total_read }}">0</strong>
+                <small>Returned after reading</small>
+            </article>
+            <article class="stat-widget">
+                <span>Favorite genre</span>
+                <strong>{{ stats.favorite_genre }}</strong>
+                <small>Your most borrowed category</small>
+            </article>
+            <article class="stat-widget">
+                <span>Reading streak</span>
+                <strong data-counter="{{ stats.reading_streak }}">0</strong>
+                <small>Reading momentum score</small>
+            </article>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Monthly Borrowing Summary</h2>
+                <span class="status-badge info">Books over time</span>
+            </div>
+            <div class="reading-chart">
+                {% for month, count in stats.monthly_summary %}
+                    <div class="reading-bar" title="{{ count }} books in {{ month }}">
+                        <span style="height: {{ (count / stats.max_monthly * 100)|round|int }}%;"></span>
+                        <strong>{{ count }}</strong>
+                        <small>{{ month }}</small>
+                    </div>
+                {% else %}
+                    <p class="empty-state">Borrow books to build your reading graph.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="data-panel reveal">
+            <div class="panel-heading">
+                <h2>Profile Settings</h2>
+                <a href="{{ url_for('auth.edit_profile') }}">Edit profile</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Field</th>
+                            <th>Old Value</th>
+                            <th>New Value</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for update in profile_updates %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ update.field_name|replace('_', ' ')|title }}</td>
+                                <td>{{ update.old_value or 'N/A' }}</td>
+                                <td>{{ update.new_value or 'N/A' }}</td>
+                                <td>{{ update.created_at.strftime('%b %d, %Y') if update.created_at else 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No profile updates recorded yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

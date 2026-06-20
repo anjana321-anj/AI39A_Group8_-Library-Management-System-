@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}My Library - BookVerse{% endblock %}
+
+{% block content %}
+<section class="compact-page-heading reveal">
+    <div>
+        <span class="eyebrow">My Library</span>
+        <h1>Your personal reading hub.</h1>
+        <p>Borrowed books, favorites, reservations, and recent reading activity in one place.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse Books</a>
+</section>
+
+<section class="section-heading reveal">
+    <h2>Currently Borrowed</h2>
+</section>
+<section class="borrow-layout reveal">
+    {% for loan in active_borrows %}
+        <article class="loan-card tilt-card">
+            <img src="{{ loan.image }}" alt="{{ loan.title }}">
+            <div class="loan-body">
+                <div>
+                    <span class="book-category">{{ loan.category }}</span>
+                    <h2>{{ loan.title }}</h2>
+                    <p>{{ loan.author }}</p>
+                </div>
+                <div class="loan-meta">
+                    <span>{{ loan.book_type or 'Physical' }} Book</span>
+                    <span>Borrowed {{ loan.borrow_date.strftime('%b %d, %Y') if loan.borrow_date else 'recently' }}</span>
+                    <span>Due {{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'soon' }}</span>
+                    <span>Renewals: {{ loan.renewal_count or 0 }}/2</span>
+                    <span>Payment: {{ loan.payment_status or 'Unpaid' }}</span>
+                </div>
+                <div class="loan-actions">
+                    <span class="status-badge {{ 'warning' if loan.status == 'overdue' else 'success' }}">{{ loan.status|title }}</span>
+                    <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=loan.book_id) }}">Read</a>
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=loan.book_id) }}">View Details</a>
+                    {% if loan.payment_status != 'Paid' %}
+                        <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
+                    {% endif %}
+                    {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
+                        <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
+                            <button class="btn btn-small btn-secondary" type="submit">Renew</button>
+                        </form>
+                    {% endif %}
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
+                </div>
+            </div>
+        </article>
+    {% else %}
+        <div class="empty-panel">
+            <h2>No active borrowed books.</h2>
+            <p>Borrow a book from the catalog to start reading here.</p>
+            <a class="btn btn-primary" href="{{ url_for('auth.books') }}">Browse Catalog</a>
+        </div>
+    {% endfor %}
+</section>
+
+<section class="dashboard-grid reveal">
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Favorites</h2>
+            <a href="{{ url_for('auth.favourites') }}">View all</a>
+        </div>
+        <div class="activity-list">
+            {% for book in favourites[:5] %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ book.title }}</strong>
+                        <small>{{ book.author }} &middot; {{ book.availability_status }}</small>
+                    </div>
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
+                </div>
+            {% else %}
+                <p class="empty-state">No favorites yet. Star books from the catalog to build this shelf.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Reservations</h2>
+            <a href="{{ url_for('auth.reservations') }}">Manage</a>
+        </div>
+        <div class="activity-list">
+            {% for reservation in reservations[:5] %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ reservation.title }}</strong>
+                        <small>{{ reservation.status }} &middot; expires {{ reservation.expiry_date.strftime('%b %d, %Y') if reservation.expiry_date else 'soon' }}</small>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-state">No active reservations.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Recently Read</h2>
+            <a href="{{ url_for('auth.borrowed') }}">History</a>
+        </div>
+        <div class="activity-list">
+            {% for loan in recently_read %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ loan.title }}</strong>
+                        <small>Returned {{ loan.return_date.strftime('%b %d, %Y') if loan.return_date else 'recently' }}</small>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-state">No completed reading history yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
