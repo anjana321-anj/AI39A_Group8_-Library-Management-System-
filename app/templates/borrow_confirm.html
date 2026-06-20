@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Borrow - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Borrow Confirmation</span>
+    <h1>Confirm your borrow request.</h1>
+    <p>Review the book details before adding it to your borrowed shelf.</p>
+</section>
+
+<section class="book-detail-layout reveal">
+    <div class="detail-cover">
+        <img src="{{ book.image }}" alt="{{ book.title }}">
+    </div>
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>{{ book.title }}</h2>
+            <span class="status-badge success">{{ book.book_type or 'Physical' }} Book</span>
+        </div>
+        <p>{{ book.description or 'No description available.' }}</p>
+        <div class="detail-grid">
+            <div><span>Author</span><strong>{{ book.author }}</strong></div>
+            <div><span>Genre</span><strong>{{ book.category }}</strong></div>
+            <div><span>Availability</span><strong>{{ book.availability_status }}</strong></div>
+            <div><span>Due Date</span><strong>21 days after borrowing</strong></div>
+            <div><span>Borrow Fee</span><strong>NPR 50</strong></div>
+            <div><span>Reading</span><strong>{{ 'Open online after borrowing' if book.book_type == 'Digital' else 'Collect physical copy from library' }}</strong></div>
+        </div>
+        <form class="review-form" method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
+            <p class="empty-state">Borrowing creates a transaction record, due date, payment status, and notification.</p>
+            <div class="form-row">
+                <button class="btn btn-primary" type="submit">Confirm Borrow</button>
+                <a class="btn btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Cancel</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}
