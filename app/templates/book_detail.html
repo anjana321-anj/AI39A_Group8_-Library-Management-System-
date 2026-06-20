@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} – BookVerse{% endblock %}
+
+{% block content %}
+<section class="book-detail-wrap reveal">
+    <div class="book-detail-cover">
+        <img src="{{ book.image or 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600' }}"
+             alt="{{ book.title }}" class="book-detail-img">
+        <div class="book-detail-status">
+            {% if book.available %}
+            <span class="badge badge-available badge-lg">✓ Available to Borrow</span>
+            {% else %}
+            <span class="badge badge-unavailable badge-lg">✗ Currently Unavailable</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="book-detail-info">
+        <span class="badge badge-category">{{ book.category }}</span>
+        <h1 class="book-detail-title">{{ book.title }}</h1>
+        <p class="book-detail-author">by <strong>{{ book.author }}</strong></p>
+
+        {% if book.description %}
+        <p class="book-detail-desc">{{ book.description }}</p>
+        {% endif %}
+
+        <div class="book-meta-grid">
+            {% if book.isbn %}
+            <div class="meta-item"><span class="meta-label">ISBN</span><span>{{ book.isbn }}</span></div>
+            {% endif %}
+            {% if book.publisher %}
+            <div class="meta-item"><span class="meta-label">Publisher</span><span>{{ book.publisher }}</span></div>
+            {% endif %}
+            {% if book.year %}
+            <div class="meta-item"><span class="meta-label">Year</span><span>{{ book.year }}</span></div>
+            {% endif %}
+            {% if book.pages %}
+            <div class="meta-item"><span class="meta-label">Pages</span><span>{{ book.pages }}</span></div>
+            {% endif %}
+            {% if book.language %}
+            <div class="meta-item"><span class="meta-label">Language</span><span>{{ book.language }}</span></div>
+            {% endif %}
+        </div>
+
+        <div class="book-detail-actions">
+            {% if session.get('user_id') and book.available %}
+            <form method="post" action="{{ url_for('auth.borrow', book_id=book.id) }}">
+                <button class="btn btn-primary" type="submit" data-ripple>Borrow This Book</button>
+            </form>
+            {% elif not book.available %}
+            <button class="btn btn-unavailable" disabled>Currently Unavailable</button>
+            {% else %}
+            <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in to Borrow</a>
+            {% endif %}
+            <a class="btn btn-ghost" href="{{ url_for('auth.books') }}">← Back to Catalog</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
