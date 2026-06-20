@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Buy Book - BookVerse{% endblock %}
+
+{% block content %}
+<section class="book-detail-layout reveal">
+    <div class="detail-cover">
+        <img src="{{ book.image }}" alt="{{ book.title }}">
+    </div>
+    <form class="data-panel" method="post" data-loading-form>
+        <span class="eyebrow">Buy Book</span>
+        <h1>{{ book.title }}</h1>
+        <p>{{ book.author }} &middot; {{ book.category }}</p>
+        <div class="detail-grid">
+            <div><span>Unit Price</span><strong>NPR {{ "%.2f"|format(book.price or 0) }}</strong></div>
+            <div><span>Stock Quantity</span><strong>{{ book.stock_quantity }}</strong></div>
+            <div><span>Publisher</span><strong>{{ book.publisher or 'N/A' }}</strong></div>
+            <div><span>ISBN</span><strong>{{ book.isbn or 'N/A' }}</strong></div>
+            <div><span>Order Summary</span><strong>Quantity x Unit Price</strong></div>
+            <div><span>Payment</span><strong>Proceed To Pay after order creation</strong></div>
+        </div>
+        <label class="field">
+            <span>Quantity</span>
+            <input type="number" name="quantity" min="1" max="{{ book.stock_quantity }}" value="1" required>
+        </label>
+        {% if book.stock_quantity > 0 %}
+            <button class="btn btn-primary" type="submit" data-ripple>
+                <span class="btn-label">Buy Now</span>
+                <span class="btn-loader"></span>
+            </button>
+            <button class="btn btn-secondary" type="submit" formaction="{{ url_for('auth.reserve_book', book_id=book.id) }}" formmethod="post" data-ripple>Buy Later</button>
+        {% else %}
+            <button class="btn btn-disabled" type="button" disabled>Out of Stock</button>
+        {% endif %}
+    </form>
+</section>
+{% endblock %}
