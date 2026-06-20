@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Fine Reports - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Fines</span>
+    <h1>Fine records and reports.</h1>
+    <p>Review late-return fines, mark payment state, waive fines, and export reports.</p>
+    <a class="btn btn-secondary" href="{{ url_for('auth.admin_fines', export='csv') }}">Export Fine Report</a>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Fine Records</h2>
+        <span class="status-badge success">{{ fines|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Book</th>
+                    <th>Reason</th>
+                    <th>Overdue Days</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fine in fines %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ fine.username }}</strong><span>{{ fine.email }}</span></td>
+                        <td><strong>{{ fine.title }}</strong><span>{{ fine.author }}</span></td>
+                        <td>{{ fine.reason }}</td>
+                        <td>{{ fine.overdue_days }}</td>
+                        <td>NPR {{ "%.2f"|format(fine.total_fine or 0) }}</td>
+                        <td><span class="status-badge {{ 'success' if fine.status in ['Paid', 'Waived'] else 'warning' }}">{{ fine.status }}</span></td>
+                        <td>{{ fine.calculated_at.strftime('%b %d, %Y') if fine.calculated_at else 'N/A' }}</td>
+                        <td class="admin-actions">
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.edit_fine_admin', fine_id=fine.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('auth.update_fine_status_admin', fine_id=fine.id, status='Paid') }}"><button class="btn btn-small btn-secondary" type="submit">Paid</button></form>
+                            <form method="post" action="{{ url_for('auth.update_fine_status_admin', fine_id=fine.id, status='Unpaid') }}"><button class="btn btn-small btn-secondary" type="submit">Unpaid</button></form>
+                            <form method="post" action="{{ url_for('auth.update_fine_status_admin', fine_id=fine.id, status='Waived') }}"><button class="btn btn-small btn-secondary" type="submit">Waive</button></form>
+                            <form method="post" action="{{ url_for('auth.delete_fine_admin', fine_id=fine.id) }}"><button class="btn btn-small btn-disabled" type="submit" data-confirm="Delete this fine record?">Delete</button></form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="9">No fine records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

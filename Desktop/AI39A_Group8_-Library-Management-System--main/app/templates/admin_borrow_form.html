@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Borrow Record - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Borrow</span>
+    <h1>Edit borrow record.</h1>
+    <p>{{ borrow.username }} borrowed {{ borrow.title }}.</p>
+</section>
+
+<section class="dashboard-grid reveal">
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Borrow Details</h2>
+            <a href="{{ url_for('auth.admin_borrows') }}">Back</a>
+        </div>
+        <form class="admin-form-grid" method="post">
+            <label class="field">
+                <span>Due Date</span>
+                <input type="datetime-local" name="due_date" value="{{ borrow.due_date.strftime('%Y-%m-%dT%H:%M') if borrow.due_date else '' }}">
+            </label>
+            <label class="field">
+                <span>Status</span>
+                <select name="status">
+                    {% for status in ['borrowed', 'returned', 'overdue', 'lost', 'cancelled'] %}
+                        <option value="{{ status }}" {{ 'selected' if borrow.status == status else '' }}>{{ status|title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field">
+                <span>Fine Amount</span>
+                <input type="number" step="0.01" min="0" name="fine_amount" value="{{ borrow.fine_amount or 0 }}">
+            </label>
+            <div class="form-row full-field">
+                <button class="btn btn-primary" type="submit">Update Borrow</button>
+                <a class="btn btn-secondary" href="{{ url_for('auth.admin_borrows') }}">Cancel</a>
+            </div>
+        </form>
+    </article>
+
+    <article class="data-panel">
+        <div class="panel-heading">
+            <h2>Borrow Timeline</h2>
+            <span class="status-badge success">{{ timeline|length }} events</span>
+        </div>
+        <div class="activity-list">
+            {% for item in timeline %}
+                <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                        <strong>{{ item.action }} - {{ item.status|title }}</strong>
+                        <small>{{ item.note or 'No note' }} &middot; {{ item.created_at.strftime('%b %d, %Y') if item.created_at else 'N/A' }}</small>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-state">No timeline records yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

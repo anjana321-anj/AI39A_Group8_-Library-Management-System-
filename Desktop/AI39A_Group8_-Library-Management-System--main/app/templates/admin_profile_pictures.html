@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Pictures - BookVerse{% endblock %}
+
+{% block content %}
+<section class="page-hero reveal">
+    <span class="eyebrow">Admin Profile Pictures</span>
+    <h1>User and admin profile picture moderation.</h1>
+    <p>Remove inappropriate pictures or restore a previously removed picture when needed.</p>
+</section>
+
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h2>Profile Pictures</h2>
+        <span class="status-badge success">{{ pictures|length }} records</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>User</th>
+                    <th>Picture</th>
+                    <th>Status</th>
+                    <th>Uploaded</th>
+                    <th>Modified</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for picture in pictures %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ picture.username }}</strong><span>{{ picture.email }}</span></td>
+                        <td>
+                            <div class="review-avatar">
+                                <img src="{{ picture.image_path }}" alt="{{ picture.username }} profile picture">
+                            </div>
+                        </td>
+                        <td><span class="status-badge {{ 'success' if picture.status == 'Active' else 'warning' }}">{{ picture.status }}</span></td>
+                        <td>{{ picture.upload_date.strftime('%b %d, %Y') if picture.upload_date else 'N/A' }}</td>
+                        <td>{{ picture.modified_date.strftime('%b %d, %Y') if picture.modified_date else 'N/A' }}</td>
+                        <td class="admin-actions">
+                            {% if picture.status == 'Active' %}
+                                <form method="post" action="{{ url_for('auth.admin_remove_profile_picture', user_id=picture.user_id) }}">
+                                    <button class="btn btn-small btn-disabled" type="submit" data-confirm="Remove this profile picture?">Remove</button>
+                                </form>
+                            {% else %}
+                                <form method="post" action="{{ url_for('auth.admin_restore_profile_picture', picture_id=picture.id) }}">
+                                    <button class="btn btn-small btn-secondary" type="submit">Restore</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7">No profile pictures uploaded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

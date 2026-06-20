@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Community - BookVerse{% endblock %}
+
+{% block content %}
+<section class="compact-page-heading reveal">
+    <div>
+        <span class="eyebrow">Community</span>
+        <h1>Reader reviews and replies.</h1>
+        <p>See what other readers are saying, like helpful reviews, and join the conversation.</p>
+    </div>
+    <form class="sort-form" method="get">
+        <label class="field">
+            <span>Sort</span>
+            <select name="sort">
+                <option value="recent" {{ 'selected' if sort == 'recent' else '' }}>Most recent</option>
+                <option value="liked" {{ 'selected' if sort == 'liked' else '' }}>Most liked</option>
+            </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Apply</button>
+    </form>
+</section>
+
+<section class="community-feed reveal">
+    {% for review in reviews %}
+        <article class="community-card">
+            <div class="community-author">
+                <span class="review-avatar">
+                    {% if review.profile_pic_url %}
+                        <img src="{{ review.profile_pic_url }}" alt="{{ review.username }} profile picture">
+                    {% else %}
+                        {{ review.username[:1]|upper }}
+                    {% endif %}
+                </span>
+                <div>
+                    <strong>{{ review.username }}</strong>
+                    <span>{{ review.review_date.strftime('%b %d, %Y') if review.review_date else 'recently' }}</span>
+                </div>
+            </div>
+            <a class="community-book" href="{{ url_for('auth.book_details', book_id=review.book_id) }}">
+                <img src="{{ review.image }}" alt="{{ review.title }}">
+                <div>
+                    <strong>{{ review.title }}</strong>
+                    <span>{{ review.author }} &middot; {{ review.rating or 'No' }} rating</span>
+                </div>
+            </a>
+            <p>{{ review.review_text }}</p>
+            <div class="community-actions">
+                <form method="post" action="{{ url_for('auth.like_community_review', review_id=review.id) }}">
+                    <button class="btn btn-small {{ 'btn-disabled' if review.liked_by_current_user else 'btn-secondary' }}" type="submit" {{ 'disabled' if review.liked_by_current_user else '' }}>
+                        {{ review.like_count }} Like{{ '' if review.like_count == 1 else 's' }}
+                    </button>
+                </form>
+                <span>{{ review.reply_count }} repl{{ 'y' if review.reply_count == 1 else 'ies' }}</span>
+            </div>
+            <div class="community-replies">
+                {% for reply in replies.get(review.id, []) %}
+                    <div class="reply-card">
+                        <span class="review-avatar">
+                            {% if reply.profile_pic_url %}
+                                <img src="{{ reply.profile_pic_url }}" alt="{{ reply.username }} profile picture">
+                            {% else %}
+                                {{ reply.username[:1]|upper }}
+                            {% endif %}
+                        </span>
+                        <div>
+                            <strong>{{ reply.username }}</strong>
+                            <p>{{ reply.reply_text }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <form class="reply-form" method="post" action="{{ url_for('auth.reply_community_review', review_id=review.id) }}">
+                <input type="text" name="reply_text" placeholder="Write a reply..." required>
+                <button class="btn btn-small btn-primary" type="submit">Reply</button>
+            </form>
+        </article>
+    {% else %}
+        <div class="empty-panel">
+            <h2>No community reviews yet.</h2>
+            <p>Borrow, reserve, or purchase a book, then leave a review to start the conversation.</p>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}

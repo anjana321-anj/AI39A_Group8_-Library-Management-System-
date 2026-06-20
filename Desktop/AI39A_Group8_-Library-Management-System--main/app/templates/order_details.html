@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Order Details - BookVerse{% endblock %}
+
+{% block content %}
+<section class="data-panel reveal">
+    <div class="panel-heading">
+        <h1>Order #{{ order.id }}</h1>
+        <div class="admin-actions">
+            {% if order.status not in ['Paid', 'Completed'] %}
+                <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_order', order_id=order.id) }}">Proceed To Pay</a>
+            {% endif %}
+            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_receipt', order_id=order.id) }}">Receipt</a>
+            {% if can_read %}
+                <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=order.book_id) }}">Read Book</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="detail-grid">
+        <div><span>Book Title</span><strong>{{ order.title }}</strong></div>
+        <div><span>Author</span><strong>{{ order.author }}</strong></div>
+        <div><span>ISBN</span><strong>{{ order.isbn or 'N/A' }}</strong></div>
+        <div><span>Publisher</span><strong>{{ order.publisher or 'N/A' }}</strong></div>
+        <div><span>Quantity</span><strong>{{ order.quantity }}</strong></div>
+        <div><span>Unit Price</span><strong>NPR {{ "%.2f"|format(order.unit_price or 0) }}</strong></div>
+        <div><span>Total Amount</span><strong>NPR {{ "%.2f"|format(order.total_amount or 0) }}</strong></div>
+        <div><span>Payment Method</span><strong>{{ order.payment_method or 'Pending' }}</strong></div>
+        <div><span>Status</span><strong>{{ order.status }}</strong></div>
+        <div><span>Order Date</span><strong>{{ order.order_date.strftime('%b %d, %Y') if order.order_date else 'N/A' }}</strong></div>
+    </div>
+</section>
+{% endblock %}
