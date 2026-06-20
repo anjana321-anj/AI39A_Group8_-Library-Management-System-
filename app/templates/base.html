@@ -43,6 +43,8 @@
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.home' else '' }}" href="{{ url_for('auth.home') }}">Home</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.books' else '' }}" href="{{ url_for('auth.books') }}">Books</a>
                 <a class="nav-link {{ 'active' if current_endpoint == 'auth.my_library' else '' }}" href="{{ url_for('auth.my_library') }}">My Library</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.community' else '' }}" href="{{ url_for('auth.community') if session.get('user_id') else url_for('auth.login', next=url_for('auth.community')) }}">Community</a>
+                <a class="nav-link {{ 'active' if current_endpoint == 'auth.contact' else '' }}" href="{{ url_for('auth.contact') }}">Contact</a>
             </nav>
 
             <div class="nav-actions">

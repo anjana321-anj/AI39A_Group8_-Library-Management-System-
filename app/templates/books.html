@@ -131,7 +131,9 @@
                         <small>{{ book.review_count or 0 }} reviews</small>
                     </div>
                     <div class="book-meta">
-                        <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}" data-ripple>Read</a>
+                        {% if book.id in readable_book_ids %}
+                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}" data-ripple>Read</a>
+                        {% endif %}
                         <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}" data-ripple>Details</a>
                         {% if is_available %}
                             {% if session.get('user_id') %}

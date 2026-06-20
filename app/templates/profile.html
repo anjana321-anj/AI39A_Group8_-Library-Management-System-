@@ -20,6 +20,13 @@
             <span>Member since</span>
             <strong>{{ user.created_at.strftime('%b %Y') if user and user.created_at else 'Today' }}</strong>
         </div>
+        <form class="profile-picture-form" method="post" action="{{ url_for('auth.update_profile_picture') }}" enctype="multipart/form-data">
+            <label class="field">
+                <span>Profile picture</span>
+                <input type="file" name="profile_picture" accept=".png,.jpg,.jpeg">
+            </label>
+            <button class="btn btn-secondary btn-wide" type="submit">Upload Picture</button>
+        </form>
         <a class="btn btn-primary btn-wide" href="{{ url_for('auth.edit_profile') }}" data-ripple>Edit Profile</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.reset_logged_in_password') }}" data-ripple>Profile Settings</a>
         <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.orders') }}" data-ripple>Orders</a>

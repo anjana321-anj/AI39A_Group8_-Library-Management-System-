@@ -75,7 +75,6 @@
                             <th>Borrow Date</th>
                             <th>Due Date</th>
                             <th>Status</th>
-                            <th>Payment</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -106,27 +105,16 @@
                                 </td>
                                 <td>
                                     {% if loan.status in ['borrowed', 'overdue'] %}
-                                        {% if loan.payment_status == 'Paid' %}
-                                            <span class="status-badge success">Paid</span>
-                                        {% else %}
-                                            <span class="status-badge warning">Unpaid (NPR {{ "%.0f"|format(loan.payment_amount or 50) }})</span>
-                                        {% endif %}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if loan.status in ['borrowed', 'overdue'] %}
-                                        <div style="display: flex; gap: 8px;">
+                                        <div class="admin-actions">
+                                            {% if loan.book_id in readable_book_ids %}
+                                                <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=loan.book_id) }}">Read</a>
+                                            {% endif %}
                                             {% if loan.status == 'borrowed' and (loan.renewal_count or 0) < 2 %}
                                                 <form method="post" action="{{ url_for('auth.renew_borrowed', borrowed_id=loan.id) }}" data-confirm="Renew this book for 7 more days?">
                                                     <button class="btn btn-small btn-secondary" type="submit">Renew</button>
                                                 </form>
                                             {% endif %}
-                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return</a>
-                                            {% if loan.payment_status != 'Paid' %}
-                                                <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_borrow', borrowed_id=loan.id) }}">Pay Fee</a>
-                                            {% endif %}
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.return_borrowed', borrowed_id=loan.id) }}">Return Book</a>
                                         </div>
                                     {% elif loan.status == 'returned' %}
                                     <span class="text-muted">Completed</span>
@@ -267,6 +255,7 @@
                                 <th>Book</th>
                                 <th>Category</th>
                                 <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -278,7 +267,13 @@
                                     </td>
                                     <td>{{ book.category }}</td>
                                     <td><span class="status-badge {{ 'warning' if book.stock_quantity < 1 else 'success' }}">{{ book.availability_status }}</span></td>
-                                    <td><a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a></td>
+                                    <td>
+                                        {% if book.id in readable_book_ids %}
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                                        {% else %}
+                                            <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -293,7 +288,9 @@
                                     <strong>{{ book.title }}</strong>
                                     <small>{{ book.author }} &middot; {{ book.category }} &middot; {{ book.average_rating or 0 }}/5</small>
                                 </div>
-                                <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                                {% if book.id in readable_book_ids %}
+                                    <a class="btn btn-small btn-secondary" href="{{ url_for('auth.read_book', book_id=book.id) }}">Read</a>
+                                {% endif %}
                                 <a class="btn btn-small btn-secondary" href="{{ url_for('auth.book_details', book_id=book.id) }}">Open</a>
                             </div>
                         {% else %}

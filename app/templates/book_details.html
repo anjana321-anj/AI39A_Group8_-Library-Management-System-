@@ -33,7 +33,9 @@
             <div><span>Total Reviews</span><strong>{{ book.review_count or 0 }}</strong></div>
         </div>
         <div class="action-stack">
-        <a class="btn btn-primary" href="{{ url_for('auth.read_book', book_id=book.id) }}" data-ripple>Read</a>
+        {% if can_read %}
+            <a class="btn btn-primary" href="{{ url_for('auth.read_book', book_id=book.id) }}" data-ripple>Read</a>
+        {% endif %}
         {% if session.get('user_id') %}
             <form method="post" action="{{ url_for('auth.remove_from_favourites' if is_favourite else 'auth.add_to_favourites', book_id=book.id) }}">
                 <button class="btn btn-secondary" type="submit" data-ripple>{{ 'Remove Favourite' if is_favourite else 'Add to Favourites' }}</button>

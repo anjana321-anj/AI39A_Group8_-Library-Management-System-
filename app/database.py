@@ -775,6 +775,40 @@ def _ensure_feature_tables(cursor):
     )
     cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS review_likes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            review_id INT NOT NULL,
+            user_id INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_review_like (review_id, user_id),
+            CONSTRAINT fk_review_likes_review
+                FOREIGN KEY (review_id) REFERENCES book_reviews(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_review_likes_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS review_replies (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            review_id INT NOT NULL,
+            user_id INT NOT NULL,
+            reply_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_review_replies_review
+                FOREIGN KEY (review_id) REFERENCES book_reviews(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_review_replies_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS return_reminders (
             id INT AUTO_INCREMENT PRIMARY KEY,
             borrowed_id INT NOT NULL,
@@ -3135,6 +3169,90 @@ def list_book_reviews(book_id):
                  COALESCE(book_reviews.updated_at, book_reviews.review_date) DESC
         """,
         (book_id,),
+    )
+
+
+def list_community_reviews(sort="recent", user_id=None):
+    order_sql = "like_count DESC, review_date DESC" if sort == "liked" else "review_date DESC"
+    return fetch_all(
+        f"""
+        SELECT book_reviews.*,
+               users.username,
+               profile_pictures.image_path AS profile_pic_url,
+               books.title,
+               books.author,
+               books.image,
+               COALESCE(likes.like_count, 0) AS like_count,
+               COALESCE(replies.reply_count, 0) AS reply_count,
+               CASE WHEN user_likes.id IS NULL THEN 0 ELSE 1 END AS liked_by_current_user
+        FROM book_reviews
+        INNER JOIN users ON book_reviews.user_id = users.id
+        INNER JOIN books ON book_reviews.book_id = books.id
+        LEFT JOIN profile_pictures
+            ON profile_pictures.user_id = users.id
+           AND profile_pictures.status = 'Active'
+        LEFT JOIN (
+            SELECT review_id, COUNT(*) AS like_count
+            FROM review_likes
+            GROUP BY review_id
+        ) AS likes ON likes.review_id = book_reviews.id
+        LEFT JOIN (
+            SELECT review_id, COUNT(*) AS reply_count
+            FROM review_replies
+            GROUP BY review_id
+        ) AS replies ON replies.review_id = book_reviews.id
+        LEFT JOIN review_likes AS user_likes
+            ON user_likes.review_id = book_reviews.id
+           AND user_likes.user_id = %s
+        WHERE book_reviews.review_text IS NOT NULL
+          AND book_reviews.status = 'Visible'
+          AND book_reviews.deleted_at IS NULL
+        ORDER BY {order_sql}
+        """,
+        (user_id or 0,),
+    )
+
+
+def list_review_replies(review_ids):
+    if not review_ids:
+        return {}
+    placeholders = ", ".join(["%s"] * len(review_ids))
+    rows = fetch_all(
+        f"""
+        SELECT review_replies.*, users.username, profile_pictures.image_path AS profile_pic_url
+        FROM review_replies
+        INNER JOIN users ON review_replies.user_id = users.id
+        LEFT JOIN profile_pictures
+            ON profile_pictures.user_id = users.id
+           AND profile_pictures.status = 'Active'
+        WHERE review_replies.review_id IN ({placeholders})
+        ORDER BY review_replies.created_at ASC
+        """,
+        tuple(review_ids),
+    )
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(row["review_id"], []).append(row)
+    return grouped
+
+
+def like_review_once(review_id, user_id):
+    return execute(
+        """
+        INSERT IGNORE INTO review_likes (review_id, user_id)
+        VALUES (%s, %s)
+        """,
+        (review_id, user_id),
+    )
+
+
+def create_review_reply(review_id, user_id, reply_text):
+    return execute(
+        """
+        INSERT INTO review_replies (review_id, user_id, reply_text)
+        VALUES (%s, %s, %s)
+        """,
+        (review_id, user_id, reply_text),
     )
 
 

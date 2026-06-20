@@ -11,7 +11,9 @@
                 <a class="btn btn-small btn-primary" href="{{ url_for('auth.pay_order', order_id=order.id) }}">Proceed To Pay</a>
             {% endif %}
             <a class="btn btn-small btn-secondary" href="{{ url_for('auth.order_receipt', order_id=order.id) }}">Receipt</a>
-            <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=order.book_id) }}">Read Book</a>
+            {% if can_read %}
+                <a class="btn btn-small btn-primary" href="{{ url_for('auth.read_book', book_id=order.book_id) }}">Read Book</a>
+            {% endif %}
         </div>
     </div>
     <div class="detail-grid">

@@ -25,6 +25,7 @@ from app.database import (
     create_notification,
     create_order,
     create_password_reset_token,
+    create_review_reply,
     create_reservation,
     create_user,
     delete_book,
@@ -69,6 +70,7 @@ from app.database import (
     get_valid_password_reset_token,
     is_book_favourite,
     join_waitlist,
+    like_review_once,
     leave_waitlist,
     list_activity_logs,
     list_admin_fine_payments,
@@ -84,7 +86,9 @@ from app.database import (
     list_backup_history,
     list_book_reviews,
     list_borrow_timeline,
+    list_community_reviews,
     list_profile_picture_history,
+    list_review_replies,
     list_books,
     list_profile_updates,
     list_review_moderation_logs,
@@ -136,7 +140,7 @@ from app.database import (
 )
 
 PROFILE_UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "uploads", "profile_pictures")
-ALLOWED_PROFILE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+ALLOWED_PROFILE_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 
 def login_required(view):
@@ -451,6 +455,7 @@ class AuthController:
         if focus_book_id:
             books.sort(key=lambda book: 0 if book["id"] == focus_book_id else 1)
         favourite_ids = get_favourite_book_ids(session["user_id"]) if session.get("user_id") else set()
+        readable_book_ids = self._readable_book_ids(session["user_id"]) if session.get("user_id") else set()
         
         borrowed_book_ids = set()
         if session.get("user_id"):
@@ -466,6 +471,7 @@ class AuthController:
             years=years,
             focus_book_id=focus_book_id,
             favourite_ids=favourite_ids,
+            readable_book_ids=readable_book_ids,
             borrowed_book_ids=borrowed_book_ids,
         )
 
@@ -481,10 +487,89 @@ class AuthController:
         if not book:
             flash("Book not found.", "warning")
             return redirect(url_for("auth.books"))
+        if not session.get("user_id"):
+            flash("Please sign in before reading this book.", "warning")
+            return redirect(url_for("auth.login", next=request.path))
+        can_read = self._user_can_read_book(session["user_id"], book_id)
+        if not can_read:
+            flash("Read access is available only while a book is currently borrowed or after purchase.", "warning")
+            return redirect(url_for("auth.book_details", book_id=book_id))
         page = max(self._safe_int(request.args.get("page"), 1), 1)
         zoom = min(max(self._safe_int(request.args.get("zoom"), 100), 75), 200)
         fullscreen = request.args.get("fullscreen") == "1"
         return render_template("read_book.html", book=book, page=page, zoom=zoom, fullscreen=fullscreen)
+
+    def _user_can_read_book(self, user_id, book_id):
+        active = fetch_one(
+            """
+            SELECT id
+            FROM borrowed_books
+            WHERE user_id = %s
+              AND book_id = %s
+              AND status IN ('borrowed', 'overdue')
+              AND COALESCE(due_date, DATE_ADD(borrow_date, INTERVAL 21 DAY)) >= NOW()
+            LIMIT 1
+            """,
+            (user_id, book_id),
+        )
+        if active:
+            return True
+        purchase = fetch_one(
+            """
+            SELECT id
+            FROM orders
+            WHERE user_id = %s
+              AND book_id = %s
+              AND status IN ('Paid', 'Completed')
+            LIMIT 1
+            """,
+            (user_id, book_id),
+        )
+        return bool(purchase)
+
+    def _readable_book_ids(self, user_id):
+        rows = fetch_all(
+            """
+            SELECT DISTINCT book_id
+            FROM borrowed_books
+            WHERE user_id = %s
+              AND status IN ('borrowed', 'overdue')
+              AND COALESCE(due_date, DATE_ADD(borrow_date, INTERVAL 21 DAY)) >= NOW()
+            UNION
+            SELECT DISTINCT book_id
+            FROM orders
+            WHERE user_id = %s
+              AND status IN ('Paid', 'Completed')
+            """,
+            (user_id, user_id),
+        )
+        return {row["book_id"] for row in rows}
+
+    @login_required
+    def community(self):
+        sort = request.args.get("sort", "recent")
+        if sort not in {"recent", "liked"}:
+            sort = "recent"
+        reviews = list_community_reviews(sort=sort, user_id=session["user_id"])
+        replies = list_review_replies([review["id"] for review in reviews])
+        return render_template("community.html", reviews=reviews, replies=replies, sort=sort)
+
+    @login_required
+    def like_community_review(self, review_id):
+        like_review_once(review_id, session["user_id"])
+        return redirect(request.referrer or url_for("auth.community"))
+
+    @login_required
+    def reply_community_review(self, review_id):
+        reply_text = request.form.get("reply_text", "").strip()
+        if len(reply_text) < 2:
+            flash("Reply must be at least 2 characters.", "warning")
+        elif len(reply_text) > 600:
+            flash("Reply is too long. Please keep it under 600 characters.", "warning")
+        else:
+            create_review_reply(review_id, session["user_id"], reply_text)
+            flash("Reply posted.", "success")
+        return redirect(request.referrer or url_for("auth.community"))
 
     def contact(self):
         if request.method == "POST":
@@ -578,7 +663,7 @@ class AuthController:
 
         extension = uploaded_file.filename.rsplit(".", 1)[-1].lower() if "." in uploaded_file.filename else ""
         if extension not in ALLOWED_PROFILE_EXTENSIONS:
-            flash("Profile picture must be PNG, JPG, JPEG, WEBP, or GIF.", "warning")
+            flash("Profile picture must be PNG, JPG, or JPEG.", "warning")
             return redirect(url_for("auth.profile"))
 
         os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
@@ -737,6 +822,7 @@ class AuthController:
             recommended_books=recommended_books,
             unread_notifications_count=unread_notifications_count,
             active_reservations=active_reservations,
+            readable_book_ids=self._readable_book_ids(session["user_id"]),
         )
 
     @login_required
@@ -753,6 +839,7 @@ class AuthController:
             borrowed_books=borrowed_books,
             current_borrows=current_borrows,
             returned_books=returned_books,
+            readable_book_ids=self._readable_book_ids(session["user_id"]),
         )
 
     def login_enhanced(self):
@@ -796,28 +883,75 @@ class AuthController:
             return redirect(url_for("auth.borrowed"))
 
         if request.method == "GET":
-            return render_template("return_confirm.html", borrow=borrow_record, confirm_step=False)
+            return render_template(
+                "return_confirm.html",
+                borrow=borrow_record,
+                payment_step=True,
+                review_step=False,
+                totals=self._return_totals(borrow_record),
+            )
 
-        action = request.form.get("action", "review")
+        action = request.form.get("action", "pay")
         rating = request.form.get("rating")
         review_text = request.form.get("review_text", "").strip()
         book_id = borrow_record["book_id"]
 
-        if action in {"review", "skip"}:
-            if action == "review" and review_text and len(review_text) < 5:
-                flash("Review must be at least 5 characters, or use Skip Review.", "warning")
-                return render_template("return_confirm.html", borrow=borrow_record, confirm_step=False, rating=rating, review_text=review_text)
+        if action == "pay":
+            if borrow_record.get("status") not in {"borrowed", "overdue"}:
+                flash("This book has already been returned.", "warning")
+                return redirect(url_for("auth.borrowed"))
+            payment_method = request.form.get("payment_method", "").strip()
+            if payment_method not in {"Cash Payment", "QR Payment", "Card Payment"}:
+                flash("Choose a valid payment method before returning the book.", "warning")
+                return render_template(
+                    "return_confirm.html",
+                    borrow=borrow_record,
+                    payment_step=True,
+                    review_step=False,
+                    totals=self._return_totals(borrow_record),
+                )
+
+            update_borrow_payment_status(borrowed_id, session["user_id"], "Paid")
+            returned_book_id = return_book(session["user_id"], borrowed_id)
+            if not returned_book_id:
+                flash("That borrowed book could not be returned.", "warning")
+                return redirect(url_for("auth.borrowed"))
+            updated_borrow = get_borrow_record(borrowed_id, session["user_id"]) or borrow_record
+            create_notification(
+                session["user_id"],
+                "Book Returned",
+                f"You have successfully returned '{borrow_record['title']}'.",
+                "return",
+                returned_book_id,
+            )
+            flash("Payment successful. Book returned.", "success")
+            return render_template(
+                "return_confirm.html",
+                borrow=updated_borrow,
+                payment_step=False,
+                review_step=True,
+                totals=self._return_totals(updated_borrow),
+            )
+
+        if action == "skip_review":
+            flash("Return complete. You can review the book later from its details page.", "success")
+            return redirect(url_for("auth.book_details", book_id=book_id, returned=1))
+
+        if action != "save_review":
+            flash("Please complete the return payment first.", "warning")
+            return redirect(url_for("auth.return_borrowed", borrowed_id=borrowed_id))
+
+        if review_text and len(review_text) < 5:
+            flash("Review must be at least 5 characters, or skip it.", "warning")
             return render_template(
                 "return_confirm.html",
                 borrow=borrow_record,
-                confirm_step=True,
-                rating=rating if action == "review" else "",
-                review_text=review_text if action == "review" else "",
+                payment_step=False,
+                review_step=True,
+                totals=self._return_totals(borrow_record),
+                rating=rating,
+                review_text=review_text,
             )
-
-        if action != "confirm":
-            flash("Please confirm the return before we update your borrowed shelf.", "warning")
-            return redirect(url_for("auth.return_borrowed", borrowed_id=borrowed_id))
 
         if rating:
             try:
@@ -832,20 +966,26 @@ class AuthController:
             upsert_review(session["user_id"], book_id, review_text, "Borrowed")
             log_event(session["user_id"], "review_submission", "book", book_id, "Book review submitted")
 
-        returned_book_id = return_book(session["user_id"], borrowed_id)
-        if returned_book_id:
-            create_notification(
-                session["user_id"],
-                "Book Returned",
-                f"You have successfully returned '{borrow_record['title']}'.",
-                "return",
-                returned_book_id
-            )
-            flash("Book returned successfully.", "success")
-            return redirect(url_for("auth.book_details", book_id=returned_book_id, returned=1))
-        else:
-            flash("That borrowed book could not be returned.", "warning")
-        return redirect(url_for("auth.borrowed"))
+        flash("Thanks for leaving feedback.", "success")
+        return redirect(url_for("auth.book_details", book_id=book_id, returned=1))
+
+    def _return_totals(self, borrow):
+        due_date = borrow.get("display_due_date") or borrow.get("due_date")
+        overdue_days = 0
+        if due_date:
+            if not isinstance(due_date, datetime):
+                due_date = datetime.combine(due_date, datetime.max.time())
+            overdue_days = max((datetime.now() - due_date).days, 0)
+        fine_amount = float(borrow.get("fine_amount") or 0)
+        if overdue_days and fine_amount <= 0:
+            fine_amount = float(get_fine_per_day() or 0) * overdue_days
+        borrow_fee = float(borrow.get("payment_amount") or 50)
+        return {
+            "borrow_fee": borrow_fee,
+            "fine_amount": fine_amount,
+            "total_amount": borrow_fee + fine_amount,
+            "overdue_days": overdue_days,
+        }
 
     @login_required
     def renew_borrowed(self, borrowed_id):
@@ -880,6 +1020,7 @@ class AuthController:
             reservations=list_user_reservations(session["user_id"]),
             recently_read=[loan for loan in borrow_history if loan.get("status") == "returned"][:6],
             reviews=list_user_reviews_and_ratings(session["user_id"])[:6],
+            readable_book_ids=self._readable_book_ids(session["user_id"]),
         )
 
     @login_required
@@ -964,7 +1105,11 @@ class AuthController:
 
     @login_required
     def favourites(self):
-        return render_template("favourites.html", books=list_user_favourites(session["user_id"]))
+        return render_template(
+            "favourites.html",
+            books=list_user_favourites(session["user_id"]),
+            readable_book_ids=self._readable_book_ids(session["user_id"]),
+        )
 
     @login_required
     def add_to_favourites(self, book_id):
@@ -1050,6 +1195,7 @@ class AuthController:
             "orders.html",
             orders=list_user_orders(session["user_id"]),
             active_borrows=get_user_active_borrowed_books(session["user_id"]),
+            readable_book_ids=self._readable_book_ids(session["user_id"]),
         )
 
     @login_required
@@ -1058,7 +1204,11 @@ class AuthController:
         if not order:
             flash("Order not found.", "warning")
             return redirect(url_for("auth.orders"))
-        return render_template("order_details.html", order=order)
+        return render_template(
+            "order_details.html",
+            order=order,
+            can_read=order.get("status") in {"Paid", "Completed"},
+        )
 
     @login_required
     def pay_order(self, order_id):
@@ -1916,4 +2066,5 @@ class AuthController:
             reviews=list_book_reviews(book_id),
             library_rating=get_library_rating_summary(),
             is_borrowed=is_borrowed,
+            can_read=self._user_can_read_book(user_id, book_id) if user_id else False,
         )
