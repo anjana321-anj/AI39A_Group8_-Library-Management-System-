@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt - BookVerse{% endblock %}
+
+{% block content %}
+<section class="receipt-slip reveal">
+    <div class="receipt-head">
+        <h1>Payment Receipt</h1>
+        <span>{{ order.status }}</span>
+    </div>
+    <div class="receipt-lines">
+        <div><span>Receipt number</span><strong>{{ order.receipt_number or ('BV-RCPT-%05d'|format(order.id)) }}</strong></div>
+        <div><span>Date and time</span><strong>{{ order.receipt_issued_at.strftime('%b %d, %Y %I:%M %p') if order.receipt_issued_at else order.order_date.strftime('%b %d, %Y %I:%M %p') if order.order_date else 'N/A' }}</strong></div>
+        <div><span>User name</span><strong>{{ order.username }}</strong></div>
+        <div><span>Book title</span><strong>{{ order.title }}</strong></div>
+        <div><span>Amount paid</span><strong>NPR {{ "%.2f"|format(order.total_amount or 0) }}</strong></div>
+        <div><span>Payment status</span><strong>{{ order.status }}</strong></div>
+    </div>
+</section>
+{% endblock %}
