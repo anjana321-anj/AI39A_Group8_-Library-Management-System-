@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - BookVerse{% endblock %}
+
+{% block content %}
+<section class="auth-screen">
+    <div class="auth-visual reveal">
+        <span class="eyebrow">Profile Management</span>
+        <h1 class="hero-title">Keep your account details current.</h1>
+        <p class="hero-copy">Update your name, address, phone number, and email. Email changes require demo verification.</p>
+    </div>
+
+    <form class="auth-card reveal" method="post" data-loading-form>
+        {% if pending %}
+            <input type="hidden" name="step" value="verify_email">
+            <div class="form-heading">
+                <h2>Verify Email</h2>
+                <p>Enter the demo verification code sent to {{ pending.email }}.</p>
+            </div>
+            <label class="field">
+                <span>Verification Code</span>
+                <input type="text" name="verification_code" placeholder="123456" required>
+            </label>
+            <p class="form-note">Demo code: <strong>{{ demo_code or '123456' }}</strong></p>
+            <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+                <span class="btn-label">Verify and Update Email</span>
+                <span class="btn-loader"></span>
+            </button>
+        {% else %}
+            <input type="hidden" name="step" value="profile">
+            <div class="form-heading">
+                <h2>Edit Profile</h2>
+                <p>Changes are stored in your Profile Updates history.</p>
+            </div>
+            <label class="field">
+                <span>Name</span>
+                <input type="text" name="username" value="{{ user.username }}" required>
+            </label>
+            <label class="field">
+                <span>Email</span>
+                <input type="email" name="email" value="{{ user.email }}" required>
+            </label>
+            <label class="field">
+                <span>Phone Number</span>
+                <input type="tel" name="phone" value="{{ user.phone_number or user.phone or '' }}">
+            </label>
+            <label class="field">
+                <span>Address</span>
+                <input type="text" name="address" value="{{ user.address or '' }}">
+            </label>
+            <button class="btn btn-primary btn-wide" type="submit" data-ripple>
+                <span class="btn-label">Save Profile</span>
+                <span class="btn-loader"></span>
+            </button>
+        {% endif %}
+        <a class="btn btn-secondary btn-wide" href="{{ url_for('auth.profile') }}">Cancel</a>
+    </form>
+</section>
+{% endblock %}
