@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Borrow Receipt - BookVerse{% endblock %}
+
+{% block content %}
+<section class="receipt-slip reveal">
+    <div class="receipt-head">
+        <h1>Borrowing Receipt</h1>
+        <span>{{ borrow.payment_status or 'Paid' }}</span>
+    </div>
+    <div class="receipt-lines">
+        <div><span>Receipt number</span><strong>BV-BORROW-{{ "%05d"|format(borrow.id) }}</strong></div>
+        <div><span>Date and time</span><strong>{{ borrow.payment_date.strftime('%b %d, %Y %I:%M %p') if borrow.payment_date else 'Just now' }}</strong></div>
+        <div><span>User name</span><strong>{{ borrow.username }}</strong></div>
+        <div><span>Book title</span><strong>{{ borrow.title }}</strong></div>
+        <div><span>Amount paid</span><strong>NPR {{ "%.2f"|format(borrow.payment_amount or 50) }}</strong></div>
+        <div><span>Payment status</span><strong>{{ borrow.payment_status or 'Paid' }}</strong></div>
+    </div>
+    <div class="form-row">
+        <a class="btn btn-secondary" href="{{ url_for('auth.my_library') }}">Back to Library</a>
+        <a class="btn btn-primary" href="{{ url_for('auth.read_book', book_id=borrow.book_id) }}">Read Book</a>
+    </div>
+</section>
+{% endblock %}
