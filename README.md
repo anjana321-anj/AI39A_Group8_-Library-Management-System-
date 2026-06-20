@@ -63,43 +63,27 @@ BookVerse offers a range of features to enhance the online library experience, i
 
 ### Here's a sneak peek of what the website looks like:
 
-<img width="936" height="434" alt="lp1" src="https://github.com/user-attachments/assets/d0d51daf-cfd5-451b-939a-7b8ca54f11b5" /><img width="938" height="363" alt="lp2" src="https://github.com/user-attachments/assets/6ffecd8a-f971-437d-ac35-5daf09775ec4" /><img width="939" height="371" alt="lp3" src="https://github.com/user-attachments/assets/ac779994-d9e2-4369-b60d-303528a9ebd7" /><img width="933" height="180" alt="lp4" src="https://github.com/user-attachments/assets/d841d2f9-ce1b-41fe-a104-be851577fb53" />
+<img width="949" height="433" alt="home(1)" src="https://github.com/user-attachments/assets/67f3c39d-d172-4ea2-9f8f-38689173a999" /><img width="947" height="160" alt="home(2)" src="https://github.com/user-attachments/assets/0e1cee43-8262-46d9-a4bf-560ea39abde1" />
 
 ---
 
 ### Login Page
 
-<img width="939" height="435" alt="Login page(1)" src="https://github.com/user-attachments/assets/f3b6a48a-6379-4463-a87b-628cb2a1c69c" />
+<img width="949" height="436" alt="sign(1)" src="https://github.com/user-attachments/assets/d3a1da09-4fdc-4cfe-9436-bd583b515fbe" /><img width="944" height="158" alt="sign(2)" src="https://github.com/user-attachments/assets/c213ffeb-ee81-4edf-b9e5-6a95b12e53cb" />
 
 ---
 
 ### Registration Page
 
-<img width="941" height="437" alt="rp1" src="https://github.com/user-attachments/assets/cae89bb0-5dae-4842-a51a-11fc0bc2c1c1" /><img width="935" height="324" alt="rp2" src="https://github.com/user-attachments/assets/7e7633f4-f479-4dce-8a91-709323aca1f0" />
-
----
-
-### Contact Page
-
-<img width="941" height="431" alt="cp1" src="https://github.com/user-attachments/assets/41ad9776-2553-45c0-8a60-33032f7a0703" /><img width="945" height="319" alt="cp2" src="https://github.com/user-attachments/assets/94cc548c-66b2-4631-8c46-b95e19dc4d83" />
-
----
-
-### Services Page
-
-<img width="943" height="329" alt="sp1" src="https://github.com/user-attachments/assets/1b183d5d-d454-4e7d-b7fe-e4dc2c36dfa6" /><img width="938" height="336" alt="sp2" src="https://github.com/user-attachments/assets/5b29185f-b31e-4a2e-b18c-fa3a2c8d6a09" /><img width="941" height="172" alt="sp3" src="https://github.com/user-attachments/assets/ce16def6-f20c-46b2-a7be-ed2ed157bcbc" />
+<img width="948" height="416" alt="create(1)" src="https://github.com/user-attachments/assets/11a1cb9b-3602-4d94-86f3-2227bb672e83" /><img width="950" height="219" alt="create(2)" src="https://github.com/user-attachments/assets/a3b25886-9f99-412d-98ea-4ae0e210fe82" /><img width="948" height="163" alt="create(3)" src="https://github.com/user-attachments/assets/d19c181d-5fc3-4bb6-84d5-39c0d491f88d" />
 
 ---
 
 ### Books Page
 
-<img width="935" height="352" alt="bp1" src="https://github.com/user-attachments/assets/583373c0-e08b-4ba2-b553-f0d300fb40d9" /><img width="934" height="359" alt="bp2" src="https://github.com/user-attachments/assets/f8e0b9b7-2b2b-4240-9492-02808bfa610d" /><img width="935" height="170" alt="bp3" src="https://github.com/user-attachments/assets/19ac55e8-bd53-4b8e-8591-a852fcf4a927" />
+<img width="948" height="436" alt="books(1)" src="https://github.com/user-attachments/assets/b55d1bb5-e8d9-4187-a93c-035747f99651" /><img width="932" height="209" alt="books(2)" src="https://github.com/user-attachments/assets/cb7f2cde-119f-45c5-950f-9ea903428e78" /><img width="947" height="165" alt="books(3)" src="https://github.com/user-attachments/assets/00ef5796-35b6-40c1-9e13-e808689ffac4" />
 
 ---
-
-### Borrowed Page
-
-<img width="935" height="434" alt="bo1" src="https://github.com/user-attachments/assets/20c5c942-51d7-422b-b422-ff7d5e988db6" /><img width="935" height="224" alt="bo2" src="https://github.com/user-attachments/assets/c606410a-95fa-47a4-b55d-81610ae42ac6" />
 
 ---
 
